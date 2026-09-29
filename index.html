@@ -110,6 +110,15 @@ h3{font-size:.95rem;margin:0 0 6px;font-weight:800}h4{margin:14px 0 6px;font-siz
 @media (min-width:640px){main{padding:8px 16px 24px}}
 
 .steps{margin:0 0 12px;padding-left:1.2rem;display:grid;gap:6px;font-size:.88rem;color:var(--mu)}.steps b{color:var(--ink)}
+
+.dcen{pointer-events:none}.dsvg svg{overflow:visible}
+circle.seg{cursor:pointer;transition:opacity .22s cubic-bezier(.23,1,.32,1),stroke-width .28s cubic-bezier(.23,1,.32,1)}
+.dleg li{cursor:pointer;border-radius:8px;transition:opacity .2s cubic-bezier(.23,1,.32,1)}.dleg li.dim{opacity:.4}
+.cat,.person,.pm1,.vbc,.hbr,.prow,.metals{transition:transform .16s cubic-bezier(.23,1,.32,1)}
+.cat:active,.person:active,.pm1:active,.metals:active{transform:scale(.975)}
+.hswitch{display:flex;align-items:center;gap:8px;background:var(--in);border:0;border-radius:12px;padding:7px 10px 7px 12px;color:var(--ink);font:inherit;cursor:pointer;text-align:left;transition:transform .16s cubic-bezier(.23,1,.32,1)}
+.hswitch h2{font-size:1.02rem}.hswitch .ic{width:18px;height:18px;color:var(--ac);flex:none}.hswitch:active{transform:scale(.96)}
+.split.two{grid-template-columns:1fr 1fr}.hint.tight{margin:-2px 4px 0}
 </style></head>
 <body><div id="app"></div>
 <script>
@@ -143,6 +152,17 @@ const num = v => { const n = parseFloat(String(v ?? '').replace(/\s/g, '').repla
 const sum = (arr, f = x => x) => arr.reduce((s, x) => s + (f(x) || 0), 0);
 
 const thisMonthISO = d => d.toISOString().slice(0, 7);
+/* Taux annuel « pondéré » : le taux r qui rend la somme des flux actualisés égale à zéro.
+   Chaque versement compte selon le temps pendant lequel il a réellement été investi. */
+function xirr(flows) {
+  const fl = flows.filter(x => x.v);
+  if (fl.length < 2) return 0;
+  const f = r => fl.reduce((s, x) => s + x.v * Math.pow(1 + r, x.t), 0); // t = âge du flux : un versement passé est capitalisé jusqu'à aujourd'hui
+  let lo = -0.95, hi = 10;
+  if (f(lo) * f(hi) > 0) return 0;
+  for (let i = 0; i < 100; i++) { const mid = (lo + hi) / 2; if (f(lo) * f(mid) <= 0) hi = mid; else lo = mid; }
+  return (lo + hi) / 2;
+}
 function monthsBetween(fromISO, to) { // équivalent DATEDIF(..., "m")
   if (!fromISO) return 0;
   const f = new Date(fromISO + (fromISO.length === 7 ? '-01' : ''));
@@ -175,7 +195,16 @@ function calcPlacement(p, cfg, now) {
   const premier = hasVirt ? (p.virements.map(v => v.date).sort()[0] || '') : ((actifs.flatMap(a => (a.lots || []).map(l => l.date))).sort()[0] || '');
   const jours = premier ? Math.max(1, (now - new Date(premier + '-01')) / 864e5) : 0;
   const rendement = investiTotal ? pv / investiTotal : 0;
-  return { actifs, valeurActifs, coutActifs, investi: investiTotal, especes, pv, pvNet, totalBrut, totalApresImpot, rendement,
+  // flux pour le taux pondéré : versements (négatifs) puis valeur finale (positive, aujourd'hui)
+  const yrs = d => Math.max(0, (now - new Date((d || premier || thisMonthISO(now)).slice(0, 7) + '-01')) / (365 * 864e5));
+  const contrib = hasVirt ? p.virements.map(v => ({ t: yrs(v.date), v: -num(v.montant) })) :
+    (actifs.flatMap(a => (a.lots || []).map(l => ({ t: yrs(l.date), v: -((l.montant !== undefined && l.montant !== '' && l.montant !== null) ? num(l.montant) : num(a.pru) * num(l.qty)) }))));
+  if (fondsInvesti) contrib.push({ t: yrs(premier), v: -fondsInvesti });
+  const finalBrut = valeurActifs + (hasVirt ? especes : 0) + fondsInvesti;
+  const versé = -sum(contrib, c => c.v), gain = finalBrut - versé;
+  const finalNet = gain > 0 ? versé + gain * taxe : finalBrut;
+  const flowsBrut = [...contrib, { t: 0, v: finalBrut }], flowsNet = [...contrib, { t: 0, v: finalNet }];
+  return { flowsBrut, flowsNet, xirr: xirr(flowsBrut), xirrNet: xirr(flowsNet), actifs, valeurActifs, coutActifs, investi: investiTotal, especes, pv, pvNet, totalBrut, totalApresImpot, rendement,
            annualise: jours ? rendement / jours * 365 : 0, premier,
            retraitMois: p.retrait ? Math.max(0, monthsBetween(now.toISOString().slice(0, 10), new Date(p.retrait))) : null };
 }
@@ -228,11 +257,13 @@ function calc(S, now = new Date(), cours = null) {
   R.comptes = S.comptes.map(c => ({ ...c, valeur: c.auto ? val(c.auto) : num(c.montant) }));
   const catOf = c => c.auto === 'peaA' || c.auto === 'peaB' ? 'PEA' : c.auto === 'ctoA' ? 'Métaux (CTO)' : c.auto === 'avA' || /assurance vie/i.test(c.label) ? 'Assurance vie' :
     c.auto === 'objets' ? 'Or physique' : /crypto/i.test(c.label) ? 'Crypto' : 'Livrets et épargne';
+  R.comptes.forEach(c => { c.cat = catOf(c); });
   R.repart = {};
   R.comptes.forEach(c => { if (c.valeur > 0 && c.auto !== 'credit') { const k = catOf(c); R.repart[k] = (R.repart[k] || 0) + c.valeur; } });
   R.patrimoine = sum(R.comptes, c => c.valeur);
   R.parPersonne = { a: sum(R.comptes.filter(c => c.who === 'a'), c => c.valeur), b: sum(R.comptes.filter(c => c.who === 'b'), c => c.valeur), commun: sum(R.comptes.filter(c => c.who !== 'a' && c.who !== 'b'), c => c.valeur) };
   R.apport = sum(R.comptes.filter(c => c.apport !== false), c => c.valeur);
+  R.xirrTotal = xirr(Object.values(R.pl).flatMap(p => p.flowsNet));
   R.pvTotale = sum(Object.values(R.pl), p => p.pvNet); R.investiTotal = sum(Object.values(R.pl), p => p.investi);
   // --- Argent investi, cumul par mois (tous placements)
   const ev = {};
@@ -256,6 +287,8 @@ function calc(S, now = new Date(), cours = null) {
     });
     let c = 0; R.seriePers[w] = Object.keys(e).sort().map(k => ({ m: k, v: (c += e[k]) }));
     R.plParPers[w].rendement = R.plParPers[w].investi ? R.plParPers[w].pvNet / R.plParPers[w].investi : 0;
+    const ks2 = ['peaA', 'peaB', 'ctoA', 'avA'].filter(k => S.placements[k].who === w);
+    R.plParPers[w].xirr = xirr(ks2.flatMap(k => R.pl[k].flowsBrut)); R.plParPers[w].xirrNet = xirr(ks2.flatMap(k => R.pl[k].flowsNet));
   });
   // --- Intérêts
   R.interets = {};
@@ -367,7 +400,7 @@ function commit() { R = recalc(); meta.dirty = true; saveLocal(); if (cfgOK() &&
 
 
 /* ---------- Petits composants ---------- */
-let showSecrets = false, pf = LS.get('cc.pf') === 'b' ? 'b' : 'a';
+let ef = ['a', 'b'].includes(LS.get('cc.ef')) ? LS.get('cc.ef') : 'all', showSecrets = false, pf = LS.get('cc.pf') === 'b' ? 'b' : 'a';
 const PAL = ['#3f7691', '#5a9a86', '#7b8fbf', '#8a7ba6', '#9bb06a', '#6b8a9a', '#b58b6e', '#4d6a8c'];
 const ICONS = {
   home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
@@ -387,6 +420,7 @@ const ICONS = {
   layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
   coins: '<circle cx="9" cy="9" r="6"/><path d="M15.5 10.5A6 6 0 1 1 10 18"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  swap: '<path d="M7 9l5-5 5 5M7 15l5 5 5-5"/>',
   dot: '<circle cx="12" cy="12" r="3"/>'
 };
 const ico = n => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ICONS.dot}</svg>`;
@@ -419,12 +453,12 @@ function donut(items, o = {}) {
   let off = 0;
   const segs = data.map((d, i) => {
     const len = d.v / tot * c, gap = data.length > 1 ? 3 : 0, col = d.c || PAL[i % PAL.length];
-    const s = `<circle r="${r}" cx="${size / 2}" cy="${size / 2}" fill="none" stroke="${col}" stroke-width="${th}" stroke-dasharray="${Math.max(0, len - gap)} ${c}" stroke-dashoffset="${-off}" transform="rotate(-90 ${size / 2} ${size / 2})" stroke-linecap="butt"/>`;
+    const s = `<circle r="${r}" cx="${size / 2}" cy="${size / 2}" fill="none" stroke="${col}" stroke-width="${th}" class="seg" data-i="${i}" stroke-dasharray="${Math.max(0, len - gap)} ${c}" stroke-dashoffset="${-off}" transform="rotate(-90 ${size / 2} ${size / 2})" stroke-linecap="butt"/>`;
     off += len; return s;
   }).join('');
-  const legend = data.map((d, i) => `<li><i style="background:${d.c || PAL[i % PAL.length]}"></i><span>${esc(d.l)}</span><b>${eur(d.v)}</b><em>${pc(d.v / tot, 0)}</em></li>`).join('');
+  const legend = data.map((d, i) => `<li data-i="${i}"><i style="background:${d.c || PAL[i % PAL.length]}"></i><span>${esc(d.l)}</span><b>${eur(d.v)}</b><em>${pc(d.v / tot, 0)}</em></li>`).join('');
   return `<div class="donutw"><div class="dsvg"><svg viewBox="0 0 ${size} ${size}" role="img" aria-label="${esc(o.label || 'Répartition')}"><circle r="${r}" cx="${size / 2}" cy="${size / 2}" fill="none" stroke="var(--track)" stroke-width="${th}"/>${segs}</svg>
-    <div class="dcen"><small>${o.top || ''}</small><b>${o.center || eur(tot)}</b></div></div><ul class="dleg">${legend}</ul></div>`;
+    <div class="dcen" data-t="${esc(o.top || '')}" data-c="${esc(o.center || eur(tot))}"><small>${o.top || ''}</small><b>${o.center || eur(tot)}</b></div></div><ul class="dleg">${legend}</ul></div>`;
 }
 function hbars(items, o = {}) {
   const max = Math.max(1, ...items.map(i => Math.abs(i.v)));
@@ -470,15 +504,15 @@ function vAccueil() {
   <div class="two">${person('a')}${person('b')}</div>`;
 }
 
-function catCard(icon, titre, pctCible, reel, cible, lower, note) {
-  return `<div class="cat"><h3>${titre}<small>${pctCible}</small></h3><div class="cv">${eur(reel)}</div>${gauge(reel, cible, lower)}<div class="cm">cible ${eur(cible)}</div><div class="cm">${gap(reel, cible, lower)}</div>${note ? `<div class="cm">${note}</div>` : ''}</div>`;
+function catCard(icon, titre, pctCible, reel, cible, lower, note, gapHtml) {
+  return `<div class="cat"><h3>${titre}<small>${pctCible}</small></h3><div class="cv">${eur(reel)}</div>${gauge(reel, cible, lower)}<div class="cm">cible ${eur(cible)}</div><div class="cm">${gapHtml || gap(reel, cible, lower)}</div>${note ? `<div class="cm">${note}</div>` : ''}</div>`;
 }
 function persRow(k) {
   const part = R.part[k], q = k === 'a' ? R.quot.parA : R.quot.parB, l = k === 'a' ? R.loisirs.parA : R.loisirs.parB, d = R.dispo[k];
   return `<div class="prow p${k}"><div class="ph"><b>${esc(N(k))}</b><span>${eur(part)} net · ${pc(R.ratio[k], 1)}</span></div><div class="pg">
     <div><span>Quotidien</span><b>${eur(q)}</b>${gauge(q, part * 0.5, true)}<em>cible ${eur(part * 0.5)}</em></div>
     <div><span>Loisirs</span><b>${eur(l)}</b>${gauge(l, part * 0.3, true)}<em>cible ${eur(part * 0.3)}</em></div>
-    <div><span>Reste</span><b class="${sign(d)}">${eur(d)}</b>${gauge(d, part * 0.2, false)}<em>cible ${eur(part * 0.2)}</em></div></div></div>`;
+    <div><span>Reste (papier)</span><b class="${sign(d)}">${eur(d)}</b>${gauge(d, part * 0.2, false)}<em>cible ${eur(part * 0.2)}</em></div></div></div>`;
 }
 function vBudget() {
   const toggle = `<div class="seg" role="tablist"><button class="${bmode === 'tableau' ? 'on' : ''}" data-bmode="tableau">Tableau de bord</button><button class="${bmode === 'saisie' ? 'on' : ''}" data-bmode="saisie">Modifier</button></div>`;
@@ -492,7 +526,8 @@ function vBudgetTableau() {
   return `
   <section class="hero small"><small>Net disponible par mois</small><div class="big">${eur(R.net)}</div><div class="hchips"><span>${eur(R.brutTotal)} brut</span><span>− ${eur(R.impots.a + R.impots.b)} d'impôt</span></div></section>
   ${sec('🍰 Où part l\'argent', donut([{ l: 'Quotidien', v: R.quot.tot, c: '#4a6fa5' }, { l: 'Loisirs', v: R.loisirs.tot, c: '#4f9a94' }, { l: 'Reste à épargner', v: Math.max(0, R.reste), c: '#86a862' }], { center: eur(R.net), top: 'net / mois' }), '', 'enter')}
-  <div class="cats">${catCard('🛒', 'Quotidien', '50 %', R.quot.tot, R.cible.besoins, true)}${catCard('🎉', 'Loisirs', '30 %', R.loisirs.tot, R.cible.envies, true, `dont vacances ${eur(R.vacMoy)}`)}${catCard('🐷', 'Épargne', '20 %', R.reste, R.cible.epargne, false)}</div>
+  <div class="cats">${catCard('🛒', 'Quotidien', '50 %', R.quot.tot, R.cible.besoins, true)}${catCard('🎉', 'Loisirs', '30 %', R.loisirs.tot, R.cible.envies, true, `dont vacances ${eur(R.vacMoy)}`)}${catCard('', 'Reste', 'épargne 20 %', R.reste, R.cible.epargne, false, 'sur le papier, pas épargné', `<span>objectif d'épargne ${eur(R.cible.epargne)}</span>`)}</div>
+  <p class="hint tight">Reste = net − dépenses listées (${eur(R.net)} − ${eur(R.quot.tot)} − ${eur(R.loisirs.tot)}). Il ne contient pas les dépenses non listées (achats, santé, cadeaux, imprévus) : l'épargne réelle est plus basse.</p>
   ${sec('🔝 Les plus grosses dépenses', hbars(top.map(t => ({ l: t.l, v: t.v, c: t.c }))), 'par mois')}
   ${sec('👫 Par personne', persRow('a') + persRow('b') + `<p class="hint">Dépenses communes au prorata des salaires nets ; les lignes attribuées comptent en entier pour la personne.</p>`)}
   ${sec('🏦 Virements vers le compte commun', `<div class="vr vh"><span></span><b>${esc(N('a'))}</b><b>${esc(N('b'))}</b></div>${v}<div class="vr vt"><span>Total</span><b>${eur(R.virements.a)}</b><b>${eur(R.virements.b)}</b></div>`, eur(R.virementsTot))}`;
@@ -511,18 +546,24 @@ function vBudgetSaisie() {
 }
 
 function vEpargne() {
-  const icon = c => c.auto === 'credit' ? '🚘' : /livret|ldds|lep|pel/i.test(c.label) ? '🐖' : /crypto/i.test(c.label) ? '🪙' : c.auto === 'objets' ? '🥇' : /dette/i.test(c.label) ? '🧾' : '📈';
-  const cc = S.comptes.map((c, i) => row(`comptes.${i}`, icon(c), c.label, chip(c.who) + (c.banque && c.banque !== '-' ? ` <i class="chip bk">${esc(c.banque)}</i>` : '') + (c.auto ? ' auto' : ''), eur(R.comptes[i].valeur), sign(R.comptes[i].valeur))).join('');
-  const yrs = S.interets.annees;
-  const iv = yrs.map(y => ({ l: String(y), v: R.interets[y] || 0, c: 'linear-gradient(var(--ac),#7fa8bb)' }));
-  const rows = S.interets.lignes.map((l, i) => row(`interets.lignes.${i}`, '💸', l.label, chip(l.who), eur(sum(yrs, y => num((l.v || {})[y]))))).join('');
+  const f = ef, ok = w => f === 'all' || w === f || (w !== 'a' && w !== 'b');
+  const idx = S.comptes.map((c, i) => i).filter(i => ok(S.comptes[i].who));
+  const icon = c => c.auto === 'credit' ? 'car' : /livret|ldds|lep|pel/i.test(c.label) ? 'wallet' : /crypto/i.test(c.label) ? 'coins' : c.auto === 'objets' ? 'gold' : /dette/i.test(c.label) ? 'receipt' : 'trend';
+  const cc = idx.map(i => { const c = S.comptes[i]; return row(`comptes.${i}`, icon(c), c.label, chip(c.who) + (c.banque && c.banque !== '-' ? ` <i class="chip bk">${esc(c.banque)}</i>` : '') + (c.auto ? ' auto' : ''), eur(R.comptes[i].valeur), sign(R.comptes[i].valeur)); }).join('');
+  const totF = sum(idx, i => R.comptes[i].valeur), repF = {};
+  idx.forEach(i => { const c = R.comptes[i]; if (c.valeur > 0 && c.auto !== 'credit') repF[c.cat] = (repF[c.cat] || 0) + c.valeur; });
+  const title = f === 'all' ? 'Tous les comptes' : `Comptes de ${esc(N(f))} et communs`;
+  const split = f === 'all' ? kv(esc(N('a')), eur(R.parPersonne.a)) + kv(esc(N('b')), eur(R.parPersonne.b)) + kv('Commun', eur(R.parPersonne.commun)) : kv(esc(N(f)), eur(R.parPersonne[f])) + kv('Commun', eur(R.parPersonne.commun));
+  const yrs = S.interets.annees, iv = yrs.map(y => ({ l: String(y), v: R.interets[y] || 0, c: 'linear-gradient(var(--ac),#7fa8bb)' }));
+  const rows = S.interets.lignes.map((l, i) => row(`interets.lignes.${i}`, 'coins', l.label, chip(l.who), eur(sum(yrs, y => num((l.v || {})[y]))))).join('');
   const cr = S.settings.credit;
   return `
-  ${sec('🍰 Répartition', donut(Object.entries(R.repart).map(([l, v]) => ({ l, v })), { center: eur(R.patrimoine), top: 'patrimoine' }), '', 'enter')}
-  ${sec('🐖 Tous les comptes', cc + addBtn('comptes', 'Compte') + `<div class="split">${kv(esc(N('a')), eur(R.parPersonne.a))}${kv(esc(N('b')), eur(R.parPersonne.b))}${kv('Commun', eur(R.parPersonne.commun))}</div>` +
-    `<p class="hint">Banques : CA = Crédit Agricole · F = Fortuneo · HB = Hello bank. « Commun » = argent à vous deux, même si le compte est chez l'un de vous. « auto » = calculé depuis Placements.</p>`, eur(R.patrimoine))}
-  ${sec('💸 Intérêts par an', vbars(iv) + rows + addBtn('interets.lignes', 'Compte') + `<button class="add" data-addyear>+ Année</button>`)}
-  ${sec('🚘 Crédit auto', `<div class="grid3"><label>Mensualité${fld('settings.credit.mensualite', cr.mensualite)}</label><label>Nb de mois${fld('settings.credit.nbMois', cr.nbMois)}</label><label>Début${fld('settings.credit.debut', cr.debut, { t: 'date' })}</label></div>` + kv('Reste à payer', eur(R.creditReste), 'neg'))}`;
+  ${sec('Répartition', donut(Object.entries(repF).map(([l, v]) => ({ l, v })), { center: eur(Object.values(repF).reduce((a, b) => a + b, 0)), top: f === 'all' ? 'patrimoine' : esc(N(f)) }), '', 'enter')}
+  <section class="sec"><header><button class="hswitch" data-ef aria-label="Changer l'affichage des comptes"><h2>${title}</h2>${ico('swap')}</button><span class="tot">${eur(totF)}</span></header>
+    ${cc}${addBtn('comptes', 'Compte')}<div class="split ${f === 'all' ? '' : 'two'}">${split}</div>
+    <p class="hint">Touche le titre pour passer de tous les comptes à ${esc(N('a'))}, puis ${esc(N('b'))}. Banques : CA = Crédit Agricole · F = Fortuneo · HB = Hello bank. « Commun » = argent à vous deux, même si le compte est chez l'un de vous. « auto » = calculé depuis Placements.</p></section>
+  ${sec('Intérêts par an', vbars(iv) + rows + addBtn('interets.lignes', 'Compte') + `<button class="add" data-addyear>+ Année</button>`)}
+  ${sec('Crédit auto', `<div class="grid3"><label>Mensualité${fld('settings.credit.mensualite', cr.mensualite)}</label><label>Nb de mois${fld('settings.credit.nbMois', cr.nbMois)}</label><label>Début${fld('settings.credit.debut', cr.debut, { t: 'date' })}</label></div>` + kv('Reste à payer', eur(R.creditReste), 'neg'))}`;
 }
 
 function assetRow(key, i, a) {
@@ -535,7 +576,7 @@ function placeBlock(key, icon) {
   const assets = c.actifs.map((a, i) => assetRow(key, i, a)).join('');
   const perfBars = c.actifs.length > 1 ? hbars(c.actifs.map(a => ({ l: a.nom, v: a.cout ? a.pv / a.cout * 100 : 0, t: signed(a.cout ? a.pv / a.cout : 0) + ' ' + moji(a.cout ? a.pv / a.cout : 0) }))) : '';
   return `<section class="sec prod"><header><h2>${esc(p.titre)} <em>${chip(p.who)}</em></h2><span class="tot">${eur(c.totalApresImpot)}</span></header>
-    <div class="pmain"><div class="pm1"><small>Rendement</small><b class="${sign(c.rendement)}">${signed(c.rendement)} ${moji(c.rendement)}</b></div><div class="pm1"><small>Par an</small><b class="${sign(c.annualise)}">${signed(c.annualise)} ${moji(c.annualise)}</b></div><div class="pm1"><small>Plus-value nette</small><b class="${sign(c.pvNet)}">${eur(c.pvNet)}</b></div></div>
+    <div class="pmain"><div class="pm1"><small>Rendement total</small><b class="${sign(c.rendement)}">${signed(c.rendement)} ${moji(c.rendement)}</b></div><div class="pm1"><small>Par an (pondéré)</small><b class="${sign(c.xirr)}">${signed(c.xirr)} ${moji(c.xirr)}</b></div><div class="pm1"><small>Plus-value nette</small><b class="${sign(c.pvNet)}">${eur(c.pvNet)}</b></div></div>
     ${kv('Investi', eur(c.investi, 2))}${hasVirt ? kv('Espèces en attente', eur(c.especes, 2)) : ''}${kv('Valeur brute', eur(c.totalBrut, 2))}${ret}
     ${perfBars}${assets}${addBtn(`placements.${key}.actifs`, 'Actif')}
     ${hasVirt ? `<button class="add ghost" data-edit="placements.${key}.virements">Virements versés (${p.virements.length})</button>` : ''}
@@ -559,7 +600,7 @@ function vPlacements() {
   const objBlock = P === 'b' ? sec('Objets en or', objets + addBtn('placements.objets', 'Objet') + kv('Valeur brute', eur(R.objetsBrut)) + kv('Après marge de revente (' + pc(S.settings.reventeOr, 0) + ')', eur(R.objetsNet), 'pos'), eur(R.objetsNet)) : '';
   return `${seg}${metalsBanner()}
   <section class="hero small"><small>Plus-value nette · ${esc(N(P))}</small><div class="big">${eur(pp.pvNet)}</div>
-    <div class="hchips"><span>${moji(pp.rendement)} ${signed(pp.rendement)}</span><span>Investi ${eur(pp.investi)}</span><span>Valeur ${eur(pp.total + (P === 'b' ? R.objetsNet : 0))}${P === 'b' ? ' avec l\'or' : ''}</span></div></section>
+    <div class="hchips"><span>${moji(pp.rendement)} ${signed(pp.rendement)} net</span><span>${signed(pp.xirrNet)} par an (pondéré)</span><span>Investi ${eur(pp.investi)}</span><span>Valeur ${eur(pp.total + (P === 'b' ? R.objetsNet : 0))}${P === 'b' ? ' avec l\'or' : ''}</span></div></section>
   ${R.seriePers[P].length > 1 ? sec('Argent investi au fil du temps', lineChart(R.seriePers[P]), '', 'enter') : ''}
   ${parProd.length > 1 ? sec('Rendement par placement', hbars(parProd)) : ''}
   ${keys.map(k => placeBlock(k, icons[k])).join('')}${objBlock}`;
@@ -715,12 +756,33 @@ document.addEventListener('change', e => {
   if (e.target.dataset && e.target.dataset.act === 'showsecrets') { showSecrets = e.target.checked; render(); return; }
   if (e.target.dataset && e.target.dataset.act === 'import') importFile(e.target.files[0]);
 });
+const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function bump(el) {
+  if (REDUCED || !el || !el.animate) return;
+  el.animate([{ transform: 'scale(1)' }, { transform: 'scale(.95)', offset: .25 }, { transform: 'scale(1.03)', offset: .6 }, { transform: 'scale(1)' }], { duration: 440, easing: 'cubic-bezier(.23,1,.32,1)' });
+}
+function donutTap(w, i) {
+  const segs = [...w.querySelectorAll('circle.seg')], lis = [...w.querySelectorAll('.dleg li')], cen = w.querySelector('.dcen');
+  const same = w.dataset.sel === String(i);
+  w.dataset.sel = same ? '' : String(i);
+  segs.forEach((s, k) => { s.style.opacity = same ? '' : (k === i ? '1' : '.28'); s.style.strokeWidth = same ? '' : (k === i ? '36' : ''); });
+  lis.forEach((l, k) => l.classList.toggle('dim', !same && k !== i));
+  const li = lis[i];
+  cen.querySelector('small').textContent = same ? cen.dataset.t : `${li.children[1].textContent} · ${li.children[3].textContent}`;
+  cen.querySelector('b').textContent = same ? cen.dataset.c : li.children[2].textContent;
+  if (!same && !REDUCED) cen.animate([{ transform: 'scale(.9)', opacity: .4 }, { transform: 'scale(1)', opacity: 1 }], { duration: 300, easing: 'cubic-bezier(.23,1,.32,1)' });
+}
 document.addEventListener('click', async e => {
+  const sg = e.target.closest('circle.seg, .dleg li');
+  if (sg) { const w = sg.closest('.donutw'); donutTap(w, +sg.dataset.i); bump(w.querySelector('.dsvg')); return; }
+  const card = e.target.closest('.cat,.person,.hero,.pm1,.metals,.dsvg,.vbc,.hbr,.prow,.split .kv,.pmain');
+  if (card && !e.target.closest('button,input,select,label')) bump(card);
   const t = e.target.closest('button,[data-close]'); if (!t) return;
   const d = t.dataset;
   if ('close' in d) { if (e.target === t) { editing = null; moreOpen = false; render(); } return; }
   if ('done' in d) { editing = null; render(); return; }
   if (d.edit) { editing = { path: d.edit }; render(); return; }
+  if ('ef' in d) { ef = ef === 'all' ? 'a' : ef === 'a' ? 'b' : 'all'; LS.set('cc.ef', ef); render(); return; }
   if (d.pf) { pf = d.pf; LS.set('cc.pf', pf); render(); window.scrollTo(0, 0); return; }
   if (d.bmode) { bmode = d.bmode; LS.set('cc.bmode', bmode); render(); window.scrollTo(0, 0); return; }
   if (d.go) { view = d.go; moreOpen = false; editing = null; render(); window.scrollTo(0, 0); return; }
