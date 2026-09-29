@@ -11,8 +11,8 @@
 <link rel="shortcut icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<style>:root{--bg:#eef1f3;--sf:#fff;--ink:#1c2733;--mu:#66727e;--ln:#e0e5e9;--in:#f3f5f7;--track:#e6eaee;--pos:#2a8562;--neg:#b8483d;--ac:#2f6b82;--ac2:#4a8ba3;--ca:#c8453a;--cat:#c8453a;--cb:#e2b23c;--cbt:#9a7410;--onb:#3a2c00;--mint:#5aa58a;--coral:#c8695e;--shadow:0 4px 16px rgba(30,50,70,.08)}
-@media (prefers-color-scheme:dark){:root{--bg:#12181d;--sf:#1b242b;--ink:#e8eef2;--mu:#98a6b1;--ln:#2a353e;--in:#151d23;--track:#26313a;--pos:#5fc59f;--neg:#e58a7e;--ac:#7db3c8;--ac2:#5f97ad;--ca:#d9584c;--cat:#ff8a7d;--cb:#e8bd4a;--cbt:#e8bd4a;--onb:#2a2000;--shadow:0 4px 16px rgba(0,0,0,.35)}}
+<style>:root{--bg:#eef1f3;--sf:#fff;--ink:#1c2733;--mu:#66727e;--ln:#e0e5e9;--in:#f3f5f7;--track:#e6eaee;--pos:#2a8562;--neg:#b8483d;--ac:#2f6b82;--ac2:#4a8ba3;--ca:#d9731a;--cat:#c2620f;--cb:#e2b23c;--cbt:#9a7410;--onb:#3a2c00;--mint:#5aa58a;--coral:#c8695e;--shadow:0 4px 16px rgba(30,50,70,.08)}
+@media (prefers-color-scheme:dark){:root{--bg:#12181d;--sf:#1b242b;--ink:#e8eef2;--mu:#98a6b1;--ln:#2a353e;--in:#151d23;--track:#26313a;--pos:#5fc59f;--neg:#e58a7e;--ac:#7db3c8;--ac2:#5f97ad;--ca:#e98f3a;--cat:#f5a555;--cb:#e8bd4a;--cbt:#e8bd4a;--onb:#2a2000;--shadow:0 4px 16px rgba(0,0,0,.35)}}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Avenir Next","Segoe UI Variable","Segoe UI",system-ui,sans-serif;font-variant-numeric:tabular-nums;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 #app{max-width:680px;margin:0 auto}
@@ -135,7 +135,7 @@ circle.seg{cursor:pointer;transition:opacity .22s cubic-bezier(.23,1,.32,1),stro
 #tip.show{opacity:1;transform:none}
 [data-tip]{cursor:help}.gauge{position:relative}.gauge::after{content:"";position:absolute;inset:-9px 0}
 .pn.a,.ca{color:var(--cat)}.pn.b,.cb{color:var(--cbt)}.pn{font-weight:800}
-.hero .pn.a{color:#ff9b90}.hero .pn.b{color:#ffd974}
+.hero .pn.a{color:#ffbe85}.hero .pn.b{color:#ffd974}
 .salc{background:var(--in);border-radius:16px;padding:12px}.salc.pa{border-left:5px solid var(--ca)}.salc.pb{border-left:5px solid var(--cb)}
 .salc h3{margin:0 0 2px}.salc.pa h3{color:var(--cat)}.salc.pb h3{color:var(--cbt)}
 .sbig{font-size:1.5rem;font-weight:800;letter-spacing:-.02em}.sbig small{display:block;font-size:.74rem;color:var(--mu);font-weight:600;letter-spacing:0}
@@ -147,8 +147,6 @@ circle.seg{cursor:pointer;transition:opacity .22s cubic-bezier(.23,1,.32,1),stro
 .ct{display:grid;gap:1px;text-align:left;font:inherit;color:var(--ink);background:var(--in);border:0;border-radius:14px;padding:9px 11px;min-width:0}
 button.ct{cursor:pointer}button.ct:active{transform:scale(.97)}
 .ct span{font-size:.72rem;color:var(--mu);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ct b{font-size:1.02rem;font-weight:800}.ct em{font-style:normal;font-size:.68rem;color:var(--mu)}
-.ct.gold{background:linear-gradient(120deg,#efe6c4,#e2d09a);color:#3a3010}.ct.gold span,.ct.gold em{color:#5c4d1c}
-.ct.crypto{background:color-mix(in srgb,var(--ac) 12%,var(--in))}
 .mst{font-size:.76rem;color:var(--mu);margin-top:8px}
 .ra{text-align:right;display:grid;justify-items:end}.ra small{font-size:.74rem;font-weight:700}
 .dl{margin:6px 0 2px}.sub{margin:12px 0 2px;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mu)}
@@ -187,6 +185,25 @@ button.ct{cursor:pointer}button.ct:active{transform:scale(.97)}
 .mst b{font-weight:800}.ct em{text-transform:none}
 
 .sal{grid-template-columns:1fr!important}
+
+/* ---- v4 : tuiles de cours par classe d'actif, variations, ajouts discrets ---- */
+.ct{border-left:4px solid var(--mu);background:var(--in)}
+.ct.etf{border-left-color:#4a6fa5}.ct.etc{border-left-color:#b08d57}.ct.cry{border-left-color:#8a7ba6}
+.ct b{font-size:1.02rem}.ct em{font-style:normal;font-size:.72rem;color:var(--mu)}
+.chg{font-weight:700;font-size:.74rem!important}.chg.up{color:var(--pos)!important}.chg.dn{color:var(--neg)!important}.chg.flat{color:var(--mu)!important}
+.rt small .chg{font-size:.78rem!important}
+.ct em.man{font-size:.66rem;color:var(--mu);font-style:italic}
+.legend2{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:.74rem;color:var(--mu)}.legend2 span{display:inline-flex;align-items:center;gap:5px}
+.lg{width:10px;height:10px;border-radius:3px;display:inline-block}.lg.etf{background:#4a6fa5}.lg.etc{background:#b08d57}.lg.cry{background:#8a7ba6}
+small.mu{color:var(--mu)!important;font-weight:600}
+.hchips .ci{display:inline-grid;place-items:center;width:15px;height:15px;margin-left:6px;border-radius:50%;border:1.3px solid rgba(255,255,255,.75);font:italic 700 .62rem/1 Georgia,serif;vertical-align:1px}
+.addw{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:6px}
+.add.mini{width:34px;height:34px;min-width:34px;padding:0;margin:0;border:0;border-radius:50%;background:var(--in);color:var(--ac);font-size:1.35rem;line-height:1;font-weight:700;display:grid;place-items:center}
+.add.pill{width:auto;margin:0;padding:6px 13px;border:0;border-radius:99px;background:var(--in);font-size:.82rem;font-weight:700}
+.add.ghost{margin-top:8px}
+@media (hover:hover){.add.mini:hover,.add.pill:hover{background:var(--track);border-color:transparent}}
+.yh{display:inline-flex;align-items:center;gap:8px;background:none;border:0;padding:2px 0;font:inherit;font-weight:800;font-size:1.05rem;color:inherit;cursor:pointer}
+.yi{display:grid;place-items:center;color:var(--mu)}.yi .ic{width:15px;height:15px}
 </style></head>
 <body><div id="app"></div>
 <script>
@@ -401,7 +418,17 @@ const set = (o, p, v) => { const ks = p.split('.'); const last = ks.pop(); const
 /* ---------- Persistance locale + synchro ---------- */
 function saveLocal() { LS.set('cc.state', JSON.stringify(S)); LS.set('cc.meta', JSON.stringify(meta)); }
 /* Ancienne version : espèces du compte-titres saisies à la main -> versements reconstitués depuis les achats */
-function migrate(s) {
+function migrate(s) { const a = migrateCto(s), b = migrateAchats(s); return a || b; }
+/* Années d'achats : « À venir » = années avant 2024 -> 2020 ; toujours classées par année */
+function migrateAchats(s) {
+  if (!Array.isArray(s.achats)) return false;
+  let ch = false;
+  s.achats.forEach(y => { if (y.annee === 'À venir') { y.annee = '2020'; ch = true; } });
+  const key = y => parseInt(y.annee) || 9999, before = s.achats.map(key).join();
+  s.achats.sort((a, b) => key(a) - key(b));
+  return ch || before !== s.achats.map(key).join();
+}
+function migrateCto(s) {
   const c = s.placements && s.placements.ctoA;
   if (!c || Array.isArray(c.virements)) return false;
   const ev = {};
@@ -506,6 +533,7 @@ const ICONS = {
   layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
   coins: '<circle cx="9" cy="9" r="6"/><path d="M15.5 10.5A6 6 0 1 1 10 18"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  pencil: '<path d="M4 20h4L20 8l-4-4L4 16z"/>',
   dot: '<circle cx="12" cy="12" r="3"/>'
 };
 const ico = n => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ICONS.dot}</svg>`;
@@ -576,7 +604,13 @@ function gap(reel, cible, lower) {
   return `<span class="${ok ? 'pos' : 'neg'}">${eur(Math.abs(d))} ${lower ? (d <= 0 ? 'sous la cible' : 'au-dessus') : (d >= 0 ? 'au-dessus' : 'sous la cible')}</span>`;
 }
 const row = (path, icon, title, sub, amount, cls = '') => `<button class="row" data-edit="${path}"><span class="ri">${ico(EMO2ICO[icon] || icon)}</span><span class="rt"><b>${esc(title || 'Sans nom')}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="ra ${cls}">${amount}</span></button>`;
-const addBtn = (path, txt) => `<button class="add" data-add="${path}">+ ${txt}</button>`;
+const addBtn = (path, txt) => `<div class="addw"><button class="add mini" data-add="${path}" aria-label="Ajouter : ${txt}" title="${txt}">+</button></div>`;
+const addPill = (attrs, txt) => `<button class="add pill" ${attrs}>+ ${txt}</button>`;
+const addPair = (...b) => `<div class="addw">${b.join('')}</div>`;
+const fmtDT = d => d ? new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+const chgHtml = x => { if (x === null || x === undefined || !isFinite(x)) return ''; const up = x > 0.00005, dn = x < -0.00005; return `<em class="chg ${up ? 'up' : dn ? 'dn' : 'flat'}">${up ? '▲' : dn ? '▼' : '■'} ${signed(x, 2)}</em>`; };
+const chgInline = x => (x === null || x === undefined || !isFinite(x)) ? '' : ` · ${chgHtml(x).replace('<em', '<span').replace('</em>', '</span>')}`;
+const chipT = (txt, tip) => `<span data-tip="${esc(tip)}">${txt}<i class="ci">i</i></span>`;
 
 /* Textes des bulles d'aide sur les jauges du budget */
 const REGLE = 'Règle 50/30/20 : 50 % du net pour les besoins, 30 % pour les envies, 20 % pour l\'épargne.';
@@ -664,34 +698,34 @@ function vEpargne() {
   ${sec('Répartition', donut(Object.entries(repF).map(([l, v]) => ({ l, v })), { center: eur(Object.values(repF).reduce((a, b) => a + b, 0)), top: f === 'all' ? 'patrimoine' : esc(N(f)) }), '', 'enter')}
   <section class="sec"><header><div class="ht"><select class="hsel" data-ef aria-label="Comptes à afficher">${opts}</select>${info('Choisis tous les comptes ou ceux d\'une personne : les comptes communs restent affichés.\nBanques : CA = Crédit Agricole · F = Fortuneo · HB = Hello bank.\nCommun = argent à vous deux, même si le compte est chez l\'un de vous.\nauto = calculé depuis Placements.')}</div><span class="tot">${eur(totF)}</span></header>
     ${cc}${addBtn('comptes', 'Compte')}<div class="split ${f === 'all' ? '' : 'two'}">${split}</div></section>
-  ${sec('Intérêts par an', vbars(iv) + rows + addBtn('interets.lignes', 'Compte') + `<button class="add" data-addyear>+ Année</button>`)}
+  ${sec('Intérêts par an', vbars(iv) + rows + addPair(addPill('data-add="interets.lignes"', 'Compte'), addPill('data-addyear', 'Année')))}
   ${sec('Crédit auto', `<div class="grid3"><label>Mensualité${fld('settings.credit.mensualite', cr.mensualite)}</label><label>Nb de mois${fld('settings.credit.nbMois', cr.nbMois)}</label><label>Début${fld('settings.credit.debut', cr.debut, { t: 'date' })}</label></div>` + kv('Reste à payer', eur(R.creditReste), 'neg'))}`;
 }
 
 /* ---------- Placements ---------- */
 const hasCrypto = P => S.comptes.some(c => /crypto/i.test(c.label) && (c.who === P || (c.who !== 'a' && c.who !== 'b')));
 function coursPanel(P, keys) {
-  const tiles = [];
-  keys.forEach(k => R.pl[k].actifs.forEach((a, i) => tiles.push(`<button class="ct" data-edit="placements.${k}.actifs.${i}" title="${esc(a.nom)}"><span>${esc(a.nom)}</span><b>${eur(num(a.cours), 2)}</b><em>${a.auto ? 'auto' : 'à saisir'}</em></button>`)));
+  const tiles = [], present = new Set();
+  const tile = (cls, nom, price, chg, tag, attrs = '') => { present.add(cls); return `<${attrs ? 'button' : 'div'} class="ct ${cls}" ${attrs}><span>${esc(nom)}</span><b>${price}</b>${tag || chgHtml(chg)}</${attrs ? 'button' : 'div'}>`; };
+  keys.forEach(k => R.pl[k].actifs.forEach((a, i) => tiles.push(tile(k === 'ctoA' ? 'etc' : 'etf', a.nom, eur(num(a.cours), 2), CHG[a.isin], a.auto ? '' : '<em class="man">saisi à la main</em>', `data-edit="placements.${k}.actifs.${i}" title="${esc(a.nom)}"`))));
   const auto = !!(METALS.orOnce && R.cours === METALS);
-  const wm = keys.includes('ctoA') || (P === 'b' && S.placements.objets.length);
-  const fmt = d => d ? new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
-  if (wm) {
-    tiles.push(`<div class="ct gold"><span>Or (once)</span><b>${eur(num(R.cours.orOnce))}</b><em>${auto ? 'auto' : 'secours'}</em></div>`);
-    if (num(R.cours.argentOnce)) tiles.push(`<div class="ct gold"><span>Argent (once)</span><b>${eur(num(R.cours.argentOnce), 2)}</b><em>${auto ? 'auto' : 'secours'}</em></div>`);
+  if (keys.includes('ctoA') || (P === 'b' && S.placements.objets.length)) {
+    tiles.push(tile('etc', 'Or (once)', eur(num(R.cours.orOnce)), CHG.or, auto ? '' : '<em class="man">cours de secours</em>'));
+    if (num(R.cours.argentOnce)) tiles.push(tile('etc', 'Argent (once)', eur(num(R.cours.argentOnce), 2), CHG.argent, auto ? '' : '<em class="man">cours de secours</em>'));
   }
-  if (hasCrypto(P) && (CRYPTO.btc || CRYPTO.eth || CRYPTO.sol)) [['Bitcoin', CRYPTO.btc], ['Ethereum', CRYPTO.eth], ['Solana', CRYPTO.sol]].forEach(([n, v]) => { if (v) tiles.push(`<div class="ct crypto"><span>${n}</span><b>${eur(v, v < 100 ? 2 : 0)}</b><em>auto</em></div>`); });
-  const errs = Object.entries(LIVE_ERR).filter(([, m]) => m);
-  const ed = LS.get('cc.etfdate'), st = metalsState === 'busy' ? 'mise à jour…' : (auto ? 'or, argent, crypto : ' + fmt(METALS.date) : 'cours de secours (Réglages)') + (ed && keys.some(k => R.pl[k].actifs.some(a => a.auto)) ? ' · ETF (relevé du relais) : ' + fmt(ed) : '');
-  const asked = hasCrypto(P) && !(CRYPTO.btc || CRYPTO.eth || CRYPTO.sol) && !errs.some(([k]) => k === 'Crypto') && metalsState !== 'busy' ? '<div class="mst">Crypto : en attente du premier cours…</div>' : '';
-  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Or, argent et crypto se mettent à jour à chaque ouverture. Les ETF viennent d\'un relais dans ton dépôt privé (toutes les heures en séance) : le bouton ↻ le relance tout de suite si ton jeton a le droit « Actions ». Sinon, touche un ETF pour saisir son cours.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
-    <div class="ctg">${tiles.join('')}</div><div class="mst">${st}</div>${asked}${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
+  if (hasCrypto(P) && (CRYPTO.btc || CRYPTO.eth || CRYPTO.sol)) [['Bitcoin', CRYPTO.btc, CHG.btc], ['Ethereum', CRYPTO.eth, CHG.eth], ['Solana', CRYPTO.sol, CHG.sol]].forEach(([n, x, c]) => { if (x) tiles.push(tile('cry', n, eur(x, x < 100 ? 2 : 0), c)); });
+  const errs = Object.entries(LIVE_ERR).filter(([, m]) => m), ed = LS.get('cc.etfdate');
+  const st = metalsState === 'busy' ? 'mise à jour…' : (ed ? 'dernier passage du relais : ' + fmtDT(ed) : 'aucun relevé du relais pour l\'instant');
+  const leg = [['etf', 'ETF'], ['etc', 'ETC et métaux'], ['cry', 'Crypto']].filter(([c]) => present.has(c)).map(([c, l]) => `<span><i class="lg ${c}"></i>${l}</span>`).join('');
+  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Une seule source : le relais de ton dépôt privé (toutes les heures en séance). Le bouton ↻ le relance tout de suite si ton jeton a le droit « Actions ». Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique). Touche un ETF pour corriger son cours à la main si besoin.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
+    <div class="ctg">${tiles.join('')}</div><div class="legend2">${leg}</div><div class="mst">${st}</div>${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
 }
-function assetRow(key, i, a) {
+function assetRow(key, i, a, base) {
   const perf = a.cout ? a.pv / a.cout : 0;
-  return row(`placements.${key}.actifs.${i}`, 'layers', a.nom, `${dec(a.qty)} × ${eur(num(a.cours), 2)}`, `${eur(a.valeur)}<small class="${sign(a.pv)}">${signed(perf)}</small>`);
+  return row(`placements.${key}.actifs.${i}`, 'layers', a.nom, `${dec(a.qty)} × ${eur(num(a.cours), 2)}${a.auto ? chgInline(CHG[a.isin]) : ''}`,
+    `${eur(a.valeur)}<small class="mu">${pc(base ? a.valeur / base : 0, 0)} du compte</small><small class="${sign(a.pv)}">${signed(perf)} depuis l'achat</small>`);
 }
-function placeBlock(key, icon) {
+function placeBlock(key) {
   const p = S.placements[key], c = R.pl[key], hasVirt = Array.isArray(p.virements), taxe = R.cfg.taxes[p.taxe];
   const netRend = c.investi ? c.pvNet / c.investi : 0;
   const tiles = `<div class="pmain">
@@ -699,27 +733,45 @@ function placeBlock(key, icon) {
     <div class="pm1" data-tip="Taux annuel qui tient compte de la date de chaque versement (méthode XIRR d'Excel).\nAvec des versements progressifs, il est plus haut que « total ÷ durée ».\nSur peu de recul, il varie beaucoup."><small>Par an (pondéré)</small><b class="${sign(c.xirr)}">${signed(c.xirr)} ${moji(c.xirr)}</b></div>
     <div class="pm1" data-tip="Plus-value après impôt à la sortie (tu en conserves ${pc(taxe, 1)}).\n${eur(c.pvNet)} ÷ ${eur(c.investi)} = ${signed(netRend)}."><small>Plus-value nette</small><b class="${sign(c.pvNet)}">${eur(c.pvNet)} ${moji(netRend)}</b></div></div>`;
   const retrait = p.retrait && c.retraitMois != null ? kv('Retrait possible', c.retraitMois > 0 ? `${dureeTxt(c.retraitMois)} · ${moisAnnee(p.retrait)}` : 'maintenant', '', 'Date à partir de laquelle le retrait est possible sans perdre l\'avantage fiscal.') : '';
-  const assets = c.actifs.map((a, i) => assetRow(key, i, a)).join('');
+  const assets = c.actifs.map((a, i) => assetRow(key, i, a, c.valeurActifs)).join('');
   const last = hasVirt && p.virements.length ? p.virements[p.virements.length - 1] : null;
-  return `<section class="sec prod"><header><div class="ht"><h2>${esc(p.titre)} ${chip(p.who)}</h2></div><span class="tot">${eur(c.totalApresImpot)}</span></header>
+  return `<section class="sec prod"><header><div class="ht"><h2>${esc(p.titre)}</h2></div><span class="tot">${eur(c.totalApresImpot)}</span></header>
     ${tiles}
     <div class="dl">${kv('Investi', eur(c.investi, 2))}${hasVirt ? kv('Espèces en attente', eur(c.especes, 2), '', 'Argent versé sur le compte mais pas encore investi : versements − achats. Calculé tout seul.') : ''}${kv('Valeur brute', eur(c.totalBrut, 2))}${retrait}</div>
     <h4 class="sub">Actifs</h4>${assets}
-    <div class="btnline"><button class="add" data-add="placements.${key}.actifs">+ Actif</button>${hasVirt ? `<button class="add ghost" data-qv="placements.${key}.virements">+ Versement du mois${last ? ' (' + eur(num(last.montant)) + ')' : ''}</button>` : ''}</div>
-    ${hasVirt ? `<button class="add ghost" data-edit="placements.${key}.virements">Tous les versements (${p.virements.length})</button>` : ''}
-    ${p.fondsEuros ? `<div class="inl3"><label>Fonds euros investi${fld(`placements.${key}.fondsEuros.investi`, p.fondsEuros.investi)}</label><label>Taux${fld(`placements.${key}.fondsEuros.taux`, p.fondsEuros.taux, { t: 'pct' })}</label></div>` : ''}
+    <div class="addw"><button class="add pill" data-add="placements.${key}.actifs">+ Actif</button></div>
+    ${hasVirt ? `<button class="add ghost" data-qv="placements.${key}.virements">+ Versement du mois${last ? ' (' + eur(num(last.montant)) + ')' : ''}</button><button class="add ghost" data-edit="placements.${key}.virements">Tous les versements (${p.virements.length})</button>` : ''}
+    ${p.fondsEuros ? `<div class="inl"><span>Fonds euros investi</span>${fld(`placements.${key}.fondsEuros.investi`, p.fondsEuros.investi)}</div>` : ''}
     ${!hasVirt && key === 'ctoA' ? `<div class="inl"><span>Espèces</span>${fld(`placements.${key}.especes`, p.especes)}</div>` : ''}</section>`;
+}
+/* Couleurs de la répartition : bleus pour les ETF, bronze pour les ETC / l'or, vert pour le fonds euros, gris pour les espèces */
+function repartActifs(P, keys) {
+  const blues = ['#3f7691', '#4a6fa5', '#5a9a86', '#7b8fbf', '#6b8a9a'], bronze = ['#b08d57', '#c9ab78'], items = []; let bi = 0, ci = 0;
+  const multi = keys.length > 1;
+  keys.forEach(k => { const p = S.placements[k], c = R.pl[k];
+    c.actifs.forEach(a => { if (a.valeur > 0) items.push({ l: a.nom + (multi ? ' (' + (k === 'ctoA' ? 'CTO' : p.titre) + ')' : ''), v: a.valeur, c: k === 'ctoA' ? bronze[ci++ % 2] : blues[bi++ % 5] }); });
+    if (p.fondsEuros && num(p.fondsEuros.investi) > 0) items.push({ l: 'Fonds euros (assurance vie)', v: num(p.fondsEuros.investi), c: '#86a862' });
+    if (Array.isArray(p.virements) && c.especes > 25) items.push({ l: 'Espèces en attente (' + (k === 'ctoA' ? 'CTO' : p.titre) + ')', v: c.especes, c: '#a9b3ba' });
+  });
+  if (P === 'b' && R.objetsBrut > 0) items.push({ l: 'Or physique', v: R.objetsBrut, c: '#d3b46a' });
+  return items;
 }
 function vPlacements() {
   const P = pf, pp = R.plParPers[P], keys = ['peaA', 'peaB', 'ctoA', 'avA'].filter(k => S.placements[k].who === P);
-  const label = k => k === 'ctoA' ? 'Métaux' : S.placements[k].titre;
-  const parProd = keys.map(k => ({ l: label(k), v: R.pl[k].rendement * 100, t: signed(R.pl[k].rendement) }));
+  const lbl = k => k === 'ctoA' ? 'Compte-titres' : S.placements[k].titre;
+  const parProd = keys.map(k => ({ l: k === 'ctoA' ? 'Métaux' : S.placements[k].titre, v: R.pl[k].rendement * 100, t: signed(R.pl[k].rendement) }));
   const objets = R.objets.map((o, i) => row(`placements.objets.${i}`, 'gold', o.label, `${dec(o.grammes)} g · titre ${dec(o.titre)}`, eur(o.valeur))).join('');
   const seg = `<div class="seg pers" role="tablist"><button class="a ${P === 'a' ? 'on' : ''}" data-pf="a">${esc(N('a'))}</button><button class="b ${P === 'b' ? 'on' : ''}" data-pf="b">${esc(N('b'))}</button></div>`;
   const objBlock = P === 'b' ? sec('Objets en or', objets + addBtn('placements.objets', 'Objet') + kv('Valeur brute', eur(R.objetsBrut)) + kv('Après marge de revente (' + pc(S.settings.reventeOr, 0) + ')', eur(R.objetsNet), 'pos'), eur(R.objetsNet)) : '';
+  const brut = sum(keys, k => R.pl[k].totalBrut) + (P === 'b' ? R.objetsBrut : 0), net = pp.total + (P === 'b' ? R.objetsNet : 0);
+  const tInv = 'Argent réellement versé, pas la valeur actuelle :\n' + keys.map(k => { const p = S.placements[k], c = R.pl[k]; return `${lbl(k)} : ${eur(c.investi)} (${Array.isArray(p.virements) ? p.virements.length + ' versements' : 'achats'}${p.fondsEuros ? ', dont fonds euros ' + eur(num(p.fondsEuros.investi)) : ''})`; }).join('\n') + `\nTotal : ${eur(pp.investi)}`;
+  const tBrut = 'Ce que valent tes placements aujourd\'hui, avant impôt :\n' + keys.map(k => { const c = R.pl[k], p = S.placements[k]; return `${lbl(k)} : ${eur(c.totalBrut)} = actifs ${eur(c.valeurActifs)}${Array.isArray(p.virements) ? ' + espèces ' + eur(c.especes) : ''}${p.fondsEuros ? ' + fonds euros ' + eur(num(p.fondsEuros.investi)) : ''}`; }).join('\n') + (P === 'b' ? `\nOr physique : ${eur(R.objetsBrut)} au cours du jour` : '') + `\nTotal : ${eur(brut)}`;
+  const tNet = 'Ce que tu récupérerais en vendant tout aujourd\'hui, après impôt sur les plus-values :\n' + keys.map(k => `${lbl(k)} : ${eur(R.pl[k].totalApresImpot)} (on conserve ${pc(R.cfg.taxes[S.placements[k].taxe], 1)} de la plus-value)`).join('\n') + (P === 'b' ? `\nOr physique : ${eur(R.objetsNet)} (après marge de revente ${pc(S.settings.reventeOr, 0)})` : '') + `\nTotal : ${eur(net)}`;
+  const rep = repartActifs(P, keys);
   return `${seg}${coursPanel(P, keys)}
   <section class="hero small"><small>Plus-value nette · ${nm(P)}</small><div class="big">${eur(pp.pvNet)}</div>
-    <div class="hchips"><span>${signed(pp.rendement)} net</span><span>${signed(pp.xirrNet)} par an (pondéré)</span><span>Investi ${eur(pp.investi)}</span><span>Valeur ${eur(pp.total + (P === 'b' ? R.objetsNet : 0))}${P === 'b' ? ' avec l\'or' : ''}</span></div></section>
+    <div class="hchips">${chipT(signed(pp.rendement) + ' net', 'Plus-value nette ÷ argent investi.')}${chipT(signed(pp.xirrNet) + ' par an (pondéré)', 'Taux annuel après impôt, en tenant compte de la date de chaque versement (méthode XIRR). Sur peu de recul, il varie beaucoup.')}${chipT('Investi ' + eur(pp.investi), tInv)}${chipT('Valeur brute ' + eur(brut), tBrut)}${chipT('Valeur nette ' + eur(net), tNet)}</div></section>
+  ${rep.length ? sec('Répartition de mes actifs', donut(rep, { center: eur(sum(rep, x => x.v)), top: 'valeur brute', label: 'Répartition des actifs' }), '', 'enter', 'Part de chaque actif dans la valeur de tes placements (espèces en attente et fonds euros compris) : sert à rééquilibrer. Touche une part pour voir son pourcentage.') : ''}
   ${R.seriePers[P].length > 1 ? sec('Argent investi au fil du temps', lineChart(R.seriePers[P]), '', 'enter') : ''}
   ${parProd.length > 1 ? sec('Rendement par placement', hbars(parProd), '', '', 'Rendement total avant impôt de chaque placement.') : ''}
   ${keys.map(k => placeBlock(k)).join('')}${objBlock}`;
@@ -730,10 +782,10 @@ function vAchats() {
   const blocks = S.achats.map((y, i) => {
     const t = R.achats[i];
     const items = y.items.map((it, j) => row(`achats.${i}.items.${j}`, num(it.vente) > 0 && !num(it.achat) ? 'plus' : 'bag', it.label, chip(it.who), num(it.vente) > 0 && !num(it.achat) ? '+' + eur(num(it.vente)) : '− ' + eur(num(it.achat)), num(it.vente) > 0 && !num(it.achat) ? 'pos' : '')).join('');
-    return sec(esc(y.annee), items + addBtn(`achats.${i}.items`, 'Ligne') + kv('Achats', eur(t.achats)) + kv('Ventes', eur(t.ventes)) + kv('Solde', eur(t.solde), sign(t.solde)), eur(t.solde));
+    return sec(`<button class="yh" data-edit="achats.${i}" aria-label="Modifier ou supprimer l'année">${esc(y.annee)}<span class="yi">${ico('pencil')}</span></button>`, items + addBtn(`achats.${i}.items`, 'Ligne') + kv('Achats', eur(t.achats)) + kv('Ventes', eur(t.ventes)) + kv('Solde', eur(t.solde), sign(t.solde)), eur(t.solde));
   }).join('');
   return `<section class="hero small"><small>Solde cumulé achats / ventes</small><div class="big">${eur(R.achatsSolde)}</div></section>
-    ${sec('Solde par année', vbars(bars), '', 'enter')}${blocks}<button class="add" data-addyearachat>+ Année</button>`;
+    ${sec('Solde par année', vbars(bars), '', 'enter')}${blocks}<div class="addw">${addPill('data-addyearachat', 'Année')}</div>`;
 }
 
 function vSimu() {
@@ -762,12 +814,10 @@ function vReglages() {
     <p class="hint">Sans la phrase secrète, les données du dépôt sont illisibles pour tout le monde, toi compris.</p>
     ${kv('État', esc(st))}${conflict}<div class="btnrow"><button class="btn pri" data-act="syncnow">Synchroniser maintenant</button></div>`)}
   ${sec('Sauvegarde et import', `<div class="btnrow"><button class="btn" data-act="export">Exporter (fichier lisible)</button><label class="btn">Importer un fichier<input type="file" accept="application/json,.json" data-act="import" hidden></label></div><p class="hint">Le fichier exporté contient tes chiffres en clair : garde-le hors de tout dossier public.</p>`)}
-  ${sec('Cours automatiques (FMP)', `<div class="form">${field('Clé API FMP', fld('settings.fmpKey', S.settings.fmpKey || '', { t: 'text', ph: 'clé de financialmodelingprep.com', pw: !showSecrets }))}</div>
-    <label class="chk"><input type="checkbox" data-act="showsecrets" ${showSecrets ? 'checked' : ''}><span>Afficher la clé</span></label>
-    ${kv('Requêtes utilisées aujourd\'hui', fmpCount() + ' / 250')}
-    <div class="btnrow"><button class="btn pri" data-act="fmptest">Tester la clé</button><button class="btn" data-act="metalsforce">Actualiser tous les cours</button></div>
-    ${FMPLOG.length ? `<div class="fmplog">${FMPLOG.map(x => `<div class="${x.ok === false ? 'neg' : x.ok ? 'pos' : ''}"><b>${x.ok === null ? '…' : x.ok ? 'OK' : 'ÉCHEC'}</b> ${esc(x.l)}${x.m ? ' : ' + esc(x.m) : ''}</div>`).join('')}</div>` : ''}`, '', '', 'La clé est enregistrée dans tes données chiffrées : elle se synchronise entre tes appareils, mais elle apparaît en clair dans le fichier « Exporter ». Elle ne doit jamais être écrite dans la page publique.\nLa formule gratuite est limitée à 250 requêtes par jour et, d\'après FMP, aux bourses américaines : les ETF de la Bourse de Paris sont refusés (c\'est le cas de ta clé). Pour eux, l\'appli essaie Yahoo Finance (non officiel, sans clé).')}
-  ${sec('Cours de secours', `<div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', s.cours.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', s.cours.argentOnce)}</label><label>Date${fld('settings.cours.date', s.cours.date, { t: 'date' })}</label></div><div class="inl"><span>Coefficient de revente or</span>${fld('settings.reventeOr', s.reventeOr, { t: 'pct' })}</div>`, '', '', 'Les cours de l\'or, de l\'argent et des cryptos se mettent à jour tout seuls. Ces valeurs ne servent que si le service est injoignable.')}
+  ${sec('Cours automatiques', `${kv('Dernier passage du relais', LS.get('cc.etfdate') ? fmtDT(LS.get('cc.etfdate')) : 'aucun')}${kv('ETF et ETC à jour', Object.keys(ETFQ).length + ' / ' + allIsins().length)}${kv('Or et argent', METALS.date ? fmtDT(METALS.date) : '–')}${kv('Crypto', CRYPTO.date ? fmtDT(CRYPTO.date) : '–')}
+    ${Object.entries(LIVE_ERR).filter(([, m]) => m).map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}
+    <div class="btnrow"><button class="btn pri" data-act="metals">Actualiser maintenant</button></div>`, '', '', 'Une seule source : le relais de ton dépôt privé (workflow « Cours des ETF », toutes les heures en séance). ETF et ETC : Boursorama puis Börse Frankfurt. Or et argent : xaus. Crypto : Kraken. Le bouton lance le relais tout de suite si ton jeton a le droit « Actions ».')}
+  ${sec('Cours de secours', `<div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', s.cours.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', s.cours.argentOnce)}</label><label>Date${fld('settings.cours.date', s.cours.date, { t: 'date' })}</label></div><div class="inl"><span>Coefficient de revente or</span>${fld('settings.reventeOr', s.reventeOr, { t: 'pct' })}</div>`, '', '', 'Ces valeurs ne servent que si le relais est injoignable.')}
   ${sec('Prénoms et fiscalité', `<div class="grid3"><label>Prénom 1${fld('settings.noms.a', s.noms.a, { t: 'text' })}</label><label>Prénom 2${fld('settings.noms.b', s.noms.b, { t: 'text' })}</label></div>
     <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>`, '', '', 'Part qui reste après impôt (82,8 % = 17,2 % prélevés). Ces taux étaient écrits en dur dans l\'Excel : à valider.')}
   ${sec('À propos', kv('Version de l\'appli', APP_BUILD), '', '', 'Si tu ne vois pas une nouveauté, ce numéro te dit quelle version ton appareil affiche.')}
@@ -790,6 +840,7 @@ function specFor(path) {
     const key = m[1], p = S.placements[key], lotCost = key === 'ctoA' || !Array.isArray(p.virements), pru = (Array.isArray(p.virements) && key !== 'ctoA') || p.fondsEuros;
     return { title: 'Actif', f: [['nom', 'text', 'Nom'], ['isin', 'text', 'Code ISIN'], ['cours', 'num', 'Cours actuel (€)'], ...(pru ? [['pru', 'num', 'Prix de revient moyen (€)']] : [])], lots: true, lotCost };
   }
+  if (/^achats\.\d+$/.test(path)) return { title: 'Année', f: [['annee', 'text', 'Année (ex : 2026)']], note: 'Supprimer l\'année supprime aussi toutes ses lignes.' };
   if (/^placements\.\w+\.virements$/.test(path)) return { title: 'Versements sur le compte', list: [['date', 'month', ''], ['montant', 'num', '€']] };
   return { title: 'Modifier', f: [] };
 }
@@ -799,7 +850,7 @@ function sheetHtml() {
   if (!obj) return '';
   let body = '';
   if (spec.list) {
-    body = obj.map((x, j) => `<div class="lrow">${spec.list.map(([k, t, ph]) => fld(`${editing.path}.${j}.${k}`, x[k], { t, ph })).join('')}<button class="x" data-delin="${editing.path}.${j}" aria-label="Supprimer">×</button></div>`).reverse().join('') + `<button class="add" data-addin="${editing.path}">+ Ajouter</button>`;
+    body = obj.map((x, j) => `<div class="lrow">${spec.list.map(([k, t, ph]) => fld(`${editing.path}.${j}.${k}`, x[k], { t, ph })).join('')}<button class="x" data-delin="${editing.path}.${j}" aria-label="Supprimer">×</button></div>`).reverse().join('') + `<div class="addw"><button class="add pill" data-addin="${editing.path}">+ Ajouter</button></div>`;
   } else {
     body = spec.f.map(([k, t, l, opts]) => t === 'chk' ? fld(`${editing.path}.${k}`, k === 'apport' ? get(obj, k) !== false : !!get(obj, k), { t: 'chk', txt: l }) :
       field(l, t === 'sel' ? fld(`${editing.path}.${k}`, get(obj, k), { t: 'sel', opts }) : fld(`${editing.path}.${k}`, get(obj, k), { t }))).join('');
@@ -807,7 +858,7 @@ function sheetHtml() {
     if (spec.lots && obj.isin && ETFQ[obj.isin]) body += `<p class="hint">Cours mis à jour automatiquement (${eur(ETFQ[obj.isin], 2)}). Le champ ci-dessus ne sert que si la mise à jour automatique échoue.</p>`;
     if (spec.lots) {
       const lots = obj.lots || [];
-      body += `<h4>Achats</h4>` + lots.map((l, j) => `<div class="lrow">${fld(`${editing.path}.lots.${j}.date`, l.date, { t: 'month' })}${fld(`${editing.path}.lots.${j}.qty`, l.qty, { ph: 'Qté' })}${spec.lotCost ? fld(`${editing.path}.lots.${j}.montant`, l.montant, { ph: '€ payés' }) : ''}<button class="x" data-delin="${editing.path}.lots.${j}" aria-label="Supprimer">×</button></div>`).join('') + `<button class="add" data-addin="${editing.path}.lots">+ Achat</button>`;
+      body += `<h4>Achats</h4>` + lots.map((l, j) => `<div class="lrow">${fld(`${editing.path}.lots.${j}.date`, l.date, { t: 'month' })}${fld(`${editing.path}.lots.${j}.qty`, l.qty, { ph: 'Qté' })}${spec.lotCost ? fld(`${editing.path}.lots.${j}.montant`, l.montant, { ph: '€ payés' }) : ''}<button class="x" data-delin="${editing.path}.lots.${j}" aria-label="Supprimer">×</button></div>`).join('') + `<div class="addw"><button class="add pill" data-addin="${editing.path}.lots">+ Achat</button></div>`;
     }
   }
   const canDel = !spec.list;
@@ -876,87 +927,16 @@ document.addEventListener('mouseover', e => {
 });
 window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: true });
 
-/* ---------- Cours en direct : or, argent, crypto, ETF ---------- */
-const APP_BUILD = '29092026-e';
-let LIVE_ERR = {}, FMPLOG = [];
-const fmpKey = () => String(S.settings.fmpKey || '').trim();
-const fmpToday = () => new Date().toISOString().slice(0, 10);
-const fmpCount = () => { try { const b = JSON.parse(LS.get('cc.fmpn') || '{}'); return b.d === fmpToday() ? b.n : 0; } catch (e) { return 0; } };
-/* Appel FMP : compte les requêtes du jour (limite gratuite : 250) et remonte le message d'erreur exact du service */
-async function fmp(path, params) {
-  const n = fmpCount();
-  if (n >= 235) throw new Error('quota du jour presque atteint (' + n + '/250)');
-  LS.set('cc.fmpn', JSON.stringify({ d: fmpToday(), n: n + 1 }));
-  const r = await fetch('https://financialmodelingprep.com/stable/' + path + '?' + new URLSearchParams({ ...params, apikey: fmpKey() }), { cache: 'no-store' });
-  const txt = await r.text(); let j = null; try { j = JSON.parse(txt); } catch (e) {}
-  if (!r.ok) throw new Error('HTTP ' + r.status + (txt ? ' : ' + txt.replace(/\s+/g, ' ').slice(0, 130) : ''));
-  if (j && !Array.isArray(j) && (j['Error Message'] || j.error)) throw new Error(String(j['Error Message'] || j.error).slice(0, 140));
-  return j;
-}
-const fmpQuote = async sym => { const j = await fmp('quote', { symbol: sym }), q = Array.isArray(j) && j[0]; if (!q || !(q.price > 0)) throw new Error('aucun cours renvoyé pour ' + sym); return q.price; };
+/* ---------- Cours : une seule source, le relais du dépôt privé (budget/cours.json) ---------- */
+let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 5000, LAST_LIVE = 0;
+const APP_BUILD = '29092026-f';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
-
-async function fetchMetals() {
-  try {
-    const r = await fetch('https://xaus.com/api/v1/spot?currency=EUR&compact=1', { cache: 'no-store' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const j = await r.json(), or = j.xau && j.xau.price;
-    if (!(or > 0)) throw new Error('réponse inattendue');
-    const fx = j.fx_rate > 0 ? j.fx_rate : (j.spot_usd_oz > 0 ? or / j.spot_usd_oz : 0), ag = j.silver_usd_oz > 0 && fx > 0 ? j.silver_usd_oz * fx : 0;
-    METALS = { orOnce: or, argentOnce: ag, date: j.updated_at || new Date().toISOString(), src: 'xaus' };
-    LS.set('cc.metals', JSON.stringify(METALS)); return '';
-  } catch (e1) {
-    if (!fmpKey()) return errTxt(e1);
-    try {
-      const [usdOr, usdAg, fx] = await Promise.all([fmpQuote('GCUSD'), fmpQuote('SIUSD'), fmpQuote('EURUSD')]);
-      METALS = { orOnce: usdOr / fx, argentOnce: usdAg / fx, date: new Date().toISOString(), src: 'fmp' };
-      LS.set('cc.metals', JSON.stringify(METALS)); return '';
-    } catch (e2) { return 'xaus : ' + errTxt(e1) + ' · FMP : ' + errTxt(e2); }
-  }
-}
-async function fetchCrypto() {
-  if (!S.comptes.some(c => /crypto/i.test(c.label))) return '';
-  const errs = [], got = { btc: null, eth: null, sol: null };
-  if (fmpKey()) {
-    const [b, e, s, fx] = await Promise.allSettled([fmpQuote('BTCUSD'), fmpQuote('ETHUSD'), fmpQuote('SOLUSD'), fmpQuote('EURUSD')]);
-    if (fx.status !== 'fulfilled') errs.push('FMP (EUR/USD) : ' + errTxt(fx.reason));
-    else [['btc', b, 'Bitcoin'], ['eth', e, 'Ethereum'], ['sol', s, 'Solana']].forEach(([k, r, n]) => { if (r.status === 'fulfilled') got[k] = r.value / fx.value; else errs.push('FMP (' + n + ') : ' + errTxt(r.reason)); });
-  }
-  const missing = Object.keys(got).filter(k => !got[k]);
-  if (missing.length) {
-    try {
-      const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=eur', { cache: 'no-store' });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const j = await r.json(), m = { btc: j.bitcoin, eth: j.ethereum, sol: j.solana };
-      missing.forEach(k => { if (m[k] && m[k].eur) got[k] = m[k].eur; });
-    } catch (e) { errs.push('CoinGecko : ' + errTxt(e)); }
-  }
-  if (got.btc || got.eth || got.sol) { CRYPTO = { ...got, date: new Date().toISOString() }; LS.set('cc.crypto', JSON.stringify(CRYPTO)); }
-  return Object.values(got).every(Boolean) ? '' : errs.join(' · ') || 'aucun cours reçu';
-}
-/* ETF : FMP d'abord (si ta formule le permet), puis Yahoo Finance (service non officiel, sans clé).
-   Garde-fous : cotation en euros uniquement, et cours ignoré s'il s'écarte de plus de 40 % du cours saisi. */
-async function yahooPrice(isin, sym) {
-  if (!sym[isin]) {
-    const r = await fetch('https://query2.finance.yahoo.com/v1/finance/search?' + new URLSearchParams({ q: isin, quotesCount: 6, newsCount: 0 }), { cache: 'no-store' });
-    if (!r.ok) throw new Error('recherche HTTP ' + r.status);
-    const l = ((await r.json()).quotes || []).filter(x => x.symbol);
-    const pick = l.find(x => /\.PA$/i.test(x.symbol)) || l.find(x => /\.(DE|MI|AS|BR)$/i.test(x.symbol)) || l[0];
-    if (!pick) throw new Error('ISIN inconnu de Yahoo');
-    sym[isin] = pick.symbol;
-  }
-  const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym[isin]) + '?interval=1d&range=1d', { cache: 'no-store' });
-  if (!r.ok) throw new Error('cours HTTP ' + r.status);
-  const m = (((await r.json()).chart || {}).result || [])[0];
-  const meta = m && m.meta;
-  if (!meta || !(meta.regularMarketPrice > 0)) throw new Error('aucun cours pour ' + sym[isin]);
-  if (meta.currency && String(meta.currency).toUpperCase() !== 'EUR') throw new Error(sym[isin] + ' coté en ' + meta.currency + ', pas en euros');
-  return meta.regularMarketPrice;
-}
-/* Relais GitHub : un workflow du dépôt privé lit les cours côté serveur (pas de blocage du navigateur) et les écrit dans cours.json.
-   L'appli lit ce fichier avec ton jeton et tient à jour la liste des ISIN à suivre. */
+const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
+const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
 const b64utf = s => btoa(unescape(encodeURIComponent(s))), utf64 = s => decodeURIComponent(escape(atob(s.replace(/\n/g, ''))));
-async function readEtfFeed(isins, skipSync) {
+
+/* Lit cours.json avec ton jeton ; tient à jour la liste des ISIN que le relais doit suivre. */
+async function readFeed(isins, skipSync) {
   if (!cfgOK()) return { err: 'synchronisation GitHub non configurée (Réglages)' };
   const dir = CFG.path.replace(/[^/]*$/, ''), q = '?ref=' + encodeURIComponent(CFG.branch) + '&t=' + Date.now();
   if (!skipSync) try {
@@ -977,7 +957,6 @@ async function readEtfFeed(isins, skipSync) {
     return JSON.parse(utf64((await r.json()).content));
   } catch (e) { return { err: errTxt(e) }; }
 }
-let RELAY_POLL_MS = 5000;
 /* Demande à GitHub de lancer le relais tout de suite (droit « Actions » du jeton nécessaire) */
 async function triggerRelay() {
   if (Date.now() - (+LS.get('cc.disp') || 0) < 90000) return { ok: false, msg: 'un lancement a déjà été demandé il y a moins de 90 secondes' };
@@ -985,95 +964,45 @@ async function triggerRelay() {
   try {
     const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(CFG.owner)}/${encodeURIComponent(CFG.repo)}/actions/workflows/cours.yml/dispatches`, { method: 'POST', headers: { ...ghHead(), 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: CFG.branch }) });
     if (r.status === 204) return { ok: true };
-    return { ok: false, msg: r.status === 403 || r.status === 404 ? 'lancement refusé (le jeton n\'a pas le droit « Actions ») : les cours se mettent à jour toutes les heures en séance' : 'GitHub ' + r.status };
+    return { ok: false, msg: r.status === 403 || r.status === 404 ? 'lancement refusé (le jeton n\'a pas le droit « Actions »)' : 'GitHub ' + r.status };
   } catch (e) { return { ok: false, msg: errTxt(e) }; }
 }
-async function fetchEtfs(force) {
-  const today = fmpToday();
-  if (force) ['cc.etfoff', 'cc.yoff'].forEach(k => LS.del(k));
-  const isins = [...new Set(Object.values(S.placements).flatMap(p => (p.actifs || []).map(a => a.isin)).filter(Boolean))];
-  let sym = {}, ysym = {}; try { sym = JSON.parse(LS.get('cc.sym') || '{}'); ysym = JSON.parse(LS.get('cc.ysym') || '{}'); } catch (e) {}
-  let fmpOk = !!fmpKey() && LS.get('cc.etfoff') !== today, yahooOk = LS.get('cc.yoff') !== today;
-  const notes = [], okList = [];
-  let trigMsg = '';
-  let feed = await readEtfFeed(isins);
-  if (force && !feed.err && cfgOK()) {
-    const t = await triggerRelay(), before = feed.date;
-    if (t.ok) { for (let i = 0; i < 16; i++) { await new Promise(r => setTimeout(r, RELAY_POLL_MS)); const f = await readEtfFeed(isins, true); if (!f.err && f.date !== before) { feed = f; break; } } }
-    else { trigMsg = 'Relais : ' + t.msg; notes.push(trigMsg); }
-  }
-  if (feed.err) notes.push('Relais : ' + feed.err);
-  else LS.set('cc.etfdate', feed.date || '');
-  const sane = (isin, px) => {
-    const ref = Object.values(S.placements).flatMap(p => p.actifs || []).find(a => a.isin === isin), man = ref ? num(ref.cours) : 0;
-    if (man > 0 && Math.abs(px / man - 1) > 0.4) throw new Error('écart suspect : ' + px.toFixed(2) + ' contre ' + man + ' saisi (cours ignoré)');
-    return px;
-  };
+/* Range dans l'appli les cours du relais (garde-fous : cours récent, écart < 40 % du cours saisi) */
+function applyFeed(feed, isins) {
+  const errs = {}, fresh = t => !t || Date.now() - new Date(t) < 8 * 864e5, fe = feed.errors || {};
+  const m = feed.metals;
+  if (m && m.orOnce > 0) { METALS = { orOnce: m.orOnce, argentOnce: m.argentOnce, date: m.time || feed.date }; CHG.or = m.orChg; CHG.argent = m.argentChg; LS.set('cc.metals', JSON.stringify(METALS)); if (m.stale) errs['Or / argent'] = 'source injoignable : dernier cours conservé'; }
+  if (fe.metals) errs['Or / argent'] = fe.metals;
+  const c = feed.crypto;
+  if (c && c.btc) { CRYPTO = { btc: c.btc.price, eth: c.eth && c.eth.price, sol: c.sol && c.sol.price, date: c.time || feed.date }; CHG.btc = c.btc.chg; CHG.eth = c.eth && c.eth.chg; CHG.sol = c.sol && c.sol.chg; LS.set('cc.crypto', JSON.stringify(CRYPTO)); if (c.stale) errs['Crypto'] = 'source injoignable : dernier cours conservé'; }
+  if (fe.crypto) errs['Crypto'] = fe.crypto;
+  const acts = allActifs(), q = {}, notes = []; let ok = 0;
   for (const isin of isins) {
-    let px = null;
     const fp = feed.prices && feed.prices[isin];
-    if (fp && fp.price > 0 && (!fp.time || Date.now() - new Date(fp.time) < 8 * 864e5)) {
-      try { px = sane(isin, fp.price); } catch (e) { notes.push('Relais ' + isin + ' : ' + errTxt(e)); }
-    } else if (feed.errors && feed.errors[isin]) notes.push('Relais ' + isin + ' : ' + feed.errors[isin]);
-    if (px === null && fmpOk) {
-      try {
-        if (!sym[isin]) {
-          const j = await fmp('search-isin', { isin }), l = Array.isArray(j) ? j : [];
-          const eur = l.filter(x => !x.currency || String(x.currency).toUpperCase() === 'EUR');
-          const pick = eur.find(x => /\.PA$/i.test(x.symbol || '')) || eur.find(x => /paris|euronext|pa$/i.test(`${x.exchange || ''} ${x.exchangeFullName || ''}`)) || eur[0];
-          if (!pick || !pick.symbol) throw new Error(l.length ? 'aucune cotation en euros pour cet ISIN' : 'ISIN inconnu de FMP');
-          sym[isin] = pick.symbol; LS.set('cc.sym', JSON.stringify(sym));
-        }
-        px = sane(isin, await fmpQuote(sym[isin]));
-      } catch (e) {
-        const m = errTxt(e);
-        if (/\b(402|403)\b|premium|subscription|upgrade|restricted|not available/i.test(m)) { fmpOk = false; LS.set('cc.etfoff', today); notes.push('FMP : ETF non couverts par ta formule'); }
-        else if (/suspect/.test(m)) notes.push('FMP ' + isin + ' : ' + m);
-      }
-    }
-    if (px === null && yahooOk && !cfgOK()) {
-      try { px = sane(isin, await yahooPrice(isin, ysym)); LS.set('cc.ysym', JSON.stringify(ysym)); }
-      catch (e) {
-        const m = errTxt(e); notes.push('Yahoo ' + (isin) + ' : ' + m);
-        if (/connexion refusée|Failed to fetch/i.test(m)) { yahooOk = false; LS.set('cc.yoff', today); }
-      }
-    }
-    if (px !== null) { ETFQ[isin] = px; okList.push(isin); }
+    if (fp && fp.price > 0 && fresh(fp.time) && !fp.stale) {
+      const ref = acts.find(a => a.isin === isin), man = ref ? num(ref.cours) : 0;
+      if (man > 0 && Math.abs(fp.price / man - 1) > 0.4) { notes.push(`${isin} : écart suspect (${fp.price.toFixed(2)} contre ${man} saisi), cours ignoré`); continue; }
+      q[isin] = fp.price; CHG[isin] = fp.chg; ok++;
+    } else notes.push(`${isin} : ${fe[isin] || 'pas de cours récent'}`);
   }
-  LS.set('cc.etfq', JSON.stringify(ETFQ));
-  if (okList.length === isins.length) return trigMsg ? trigMsg + ' (les derniers cours du relais sont utilisés)' : '';
-  const uniq = [...new Set(notes)].slice(0, 3);
-  return `${okList.length}/${isins.length} ETF mis à jour${uniq.length ? ' · ' + uniq.join(' · ') : ''}`;
+  ETFQ = q; LS.set('cc.etfq', JSON.stringify(ETFQ)); LS.set('cc.chg', JSON.stringify(CHG)); LS.set('cc.etfdate', feed.date || '');
+  if (notes.length) errs['ETF'] = `${ok}/${isins.length} à jour · ` + notes.slice(0, 2).join(' · ');
+  return errs;
 }
 async function fetchLive(force) {
-  metalsState = 'busy'; if (view === 'placements') render();
-  const stale = !LS.get('cc.fmpT') || Date.now() - +LS.get('cc.fmpT') > 60 * 60 * 1000;
-  const doEtf = force === true || stale;
-  const [a, b] = await Promise.all([fetchMetals(), fetchCrypto()]);
-  LIVE_ERR = { 'Or / argent': a, 'Crypto': b, 'ETF': LIVE_ERR.ETF || '' };
-  R = recalc(); render();                                   // or, argent, crypto s'affichent tout de suite
-  if (doEtf) { LIVE_ERR.ETF = await fetchEtfs(force === true); LS.set('cc.fmpT', String(Date.now())); }
-  metalsState = Object.values(LIVE_ERR).some(Boolean) ? 'err' : 'ok'; R = recalc(); render();
-}
-async function fmpTest() {
-  FMPLOG = [{ l: 'Test en cours…', ok: null, m: '' }]; render();
-  const out = [], step = async (l, f) => { try { out.push({ l, ok: true, m: await f() }); } catch (e) { out.push({ l, ok: false, m: errTxt(e) }); } };
-  if (!fmpKey()) out.push({ l: 'Clé FMP', ok: false, m: 'aucune clé saisie' });
-  else {
-    await step('FMP · change EUR/USD', async () => 'USD par euro : ' + (await fmpQuote('EURUSD')));
-    await step('FMP · Bitcoin', async () => (await fmpQuote('BTCUSD')) + ' USD');
-    await step('FMP · Ethereum', async () => (await fmpQuote('ETHUSD')) + ' USD');
-    await step('FMP · Solana', async () => (await fmpQuote('SOLUSD')) + ' USD');
-    await step('FMP · or', async () => (await fmpQuote('GCUSD')) + ' USD/once');
+  if (force !== true && Date.now() - LAST_LIVE < 120000) return;
+  LAST_LIVE = Date.now();
+  metalsState = 'busy'; if (view === 'placements' || view === 'reglages') render();
+  const isins = allIsins();
+  let feed = await readFeed(isins), errs = {};
+  if (!feed.err) { errs = applyFeed(feed, isins); R = recalc(); render(); }          // les derniers cours s'affichent tout de suite
+  if (force === true && !feed.err && cfgOK()) {
+    const t = await triggerRelay(), before = feed.date;
+    if (t.ok) { for (let i = 0; i < 16; i++) { await new Promise(r => setTimeout(r, RELAY_POLL_MS)); const f = await readFeed(isins, true); if (!f.err && f.date !== before) { feed = f; errs = applyFeed(f, isins); break; } } }
+    else errs['Relais'] = t.msg + ' : cours du dernier passage utilisés (passage automatique toutes les heures en séance)';
   }
-  await step('CoinGecko · crypto', async () => { const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur', { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status); return (await r.json()).bitcoin.eur + ' €'; });
-  const isin = (Object.values(S.placements).flatMap(p => (p.actifs || []).map(a => a.isin)).filter(Boolean))[0];
-  if (isin) {
-    if (fmpKey()) await step('FMP · ETF ' + isin, async () => { const j = await fmp('search-isin', { isin }), l = Array.isArray(j) ? j : []; if (!l.length) throw new Error('ISIN inconnu de FMP'); const s = (l.find(x => /\.PA$/i.test(x.symbol || '')) || l[0]).symbol; return s + ' : ' + (await fmpQuote(s)); });
-    await step('Relais GitHub · cours des ETF', async () => { const f = await readEtfFeed([isin]); if (f.err) throw new Error(f.err); const n = Object.values(f.prices || {}).filter(p => !p.stale).length; return n + ' cours frais, dernière mise à jour ' + new Date(f.date).toLocaleString('fr-FR') + (Object.keys(f.errors || {}).length ? ' · erreurs : ' + Object.entries(f.errors).map(([k, m]) => k + ' ' + m).join(' ; ') : ''); });
-    await step('Yahoo depuis ce navigateur (sans le relais)', async () => { const s = {}; const p = await yahooPrice(isin, s); return s[isin] + ' : ' + p + ' €'; });
-  }
-  FMPLOG = out; render(); fetchLive(true);
+  if (feed.err) errs['Relais'] = feed.err;
+  LIVE_ERR = errs; metalsState = Object.keys(errs).length ? 'err' : 'ok'; R = recalc(); render();
 }
 
 /* ---------- Événements ---------- */
@@ -1082,6 +1011,7 @@ const NEW = {
   vacances: () => ({ label: '', montant: 0 }), virements: () => ({ label: '', montant: 0 }), comptes: () => ({ label: '', banque: '', who: 'a', montant: 0 }),
   'interets.lignes': () => ({ label: '', who: 'a', v: {} }), 'placements.objets': () => ({ label: '', grammes: 0, titre: 1 })
 };
+const sortAchats = () => S.achats.sort((a, b) => (parseInt(a.annee) || 9999) - (parseInt(b.annee) || 9999));
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 function newItem(path) {
   if (NEW[path]) return NEW[path]();
@@ -1099,9 +1029,7 @@ document.addEventListener('change', e => {
     if (t === 'chk') v = el.checked; else if (t === 'sel' || t === 'text' || t === 'month' || t === 'date') v = el.value;
     else if (t === 'pct') v = num(el.value) / 100; else v = el.value.trim() === '' ? '' : num(el.value);
     if (p.startsWith('cfg.')) { CFG[p.slice(4)] = v; LS.set('cc.cfg', JSON.stringify(CFG)); render(); return; }
-    set(S, p, v); commit();
-    if (p === 'settings.fmpKey') { LS.del('cc.etfoff'); LS.del('cc.yoff'); setTimeout(() => fetchLive(true), 700); }
-    return;
+    set(S, p, v); commit(); return;
   }
   if (e.target.dataset && e.target.dataset.act === 'showsecrets') { showSecrets = e.target.checked; render(); return; }
   if (e.target.dataset && e.target.dataset.act === 'import') importFile(e.target.files[0]);
@@ -1132,7 +1060,7 @@ document.addEventListener('click', async e => {
   const t = e.target.closest('button,[data-close]'); if (!t) return;
   const d = t.dataset;
   if ('close' in d) { if (e.target === t) { editing = null; moreOpen = false; render(); } return; }
-  if ('done' in d) { editing = null; render(); return; }
+  if ('done' in d) { if (editing && /^achats\.\d+$/.test(editing.path)) sortAchats(); editing = null; render(); return; }
   if (d.edit) { editing = { path: d.edit }; render(); return; }
   if (d.pf) { pf = d.pf; LS.set('cc.pf', pf); render(); window.scrollTo(0, 0); return; }
   if (d.bmode) { bmode = d.bmode; LS.set('cc.bmode', bmode); render(); window.scrollTo(0, 0); return; }
@@ -1144,10 +1072,8 @@ document.addEventListener('click', async e => {
   if (d.delin) { const ks = d.delin.split('.'), i = +ks.pop(); get(S, ks.join('.')).splice(i, 1); commit(); return; }
   if (d.delete) { const ks = d.delete.split('.'), i = +ks.pop(); get(S, ks.join('.')).splice(i, 1); editing = null; commit(); return; }
   if ('addyear' in d) { const a = S.interets.annees; a.push(a[a.length - 1] + 1); commit(); return; }
-  if ('addyearachat' in d) { S.achats.push({ annee: String(new Date().getFullYear() + S.achats.length), items: [] }); commit(); return; }
+  if ('addyearachat' in d) { const ys = S.achats.map(y => parseInt(y.annee)).filter(Number.isFinite); S.achats.push({ annee: String(ys.length ? Math.max(...ys) + 1 : new Date().getFullYear()), items: [] }); sortAchats(); commit(); return; }
   if (d.act === 'metals') { fetchLive(true); return; }
-  if (d.act === 'metalsforce') { fetchLive(true); return; }
-  if (d.act === 'fmptest') { fmpTest(); return; }
   if (d.act === 'syncnow') { await pull(false); if (sync.state === 'dirty') await push(); if (sync.state === 'ok') toast('Synchronisé'); render(); return; }
   if (d.act === 'keeplocal') { await push(true); render(); return; }
   if (d.act === 'keepremote') { meta.dirty = false; meta.sha = ''; await pull(false); render(); return; }
