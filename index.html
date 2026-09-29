@@ -432,7 +432,8 @@ async function decrypt(envelope, pass) {
   return new TextDecoder().decode(pt);
 }
 const cfgOK = () => CFG.owner && CFG.repo && CFG.path && CFG.token && CFG.pass;
-const ghUrl = () => `https://api.github.com/repos/${encodeURIComponent(CFG.owner)}/${encodeURIComponent(CFG.repo)}/contents/${CFG.path.split('/').map(encodeURIComponent).join('/')}`;
+const ghUrlFor = p => `https://api.github.com/repos/${encodeURIComponent(CFG.owner)}/${encodeURIComponent(CFG.repo)}/contents/${p.split('/').map(encodeURIComponent).join('/')}`;
+const ghUrl = () => ghUrlFor(CFG.path);
 const ghHead = () => ({ Authorization: 'Bearer ' + CFG.token, Accept: 'application/vnd.github+json' });
 async function ghRead() {
   const r = await fetch(`${ghUrl()}?ref=${encodeURIComponent(CFG.branch)}&t=${Date.now()}`, { headers: ghHead(), cache: 'no-store' });
@@ -678,7 +679,7 @@ function coursPanel(P, keys) {
   }
   if (hasCrypto(P) && (CRYPTO.btc || CRYPTO.eth || CRYPTO.sol)) [['Bitcoin', CRYPTO.btc], ['Ethereum', CRYPTO.eth], ['Solana', CRYPTO.sol]].forEach(([n, v]) => { if (v) tiles.push(`<div class="ct crypto"><span>${n}</span><b>${eur(v, v < 100 ? 2 : 0)}</b><em>auto</em></div>`); });
   const errs = Object.entries(LIVE_ERR).filter(([, m]) => m);
-  const st = metalsState === 'busy' ? 'mise à jour…' : (auto ? 'dernière mise à jour : ' + fmt(METALS.date) : 'cours de secours (Réglages)');
+  const ed = LS.get('cc.etfdate'), st = metalsState === 'busy' ? 'mise à jour…' : (auto ? 'or, argent, crypto : ' + fmt(METALS.date) : 'cours de secours (Réglages)') + (ed && keys.some(k => R.pl[k].actifs.some(a => a.auto)) ? ' · ETF : ' + fmt(ed) : '');
   const asked = hasCrypto(P) && !(CRYPTO.btc || CRYPTO.eth || CRYPTO.sol) && !errs.some(([k]) => k === 'Crypto') && metalsState !== 'busy' ? '<div class="mst">Crypto : en attente du premier cours…</div>' : '';
   return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Or, argent et crypto se mettent à jour tout seuls. Les ETF se mettent à jour si ta clé FMP les couvre (Réglages) ; sinon touche un ETF pour saisir son cours.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
     <div class="ctg">${tiles.join('')}</div><div class="mst">${st}</div>${asked}${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
@@ -862,7 +863,7 @@ document.addEventListener('mouseover', e => {
 window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: true });
 
 /* ---------- Cours en direct : or, argent, crypto, ETF ---------- */
-const APP_BUILD = '29092026-c';
+const APP_BUILD = '29092026-d';
 let LIVE_ERR = {}, FMPLOG = [];
 const fmpKey = () => String(S.settings.fmpKey || '').trim();
 const fmpToday = () => new Date().toISOString().slice(0, 10);
@@ -938,6 +939,30 @@ async function yahooPrice(isin, sym) {
   if (meta.currency && String(meta.currency).toUpperCase() !== 'EUR') throw new Error(sym[isin] + ' coté en ' + meta.currency + ', pas en euros');
   return meta.regularMarketPrice;
 }
+/* Relais GitHub : un workflow du dépôt privé lit les cours côté serveur (pas de blocage du navigateur) et les écrit dans cours.json.
+   L'appli lit ce fichier avec ton jeton et tient à jour la liste des ISIN à suivre. */
+const b64utf = s => btoa(unescape(encodeURIComponent(s))), utf64 = s => decodeURIComponent(escape(atob(s.replace(/\n/g, ''))));
+async function readEtfFeed(isins) {
+  if (!cfgOK()) return { err: 'synchronisation GitHub non configurée (Réglages)' };
+  const dir = CFG.path.replace(/[^/]*$/, ''), q = '?ref=' + encodeURIComponent(CFG.branch) + '&t=' + Date.now();
+  try {
+    const r = await fetch(ghUrlFor(dir + 'isins.json') + q, { headers: ghHead(), cache: 'no-store' });
+    let cur = null, sha;
+    if (r.ok) { const j = await r.json(); sha = j.sha; cur = JSON.parse(utf64(j.content)); }
+    const want = [...isins].sort();
+    if (!cur || JSON.stringify([...(cur.isins || [])].sort()) !== JSON.stringify(want)) {
+      const body = { message: 'Liste des ISIN à suivre', content: b64utf(JSON.stringify({ ...(cur || {}), isins: want }, null, 1) + '\n'), branch: CFG.branch };
+      if (sha) body.sha = sha;
+      await fetch(ghUrlFor(dir + 'isins.json'), { method: 'PUT', headers: { ...ghHead(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    }
+  } catch (e) {}
+  try {
+    const r = await fetch(ghUrlFor(dir + 'cours.json') + q, { headers: ghHead(), cache: 'no-store' });
+    if (r.status === 404) return { err: 'cours.json absent : lance le workflow « Cours des ETF » (dépôt privé, onglet Actions)' };
+    if (!r.ok) return { err: 'GitHub ' + r.status };
+    return JSON.parse(utf64((await r.json()).content));
+  } catch (e) { return { err: errTxt(e) }; }
+}
 async function fetchEtfs(force) {
   const today = fmpToday();
   if (force) ['cc.etfoff', 'cc.yoff'].forEach(k => LS.del(k));
@@ -945,6 +970,9 @@ async function fetchEtfs(force) {
   let sym = {}, ysym = {}; try { sym = JSON.parse(LS.get('cc.sym') || '{}'); ysym = JSON.parse(LS.get('cc.ysym') || '{}'); } catch (e) {}
   let fmpOk = !!fmpKey() && LS.get('cc.etfoff') !== today, yahooOk = LS.get('cc.yoff') !== today;
   const notes = [], okList = [];
+  const feed = await readEtfFeed(isins);
+  if (feed.err) notes.push('Relais : ' + feed.err);
+  else LS.set('cc.etfdate', feed.date || '');
   const sane = (isin, px) => {
     const ref = Object.values(S.placements).flatMap(p => p.actifs || []).find(a => a.isin === isin), man = ref ? num(ref.cours) : 0;
     if (man > 0 && Math.abs(px / man - 1) > 0.4) throw new Error('écart suspect : ' + px.toFixed(2) + ' contre ' + man + ' saisi (cours ignoré)');
@@ -952,7 +980,11 @@ async function fetchEtfs(force) {
   };
   for (const isin of isins) {
     let px = null;
-    if (fmpOk) {
+    const fp = feed.prices && feed.prices[isin];
+    if (fp && fp.price > 0 && (!fp.time || Date.now() - new Date(fp.time) < 8 * 864e5)) {
+      try { px = sane(isin, fp.price); } catch (e) { notes.push('Relais ' + isin + ' : ' + errTxt(e)); }
+    } else if (feed.errors && feed.errors[isin]) notes.push('Relais ' + isin + ' : ' + feed.errors[isin]);
+    if (px === null && fmpOk) {
       try {
         if (!sym[isin]) {
           const j = await fmp('search-isin', { isin }), l = Array.isArray(j) ? j : [];
@@ -968,7 +1000,7 @@ async function fetchEtfs(force) {
         else if (/suspect/.test(m)) notes.push('FMP ' + isin + ' : ' + m);
       }
     }
-    if (px === null && yahooOk) {
+    if (px === null && yahooOk && !cfgOK()) {
       try { px = sane(isin, await yahooPrice(isin, ysym)); LS.set('cc.ysym', JSON.stringify(ysym)); }
       catch (e) {
         const m = errTxt(e); notes.push('Yahoo ' + (isin) + ' : ' + m);
@@ -1006,7 +1038,8 @@ async function fmpTest() {
   const isin = (Object.values(S.placements).flatMap(p => (p.actifs || []).map(a => a.isin)).filter(Boolean))[0];
   if (isin) {
     if (fmpKey()) await step('FMP · ETF ' + isin, async () => { const j = await fmp('search-isin', { isin }), l = Array.isArray(j) ? j : []; if (!l.length) throw new Error('ISIN inconnu de FMP'); const s = (l.find(x => /\.PA$/i.test(x.symbol || '')) || l[0]).symbol; return s + ' : ' + (await fmpQuote(s)); });
-    await step('Yahoo · ETF ' + isin, async () => { const s = {}; const p = await yahooPrice(isin, s); return s[isin] + ' : ' + p + ' €'; });
+    await step('Relais GitHub · cours des ETF', async () => { const f = await readEtfFeed([isin]); if (f.err) throw new Error(f.err); const n = Object.values(f.prices || {}).filter(p => !p.stale).length; return n + ' cours frais, dernière mise à jour ' + new Date(f.date).toLocaleString('fr-FR') + (Object.keys(f.errors || {}).length ? ' · erreurs : ' + Object.entries(f.errors).map(([k, m]) => k + ' ' + m).join(' ; ') : ''); });
+    await step('Yahoo depuis ce navigateur (sans le relais)', async () => { const s = {}; const p = await yahooPrice(isin, s); return s[isin] + ' : ' + p + ' €'; });
   }
   FMPLOG = out; render(); fetchLive(true);
 }
