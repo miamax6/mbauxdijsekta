@@ -163,10 +163,11 @@ button.ct{cursor:pointer}button.ct:active{transform:scale(.97)}
   #app{max-width:none;padding-left:228px}
   .top{padding:14px 28px}
   h1{font-size:1.6rem}
-  main{display:block;padding:8px 28px 28px;column-width:340px;column-gap:18px}
-  main>*{break-inside:avoid;margin:0 0 18px}
-  main>.hero,main>.seg,main>.cours,main>.cats,main>.two,main>.add{column-span:all}
-  main>.seg{max-width:460px}
+  main{padding:8px 28px 28px}
+  .mtop>*{margin:0 0 18px}
+  .mflow{column-width:340px;column-gap:18px}
+  .mflow>*{break-inside:avoid;margin:0 0 18px}
+  main>.seg,.mtop>.seg{max-width:460px}
   .nav{left:0;top:0;bottom:0;right:auto;width:214px;max-width:none;margin:0;border-radius:0;flex-direction:column;justify-content:flex-start;gap:4px;padding:78px 10px 16px;background:var(--sf);box-shadow:1px 0 0 var(--ln);backdrop-filter:none}
   .nav::before{content:"Comptes du foyer";position:absolute;top:24px;left:22px;font-weight:800;font-size:1.05rem;letter-spacing:-.01em}
   .tab{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;flex:none;font-size:.95rem;padding:11px 14px}
@@ -180,10 +181,12 @@ button.ct{cursor:pointer}button.ct:active{transform:scale(.97)}
   .dsvg{width:240px}
   .sec>.row:hover{cursor:pointer}
 }
-@media (min-width:1700px){main{column-width:380px}}
+@media (min-width:1700px){.mflow{column-width:380px}}
 
 .fmplog{display:grid;gap:4px;margin-top:10px;font-size:.84rem;background:var(--in);border-radius:12px;padding:10px 12px}.fmplog b{font-weight:800}
 .mst b{font-weight:800}.ct em{text-transform:none}
+
+.sal{grid-template-columns:1fr!important}
 </style></head>
 <body><div id="app"></div>
 <script>
@@ -639,10 +642,10 @@ function vBudgetSaisie() {
   const imp = ['a', 'b'].map(k => `<div class="inl"><span>Taux d'impôt ${nm(k)}</span>${fld(`settings.impotTaux.${k}`, S.settings.impotTaux[k], { t: 'pct' })}<em>= ${eur(R.impots[k])}</em></div>`).join('');
   return `
   ${sec('Revenus', sal + addBtn('salaires', 'Salaire') + imp, eur(R.brutTotal) + ' brut')}
+  ${sec('Virements compte commun', S.virements.map((v, i) => row(`virements.${i}`, 'bank', v.label, 'réparti au prorata', eur(num(v.montant)))).join('') + addBtn('virements', 'Virement'), eur(R.virementsTot))}
   ${sec('Quotidien', list('quotidien', 'cart') + addBtn('quotidien', 'Dépense'), eur(R.quot.tot))}
   ${sec('Loisirs', list('loisirs', 'smile') + addBtn('loisirs', 'Loisir'), eur(R.loisirs.tot))}
-  ${sec('Vacances', `<div class="inl"><span>Compté depuis</span>${fld('settings.vacancesDebut', S.settings.vacancesDebut, { t: 'date' })}</div>` + S.vacances.map((v, i) => row(`vacances.${i}`, 'sun', v.label, '', eur(num(v.montant)))).join('') + addBtn('vacances', 'Séjour') + kv('Moyenne', eur(R.vacMoy) + '/mois'), eur(R.vacTotal))}
-  ${sec('Virements compte commun', S.virements.map((v, i) => row(`virements.${i}`, 'bank', v.label, 'réparti au prorata', eur(num(v.montant)))).join('') + addBtn('virements', 'Virement'), eur(R.virementsTot))}`;
+  ${sec('Vacances', `<div class="inl"><span>Compté depuis</span>${fld('settings.vacancesDebut', S.settings.vacancesDebut, { t: 'date' })}</div>` + S.vacances.map((v, i) => row(`vacances.${i}`, 'sun', v.label, '', eur(num(v.montant)))).join('') + addBtn('vacances', 'Séjour') + kv('Moyenne', eur(R.vacMoy) + '/mois'), eur(R.vacTotal))}`;
 }
 
 function vEpargne() {
@@ -679,9 +682,9 @@ function coursPanel(P, keys) {
   }
   if (hasCrypto(P) && (CRYPTO.btc || CRYPTO.eth || CRYPTO.sol)) [['Bitcoin', CRYPTO.btc], ['Ethereum', CRYPTO.eth], ['Solana', CRYPTO.sol]].forEach(([n, v]) => { if (v) tiles.push(`<div class="ct crypto"><span>${n}</span><b>${eur(v, v < 100 ? 2 : 0)}</b><em>auto</em></div>`); });
   const errs = Object.entries(LIVE_ERR).filter(([, m]) => m);
-  const ed = LS.get('cc.etfdate'), st = metalsState === 'busy' ? 'mise à jour…' : (auto ? 'or, argent, crypto : ' + fmt(METALS.date) : 'cours de secours (Réglages)') + (ed && keys.some(k => R.pl[k].actifs.some(a => a.auto)) ? ' · ETF : ' + fmt(ed) : '');
+  const ed = LS.get('cc.etfdate'), st = metalsState === 'busy' ? 'mise à jour…' : (auto ? 'or, argent, crypto : ' + fmt(METALS.date) : 'cours de secours (Réglages)') + (ed && keys.some(k => R.pl[k].actifs.some(a => a.auto)) ? ' · ETF (relevé du relais) : ' + fmt(ed) : '');
   const asked = hasCrypto(P) && !(CRYPTO.btc || CRYPTO.eth || CRYPTO.sol) && !errs.some(([k]) => k === 'Crypto') && metalsState !== 'busy' ? '<div class="mst">Crypto : en attente du premier cours…</div>' : '';
-  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Or, argent et crypto se mettent à jour tout seuls. Les ETF se mettent à jour si ta clé FMP les couvre (Réglages) ; sinon touche un ETF pour saisir son cours.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
+  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Or, argent et crypto se mettent à jour à chaque ouverture. Les ETF viennent d\'un relais dans ton dépôt privé (toutes les heures en séance) : le bouton ↻ le relance tout de suite si ton jeton a le droit « Actions ». Sinon, touche un ETF pour saisir son cours.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
     <div class="ctg">${tiles.join('')}</div><div class="mst">${st}</div>${asked}${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
 }
 function assetRow(key, i, a) {
@@ -816,6 +819,17 @@ const VIEWS = { accueil: ['Accueil', vAccueil], budget: ['Budget', vBudget], epa
 const TABS = [['accueil', 'home', 'Accueil'], ['budget', 'receipt', 'Budget'], ['epargne', 'wallet', 'Épargne'], ['placements', 'trend', 'Placements']];
 const EXTRA = [['achats', 'bag', 'Achats et ventes'], ['simu', 'home', 'Emprunt'], ['reglages', 'sliders', 'Réglages']];
 let lastView = null;
+const isDesk = () => window.matchMedia('(min-width: 900px)').matches;
+/* PC : les blocs larges (bandeau, cartes de synthèse) vont en haut, les autres cartes se répartissent en colonnes */
+function layoutMain(html) {
+  if (!isDesk()) return html;
+  const d = document.createElement('div'); d.innerHTML = html;
+  const top = [], flow = [];
+  [...d.children].forEach(el => (/\b(hero|seg|cours|cats|two)\b/.test(el.className) ? top : flow).push(el.outerHTML));
+  return `<div class="mtop">${top.join('')}</div><div class="mflow">${flow.join('')}</div>`;
+}
+let wasDesk = isDesk();
+window.addEventListener('resize', () => { const d = isDesk(); if (d !== wasDesk) { wasDesk = d; render(); } });
 function render() {
   R = R || recalc();
   const [title, fn] = VIEWS[view];
@@ -823,7 +837,7 @@ function render() {
   hideTip();
   document.getElementById('app').innerHTML = `
   <header class="top"><h1>${title}</h1><span id="syncpill" class="pill off"></span></header>
-  <main class="${fresh ? 'anim' : ''}">${fn()}</main>
+  <main class="${fresh ? 'anim' : ''}">${layoutMain(fn())}</main>
   <nav class="nav">${TABS.map(([k, e, l]) => `<button class="tab ${view === k ? 'on' : ''}" data-go="${k}"><span class="te">${ico(e)}</span><span>${l}</span></button>`).join('')}
     <button class="tab plus ${['achats', 'simu', 'reglages'].includes(view) ? 'on' : ''}" data-more><span class="te">${ico('dots')}</span><span>Plus</span></button>
     ${EXTRA.map(([k, e, l]) => `<button class="tab extra ${view === k ? 'on' : ''}" data-go="${k}"><span class="te">${ico(e)}</span><span>${l}</span></button>`).join('')}</nav>
@@ -863,7 +877,7 @@ document.addEventListener('mouseover', e => {
 window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: true });
 
 /* ---------- Cours en direct : or, argent, crypto, ETF ---------- */
-const APP_BUILD = '29092026-d';
+const APP_BUILD = '29092026-e';
 let LIVE_ERR = {}, FMPLOG = [];
 const fmpKey = () => String(S.settings.fmpKey || '').trim();
 const fmpToday = () => new Date().toISOString().slice(0, 10);
@@ -942,10 +956,10 @@ async function yahooPrice(isin, sym) {
 /* Relais GitHub : un workflow du dépôt privé lit les cours côté serveur (pas de blocage du navigateur) et les écrit dans cours.json.
    L'appli lit ce fichier avec ton jeton et tient à jour la liste des ISIN à suivre. */
 const b64utf = s => btoa(unescape(encodeURIComponent(s))), utf64 = s => decodeURIComponent(escape(atob(s.replace(/\n/g, ''))));
-async function readEtfFeed(isins) {
+async function readEtfFeed(isins, skipSync) {
   if (!cfgOK()) return { err: 'synchronisation GitHub non configurée (Réglages)' };
   const dir = CFG.path.replace(/[^/]*$/, ''), q = '?ref=' + encodeURIComponent(CFG.branch) + '&t=' + Date.now();
-  try {
+  if (!skipSync) try {
     const r = await fetch(ghUrlFor(dir + 'isins.json') + q, { headers: ghHead(), cache: 'no-store' });
     let cur = null, sha;
     if (r.ok) { const j = await r.json(); sha = j.sha; cur = JSON.parse(utf64(j.content)); }
@@ -963,6 +977,17 @@ async function readEtfFeed(isins) {
     return JSON.parse(utf64((await r.json()).content));
   } catch (e) { return { err: errTxt(e) }; }
 }
+let RELAY_POLL_MS = 5000;
+/* Demande à GitHub de lancer le relais tout de suite (droit « Actions » du jeton nécessaire) */
+async function triggerRelay() {
+  if (Date.now() - (+LS.get('cc.disp') || 0) < 90000) return { ok: false, msg: 'un lancement a déjà été demandé il y a moins de 90 secondes' };
+  LS.set('cc.disp', String(Date.now()));
+  try {
+    const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(CFG.owner)}/${encodeURIComponent(CFG.repo)}/actions/workflows/cours.yml/dispatches`, { method: 'POST', headers: { ...ghHead(), 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: CFG.branch }) });
+    if (r.status === 204) return { ok: true };
+    return { ok: false, msg: r.status === 403 || r.status === 404 ? 'lancement refusé (le jeton n\'a pas le droit « Actions ») : les cours se mettent à jour toutes les heures en séance' : 'GitHub ' + r.status };
+  } catch (e) { return { ok: false, msg: errTxt(e) }; }
+}
 async function fetchEtfs(force) {
   const today = fmpToday();
   if (force) ['cc.etfoff', 'cc.yoff'].forEach(k => LS.del(k));
@@ -970,7 +995,13 @@ async function fetchEtfs(force) {
   let sym = {}, ysym = {}; try { sym = JSON.parse(LS.get('cc.sym') || '{}'); ysym = JSON.parse(LS.get('cc.ysym') || '{}'); } catch (e) {}
   let fmpOk = !!fmpKey() && LS.get('cc.etfoff') !== today, yahooOk = LS.get('cc.yoff') !== today;
   const notes = [], okList = [];
-  const feed = await readEtfFeed(isins);
+  let trigMsg = '';
+  let feed = await readEtfFeed(isins);
+  if (force && !feed.err && cfgOK()) {
+    const t = await triggerRelay(), before = feed.date;
+    if (t.ok) { for (let i = 0; i < 16; i++) { await new Promise(r => setTimeout(r, RELAY_POLL_MS)); const f = await readEtfFeed(isins, true); if (!f.err && f.date !== before) { feed = f; break; } } }
+    else { trigMsg = 'Relais : ' + t.msg; notes.push(trigMsg); }
+  }
   if (feed.err) notes.push('Relais : ' + feed.err);
   else LS.set('cc.etfdate', feed.date || '');
   const sane = (isin, px) => {
@@ -1010,7 +1041,7 @@ async function fetchEtfs(force) {
     if (px !== null) { ETFQ[isin] = px; okList.push(isin); }
   }
   LS.set('cc.etfq', JSON.stringify(ETFQ));
-  if (okList.length === isins.length) return '';
+  if (okList.length === isins.length) return trigMsg ? trigMsg + ' (les derniers cours du relais sont utilisés)' : '';
   const uniq = [...new Set(notes)].slice(0, 3);
   return `${okList.length}/${isins.length} ETF mis à jour${uniq.length ? ' · ' + uniq.join(' · ') : ''}`;
 }
@@ -1018,10 +1049,11 @@ async function fetchLive(force) {
   metalsState = 'busy'; if (view === 'placements') render();
   const stale = !LS.get('cc.fmpT') || Date.now() - +LS.get('cc.fmpT') > 60 * 60 * 1000;
   const doEtf = force === true || stale;
-  const [a, b, c] = await Promise.all([fetchMetals(), fetchCrypto(), doEtf ? fetchEtfs(force === true) : Promise.resolve('')]);
-  if (doEtf) LS.set('cc.fmpT', String(Date.now()));
-  LIVE_ERR = { 'Or / argent': a, 'Crypto': b, 'ETF': c };
-  metalsState = (a || b || c) ? 'err' : 'ok'; R = recalc(); render();
+  const [a, b] = await Promise.all([fetchMetals(), fetchCrypto()]);
+  LIVE_ERR = { 'Or / argent': a, 'Crypto': b, 'ETF': LIVE_ERR.ETF || '' };
+  R = recalc(); render();                                   // or, argent, crypto s'affichent tout de suite
+  if (doEtf) { LIVE_ERR.ETF = await fetchEtfs(force === true); LS.set('cc.fmpT', String(Date.now())); }
+  metalsState = Object.values(LIVE_ERR).some(Boolean) ? 'err' : 'ok'; R = recalc(); render();
 }
 async function fmpTest() {
   FMPLOG = [{ l: 'Test en cours…', ok: null, m: '' }]; render();
