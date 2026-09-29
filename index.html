@@ -11,8 +11,8 @@
 <link rel="shortcut icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<style>:root{--bg:#eef1f3;--sf:#fff;--ink:#1c2733;--mu:#66727e;--ln:#e0e5e9;--in:#f3f5f7;--track:#e6eaee;--pos:#2a8562;--neg:#b8483d;--ac:#2f6b82;--ac2:#4a8ba3;--ca:#d9731a;--cat:#c2620f;--cb:#e2b23c;--cbt:#9a7410;--onb:#3a2c00;--mint:#5aa58a;--coral:#c8695e;--shadow:0 4px 16px rgba(30,50,70,.08)}
-@media (prefers-color-scheme:dark){:root{--bg:#12181d;--sf:#1b242b;--ink:#e8eef2;--mu:#98a6b1;--ln:#2a353e;--in:#151d23;--track:#26313a;--pos:#5fc59f;--neg:#e58a7e;--ac:#7db3c8;--ac2:#5f97ad;--ca:#e98f3a;--cat:#f5a555;--cb:#e8bd4a;--cbt:#e8bd4a;--onb:#2a2000;--shadow:0 4px 16px rgba(0,0,0,.35)}}
+<style>:root{--bg:#eef1f3;--sf:#fff;--ink:#1c2733;--mu:#66727e;--ln:#e0e5e9;--in:#f3f5f7;--track:#e6eaee;--pos:#2a8562;--neg:#b8483d;--ac:#2f6b82;--ac2:#4a8ba3;--ca:#d4570f;--cat:#c24d08;--cb:#f2c230;--cbt:#a67c00;--onb:#3a2c00;--mint:#5aa58a;--coral:#c8695e;--shadow:0 4px 16px rgba(30,50,70,.08)}
+@media (prefers-color-scheme:dark){:root{--bg:#12181d;--sf:#1b242b;--ink:#e8eef2;--mu:#98a6b1;--ln:#2a353e;--in:#151d23;--track:#26313a;--pos:#5fc59f;--neg:#e58a7e;--ac:#7db3c8;--ac2:#5f97ad;--ca:#f0803a;--cat:#f79a55;--cb:#f5cf4a;--cbt:#f5cf4a;--onb:#2a2000;--shadow:0 4px 16px rgba(0,0,0,.35)}}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Avenir Next","Segoe UI Variable","Segoe UI",system-ui,sans-serif;font-variant-numeric:tabular-nums;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 #app{max-width:680px;margin:0 auto}
@@ -122,7 +122,7 @@ h3{font-size:.95rem;margin:0 0 6px;font-weight:800}h4{margin:14px 0 6px;font-siz
 circle.seg{cursor:pointer;transition:opacity .22s cubic-bezier(.23,1,.32,1),stroke-width .28s cubic-bezier(.23,1,.32,1)}
 .dleg li{cursor:pointer;border-radius:8px;transition:opacity .2s cubic-bezier(.23,1,.32,1)}.dleg li.dim{opacity:.4}
 .cat,.person,.pm1,.vbc,.hbr,.prow,.metals{transition:transform .16s cubic-bezier(.23,1,.32,1)}
-.cat:active,.person:active,.pm1:active,.metals:active{transform:scale(.975)}
+
 .hswitch{display:flex;align-items:center;gap:8px;background:var(--in);border:0;border-radius:12px;padding:7px 10px 7px 12px;color:var(--ink);font:inherit;cursor:pointer;text-align:left;transition:transform .16s cubic-bezier(.23,1,.32,1)}
 .hswitch h2{font-size:1.02rem}.hswitch .ic{width:18px;height:18px;color:var(--ac);flex:none}.hswitch:active{transform:scale(.96)}
 .split.two{grid-template-columns:1fr 1fr}.hint.tight{margin:-2px 4px 0}
@@ -135,7 +135,7 @@ circle.seg{cursor:pointer;transition:opacity .22s cubic-bezier(.23,1,.32,1),stro
 #tip.show{opacity:1;transform:none}
 [data-tip]{cursor:help}.gauge{position:relative}.gauge::after{content:"";position:absolute;inset:-9px 0}
 .pn.a,.ca{color:var(--cat)}.pn.b,.cb{color:var(--cbt)}.pn{font-weight:800}
-.hero .pn.a{color:#ffbe85}.hero .pn.b{color:#ffd974}
+.hero .pn.a{color:#ffa566}.hero .pn.b{color:#ffd974}
 .salc{background:var(--in);border-radius:16px;padding:12px}.salc.pa{border-left:5px solid var(--ca)}.salc.pb{border-left:5px solid var(--cb)}
 .salc h3{margin:0 0 2px}.salc.pa h3{color:var(--cat)}.salc.pb h3{color:var(--cbt)}
 .sbig{font-size:1.5rem;font-weight:800;letter-spacing:-.02em}.sbig small{display:block;font-size:.74rem;color:var(--mu);font-weight:600;letter-spacing:0}
@@ -187,8 +187,8 @@ button.ct{cursor:pointer}button.ct:active{transform:scale(.97)}
 .sal{grid-template-columns:1fr!important}
 
 /* ---- v4 : tuiles de cours par classe d'actif, variations, ajouts discrets ---- */
-.ct{border-left:4px solid var(--mu);background:var(--in)}
-.ct.etf{border-left-color:#4a6fa5}.ct.etc{border-left-color:#b08d57}.ct.cry{border-left-color:#8a7ba6}
+.ct{background:var(--in)}
+.ct.etf{background:color-mix(in srgb,#4a6fa5 13%,var(--sf))}.ct.etc{background:color-mix(in srgb,#b08d57 17%,var(--sf))}.ct.cry{background:color-mix(in srgb,#8a7ba6 15%,var(--sf))}
 .ct b{font-size:1.02rem}.ct em{font-style:normal;font-size:.72rem;color:var(--mu)}
 .chg{font-weight:700;font-size:.74rem!important}.chg.up{color:var(--pos)!important}.chg.dn{color:var(--neg)!important}.chg.flat{color:var(--mu)!important}
 .rt small .chg{font-size:.78rem!important}
@@ -198,12 +198,21 @@ button.ct{cursor:pointer}button.ct:active{transform:scale(.97)}
 small.mu{color:var(--mu)!important;font-weight:600}
 .hchips .ci{display:inline-grid;place-items:center;width:15px;height:15px;margin-left:6px;border-radius:50%;border:1.3px solid rgba(255,255,255,.75);font:italic 700 .62rem/1 Georgia,serif;vertical-align:1px}
 .addw{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:6px}
-.add.mini{width:34px;height:34px;min-width:34px;padding:0;margin:0;border:0;border-radius:50%;background:var(--in);color:var(--ac);font-size:1.35rem;line-height:1;font-weight:700;display:grid;place-items:center}
-.add.pill{width:auto;margin:0;padding:6px 13px;border:0;border-radius:99px;background:var(--in);font-size:.82rem;font-weight:700}
-.add.ghost{margin-top:8px}
+.add.mini{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;min-width:34px;padding:0;margin:0;border:0;border-radius:50%;background:var(--in);color:var(--ac);line-height:0}
+.add.pill{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:auto;height:32px;margin:0;padding:0 14px;border:0;border-radius:99px;background:var(--in);color:var(--ac);font-size:.82rem;font-weight:700;line-height:1}
+.add.mini .ic,.add.pill .ic{width:16px;height:16px;stroke-width:2.4;flex:none;display:block}
+.add.pill span{display:block;line-height:1;transform:translateY(.5px)}
 @media (hover:hover){.add.mini:hover,.add.pill:hover{background:var(--track);border-color:transparent}}
 .yh{display:inline-flex;align-items:center;gap:8px;background:none;border:0;padding:2px 0;font:inherit;font-weight:800;font-size:1.05rem;color:inherit;cursor:pointer}
 .yi{display:grid;place-items:center;color:var(--mu)}.yi .ic{width:15px;height:15px}
+
+/* ---- v5 : carte des personnes (Accueil), infobulle sur le « i » seulement ---- */
+.person .pk{margin-top:8px}.person .pk small{display:block;font-size:.74rem;color:var(--mu);font-weight:600}
+.person .pbig{font-size:1.45rem;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.person .faint{margin-top:10px;font-size:.74rem;color:var(--mu);opacity:.85;display:flex;align-items:center;gap:2px}
+.hchips .ci{cursor:help}.hchips span[data-tip]{cursor:default}
+.lleg{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 2px;font-size:.78rem;color:var(--mu)}.lleg span{display:inline-flex;align-items:center;gap:6px}.lleg i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.lleg b{color:var(--ink)}
 </style></head>
 <body><div id="app"></div>
 <script>
@@ -512,7 +521,7 @@ function commit() { R = recalc(); meta.dirty = true; saveLocal(); if (cfgOK() &&
 
 
 /* ---------- Petits composants ---------- */
-let ef = ['a', 'b'].includes(LS.get('cc.ef')) ? LS.get('cc.ef') : 'all', showSecrets = false, pf = LS.get('cc.pf') === 'b' ? 'b' : 'a';
+let ef = LS.get('cc.ef') === 'b' ? 'b' : 'a', showSecrets = false, pf = LS.get('cc.pf') === 'b' ? 'b' : 'a';
 let CRYPTO = JSON.parse(LS.get('cc.crypto') || 'null') || {};
 const PAL = ['#3f7691', '#5a9a86', '#7b8fbf', '#8a7ba6', '#9bb06a', '#6b8a9a', '#b58b6e', '#4d6a8c'];
 const ICONS = {
@@ -585,15 +594,18 @@ function vbars(items) {
   const max = Math.max(1, ...items.map(i => Math.abs(i.v))), H = 110;
   return `<div class="vb">${items.map(d => { const h = Math.max(3, Math.abs(d.v) / max * H); return `<div class="vbc"><b class="${d.v < 0 ? 'neg' : 'pos'}">${eur(d.v)}</b><div class="vbb" style="height:${h}px;background:${d.c || (d.v < 0 ? 'linear-gradient(var(--neg),#e0a49c)' : 'linear-gradient(var(--mint),#a9d4c3)')}"></div><span>${esc(d.l)}</span></div>`; }).join('')}</div>`;
 }
-function lineChart(pts) {
+function lineChart(pts, now) {
   if (pts.length < 2) return '';
-  const W = 320, H = 130, pad = 6, max = Math.max(...pts.map(p => p.v)), x = i => pad + i / (pts.length - 1) * (W - 2 * pad), y = v => H - pad - v / max * (H - 2 * pad - 8);
+  const W = 320, H = 130, pad = 8, top = Math.max(...pts.map(p => p.v), now ? now.value : 0), n = pts.length, x = i => pad + i / (n - 1) * (W - 2 * pad), y = val => H - pad - val / top * (H - 2 * pad - 8);
   const d = pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join(' ');
-  const area = `${d} L${x(pts.length - 1)},${H - pad} L${x(0)},${H - pad} Z`;
+  const area = `${d} L${x(n - 1)},${H - pad} L${x(0)},${H - pad} Z`;
   const lab = m => { const [Y, M] = m.split('-'); return ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'][+M - 1] + ' ' + Y.slice(2); };
-  return `<svg class="line" viewBox="0 0 ${W} ${H}" role="img" aria-label="Argent investi au fil du temps"><defs><linearGradient id="lg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3f7691" stop-opacity=".4"/><stop offset="1" stop-color="#3f7691" stop-opacity="0"/></linearGradient></defs>
-    <path d="${area}" fill="url(#lg)"/><path d="${d}" fill="none" stroke="#3f7691" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${x(pts.length - 1)}" cy="${y(pts.at(-1).v)}" r="5" fill="#c8453a"/></svg>
-    <div class="lax"><span>${lab(pts[0].m)}</span><b>${eur(pts.at(-1).v)}</b><span>${lab(pts.at(-1).m)}</span></div>`;
+  const last = pts[n - 1].v, gain = now ? now.value - last : 0;
+  const extra = now ? `<line x1="${x(n - 1)}" x2="${x(n - 1)}" y1="${y(last)}" y2="${y(now.value)}" stroke="${gain >= 0 ? '#2a8562' : '#b8483d'}" stroke-width="2.5" stroke-dasharray="3 3"/><circle cx="${x(n - 1)}" cy="${y(now.value)}" r="5.5" fill="${gain >= 0 ? '#2a8562' : '#b8483d'}"/>` : '';
+  return `<svg class="line" viewBox="0 0 ${W} ${H}" role="img" aria-label="Argent investi et valeur actuelle"><defs><linearGradient id="lg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3f7691" stop-opacity=".4"/><stop offset="1" stop-color="#3f7691" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#lg)"/><path d="${d}" fill="none" stroke="#3f7691" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${extra}<circle cx="${x(n - 1)}" cy="${y(last)}" r="5" fill="#3f7691"/></svg>
+    <div class="lax"><span>${lab(pts[0].m)}</span><span>${lab(pts[n - 1].m)}</span></div>
+    <div class="lleg"><span><i style="background:#3f7691"></i>Investi <b>${eur(last)}</b></span>${now ? `<span><i style="background:${gain >= 0 ? '#2a8562' : '#b8483d'}"></i>Valeur brute aujourd'hui <b>${eur(now.value)}</b></span><span>Plus-value brute <b class="${gain >= 0 ? 'pos' : 'neg'}">${gain >= 0 ? '+' : ''}${eur(gain)}</b></span>` : ''}</div>`;
 }
 function gauge(reel, cible, lower, tip) {
   const ratio = cible > 0 ? reel / cible : 0, w = Math.max(0, Math.min(100, ratio * 100)), ok = lower ? reel <= cible : reel >= cible;
@@ -604,13 +616,13 @@ function gap(reel, cible, lower) {
   return `<span class="${ok ? 'pos' : 'neg'}">${eur(Math.abs(d))} ${lower ? (d <= 0 ? 'sous la cible' : 'au-dessus') : (d >= 0 ? 'au-dessus' : 'sous la cible')}</span>`;
 }
 const row = (path, icon, title, sub, amount, cls = '') => `<button class="row" data-edit="${path}"><span class="ri">${ico(EMO2ICO[icon] || icon)}</span><span class="rt"><b>${esc(title || 'Sans nom')}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="ra ${cls}">${amount}</span></button>`;
-const addBtn = (path, txt) => `<div class="addw"><button class="add mini" data-add="${path}" aria-label="Ajouter : ${txt}" title="${txt}">+</button></div>`;
-const addPill = (attrs, txt) => `<button class="add pill" ${attrs}>+ ${txt}</button>`;
+const addBtn = (path, txt) => `<div class="addw"><button class="add mini" data-add="${path}" aria-label="Ajouter : ${txt}" title="${txt}">${ico('plus')}</button></div>`;
+const addPill = (attrs, txt) => `<button class="add pill" ${attrs}>${ico('plus')}<span>${txt}</span></button>`;
 const addPair = (...b) => `<div class="addw">${b.join('')}</div>`;
 const fmtDT = d => d ? new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
 const chgHtml = x => { if (x === null || x === undefined || !isFinite(x)) return ''; const up = x > 0.00005, dn = x < -0.00005; return `<em class="chg ${up ? 'up' : dn ? 'dn' : 'flat'}">${up ? '▲' : dn ? '▼' : '■'} ${signed(x, 2)}</em>`; };
 const chgInline = x => (x === null || x === undefined || !isFinite(x)) ? '' : ` · ${chgHtml(x).replace('<em', '<span').replace('</em>', '</span>')}`;
-const chipT = (txt, tip) => `<span data-tip="${esc(tip)}">${txt}<i class="ci">i</i></span>`;
+const chipT = (txt, tip) => `<span>${txt}<i class="ci" data-tip="${esc(tip)}">i</i></span>`;
 
 /* Textes des bulles d'aide sur les jauges du budget */
 const REGLE = 'Règle 50/30/20 : 50 % du net pour les besoins, 30 % pour les envies, 20 % pour l\'épargne.';
@@ -624,8 +636,10 @@ function vAccueil() {
   if (!S.salaires.length) return `<section class="sec empty"><h2>Bienvenue</h2><p>Aucune donnée pour l'instant. Va dans <b>Réglages</b> pour importer ton fichier de départ, ou commence par le <b>Budget</b>.</p></section>`;
   const rend = R.investiTotal ? R.pvTotale / R.investiTotal : 0;
   const q = R.quot.tot, l = R.loisirs.tot, r = Math.max(0, R.reste);
-  const person = k => `<div class="person p${k}"><h3>${esc(N(k))}</h3><div class="pbig ${sign(R.dispo[k])}">${eur(R.dispo[k])}</div><small>reste pour épargne ce mois</small>
-    ${gauge(R.dispo[k], R.part[k] * 0.2, false, tipReste(R.dispo[k], R.part[k], R.part[k] * 0.2))}<div class="pl">${eur(R.part[k])} net · ${pc(R.ratio[k], 0)}</div><div class="pl">Patrimoine ${eur(R.parPersonne[k])}</div></div>`;
+  const person = k => `<div class="person p${k}"><h3>${esc(N(k))}</h3>
+    <div class="pk"><small>Revenu net par mois</small><div class="pbig">${eur(R.part[k])}</div></div>
+    <div class="pk"><small>Patrimoine</small><div class="pbig">${eur(R.parPersonne[k])}</div></div>
+    <div class="faint">Reste pour épargne ce mois : ${eur(R.dispo[k])}${info(tipReste(R.dispo[k], R.part[k], R.part[k] * 0.2))}</div></div>`;
   return `
   <section class="hero"><small>Patrimoine du foyer</small><div class="big">${eur(R.patrimoine)}</div>
     <div class="hchips"><span>${signed(rend)} sur les placements</span><span>${eur(R.pvTotale)} de plus-value nette</span><span>Apport ${eur(R.apport)}</span></div></section>
@@ -683,21 +697,21 @@ function vBudgetSaisie() {
 }
 
 function vEpargne() {
-  const f = ef, ok = w => f === 'all' || w === f || (w !== 'a' && w !== 'b');
+  const f = ef, ok = w => w === f || (w !== 'a' && w !== 'b');
   const idx = S.comptes.map((c, i) => i).filter(i => ok(S.comptes[i].who));
   const icon = c => c.auto === 'credit' ? 'car' : /livret|ldds|lep|pel/i.test(c.label) ? 'wallet' : /crypto/i.test(c.label) ? 'coins' : c.auto === 'objets' ? 'gold' : /dette/i.test(c.label) ? 'receipt' : 'trend';
   const cc = idx.map(i => { const c = S.comptes[i]; return row(`comptes.${i}`, icon(c), c.label, chip(c.who) + (c.banque && c.banque !== '-' ? ` <i class="chip bk">${esc(c.banque)}</i>` : '') + (c.auto ? ' auto' : ''), eur(R.comptes[i].valeur), sign(R.comptes[i].valeur)); }).join('');
   const totF = sum(idx, i => R.comptes[i].valeur), repF = {};
   idx.forEach(i => { const c = R.comptes[i]; if (c.valeur > 0 && c.auto !== 'credit') repF[c.cat] = (repF[c.cat] || 0) + c.valeur; });
-  const split = f === 'all' ? kv(nm('a'), eur(R.parPersonne.a)) + kv(nm('b'), eur(R.parPersonne.b)) + kv('Commun', eur(R.parPersonne.commun)) : kv(nm(f), eur(R.parPersonne[f])) + kv('Commun', eur(R.parPersonne.commun));
+  const split = kv(nm(f), eur(R.parPersonne[f])) + kv('Commun', eur(R.parPersonne.commun));
   const yrs = S.interets.annees, iv = yrs.map(y => ({ l: String(y), v: R.interets[y] || 0, c: 'linear-gradient(var(--ac),#7fa8bb)' }));
   const rows = S.interets.lignes.map((l, i) => row(`interets.lignes.${i}`, 'coins', l.label, chip(l.who), eur(sum(yrs, y => num((l.v || {})[y]))))).join('');
   const cr = S.settings.credit;
-  const opts = [['all', 'Tous les comptes'], ['a', 'Comptes de ' + N('a')], ['b', 'Comptes de ' + N('b')]].map(([v, l]) => `<option value="${v}" ${f === v ? 'selected' : ''}>${esc(l)}</option>`).join('');
-  return `
-  ${sec('Répartition', donut(Object.entries(repF).map(([l, v]) => ({ l, v })), { center: eur(Object.values(repF).reduce((a, b) => a + b, 0)), top: f === 'all' ? 'patrimoine' : esc(N(f)) }), '', 'enter')}
-  <section class="sec"><header><div class="ht"><select class="hsel" data-ef aria-label="Comptes à afficher">${opts}</select>${info('Choisis tous les comptes ou ceux d\'une personne : les comptes communs restent affichés.\nBanques : CA = Crédit Agricole · F = Fortuneo · HB = Hello bank.\nCommun = argent à vous deux, même si le compte est chez l\'un de vous.\nauto = calculé depuis Placements.')}</div><span class="tot">${eur(totF)}</span></header>
-    ${cc}${addBtn('comptes', 'Compte')}<div class="split ${f === 'all' ? '' : 'two'}">${split}</div></section>
+  const seg = `<div class="seg pers" role="tablist"><button class="a ${f === 'a' ? 'on' : ''}" data-ef="a">${esc(N('a'))}</button><button class="b ${f === 'b' ? 'on' : ''}" data-ef="b">${esc(N('b'))}</button></div>`;
+  return `${seg}
+  ${sec('Répartition', donut(Object.entries(repF).map(([l, v]) => ({ l, v })), { center: eur(Object.values(repF).reduce((a, b) => a + b, 0)), top: esc(N(f)) }), '', 'enter')}
+  <section class="sec"><header><div class="ht"><h2>Comptes de ${nm(f)}</h2>${info('Les comptes communs sont affichés pour chacun.\nBanques : CA = Crédit Agricole · F = Fortuneo · HB = Hello bank.\nCommun = argent à vous deux, même si le compte est chez l\'un de vous.\nauto = calculé depuis Placements.')}</div><span class="tot">${eur(totF)}</span></header>
+    ${cc}${addBtn('comptes', 'Compte')}<div class="split two">${split}</div></section>
   ${sec('Intérêts par an', vbars(iv) + rows + addPair(addPill('data-add="interets.lignes"', 'Compte'), addPill('data-addyear', 'Année')))}
   ${sec('Crédit auto', `<div class="grid3"><label>Mensualité${fld('settings.credit.mensualite', cr.mensualite)}</label><label>Nb de mois${fld('settings.credit.nbMois', cr.nbMois)}</label><label>Début${fld('settings.credit.debut', cr.debut, { t: 'date' })}</label></div>` + kv('Reste à payer', eur(R.creditReste), 'neg'))}`;
 }
@@ -739,7 +753,7 @@ function placeBlock(key) {
     ${tiles}
     <div class="dl">${kv('Investi', eur(c.investi, 2))}${hasVirt ? kv('Espèces en attente', eur(c.especes, 2), '', 'Argent versé sur le compte mais pas encore investi : versements − achats. Calculé tout seul.') : ''}${kv('Valeur brute', eur(c.totalBrut, 2))}${retrait}</div>
     <h4 class="sub">Actifs</h4>${assets}
-    <div class="addw"><button class="add pill" data-add="placements.${key}.actifs">+ Actif</button></div>
+    <div class="addw">${addPill(`data-add="placements.${key}.actifs"`, 'Actif')}</div>
     ${hasVirt ? `<button class="add ghost" data-qv="placements.${key}.virements">+ Versement du mois${last ? ' (' + eur(num(last.montant)) + ')' : ''}</button><button class="add ghost" data-edit="placements.${key}.virements">Tous les versements (${p.virements.length})</button>` : ''}
     ${p.fondsEuros ? `<div class="inl"><span>Fonds euros investi</span>${fld(`placements.${key}.fondsEuros.investi`, p.fondsEuros.investi)}</div>` : ''}
     ${!hasVirt && key === 'ctoA' ? `<div class="inl"><span>Espèces</span>${fld(`placements.${key}.especes`, p.especes)}</div>` : ''}</section>`;
@@ -754,7 +768,7 @@ function repartActifs(P, keys) {
     if (Array.isArray(p.virements) && c.especes > 25) items.push({ l: 'Espèces en attente (' + (k === 'ctoA' ? 'CTO' : p.titre) + ')', v: c.especes, c: '#a9b3ba' });
   });
   if (P === 'b' && R.objetsBrut > 0) items.push({ l: 'Or physique', v: R.objetsBrut, c: '#d3b46a' });
-  return items;
+  return items.sort((a, b) => b.v - a.v);
 }
 function vPlacements() {
   const P = pf, pp = R.plParPers[P], keys = ['peaA', 'peaB', 'ctoA', 'avA'].filter(k => S.placements[k].who === P);
@@ -765,14 +779,13 @@ function vPlacements() {
   const objBlock = P === 'b' ? sec('Objets en or', objets + addBtn('placements.objets', 'Objet') + kv('Valeur brute', eur(R.objetsBrut)) + kv('Après marge de revente (' + pc(S.settings.reventeOr, 0) + ')', eur(R.objetsNet), 'pos'), eur(R.objetsNet)) : '';
   const brut = sum(keys, k => R.pl[k].totalBrut) + (P === 'b' ? R.objetsBrut : 0), net = pp.total + (P === 'b' ? R.objetsNet : 0);
   const tInv = 'Argent réellement versé, pas la valeur actuelle :\n' + keys.map(k => { const p = S.placements[k], c = R.pl[k]; return `${lbl(k)} : ${eur(c.investi)} (${Array.isArray(p.virements) ? p.virements.length + ' versements' : 'achats'}${p.fondsEuros ? ', dont fonds euros ' + eur(num(p.fondsEuros.investi)) : ''})`; }).join('\n') + `\nTotal : ${eur(pp.investi)}`;
-  const tBrut = 'Ce que valent tes placements aujourd\'hui, avant impôt :\n' + keys.map(k => { const c = R.pl[k], p = S.placements[k]; return `${lbl(k)} : ${eur(c.totalBrut)} = actifs ${eur(c.valeurActifs)}${Array.isArray(p.virements) ? ' + espèces ' + eur(c.especes) : ''}${p.fondsEuros ? ' + fonds euros ' + eur(num(p.fondsEuros.investi)) : ''}`; }).join('\n') + (P === 'b' ? `\nOr physique : ${eur(R.objetsBrut)} au cours du jour` : '') + `\nTotal : ${eur(brut)}`;
-  const tNet = 'Ce que tu récupérerais en vendant tout aujourd\'hui, après impôt sur les plus-values :\n' + keys.map(k => `${lbl(k)} : ${eur(R.pl[k].totalApresImpot)} (on conserve ${pc(R.cfg.taxes[S.placements[k].taxe], 1)} de la plus-value)`).join('\n') + (P === 'b' ? `\nOr physique : ${eur(R.objetsNet)} (après marge de revente ${pc(S.settings.reventeOr, 0)})` : '') + `\nTotal : ${eur(net)}`;
+  const tNet = 'Valeur nette : ce que tu récupérerais en vendant tout aujourd\'hui, après impôt sur les plus-values.\n' + keys.map(k => `${lbl(k)} : ${eur(R.pl[k].totalApresImpot)} (brut ${eur(R.pl[k].totalBrut)} ; on conserve ${pc(R.cfg.taxes[S.placements[k].taxe], 1)} de la plus-value)`).join('\n') + (P === 'b' ? `\nOr physique : ${eur(R.objetsNet)} (brut ${eur(R.objetsBrut)}, après marge de revente ${pc(S.settings.reventeOr, 0)})` : '') + `\n\nTotal net : ${eur(net)}\nValeur brute (avant impôt) : ${eur(brut)}\nActifs : ${keys.map(k => lbl(k) + ' ' + eur(R.pl[k].valeurActifs)).join(', ')}${keys.some(k => Array.isArray(S.placements[k].virements)) ? '\nEspèces en attente comprises.' : ''}`;
   const rep = repartActifs(P, keys);
   return `${seg}${coursPanel(P, keys)}
   <section class="hero small"><small>Plus-value nette · ${nm(P)}</small><div class="big">${eur(pp.pvNet)}</div>
-    <div class="hchips">${chipT(signed(pp.rendement) + ' net', 'Plus-value nette ÷ argent investi.')}${chipT(signed(pp.xirrNet) + ' par an (pondéré)', 'Taux annuel après impôt, en tenant compte de la date de chaque versement (méthode XIRR). Sur peu de recul, il varie beaucoup.')}${chipT('Investi ' + eur(pp.investi), tInv)}${chipT('Valeur brute ' + eur(brut), tBrut)}${chipT('Valeur nette ' + eur(net), tNet)}</div></section>
+    <div class="hchips">${chipT(signed(pp.rendement) + ' net', 'Plus-value nette ÷ argent investi.')}${chipT(signed(pp.xirrNet) + ' par an (pondéré)', 'Taux annuel après impôt, en tenant compte de la date de chaque versement (méthode XIRR). Sur peu de recul, il varie beaucoup.')}${chipT('Investi ' + eur(pp.investi), tInv)}${chipT('Valeur nette ' + eur(net), tNet)}</div></section>
   ${rep.length ? sec('Répartition de mes actifs', donut(rep, { center: eur(sum(rep, x => x.v)), top: 'valeur brute', label: 'Répartition des actifs' }), '', 'enter', 'Part de chaque actif dans la valeur de tes placements (espèces en attente et fonds euros compris) : sert à rééquilibrer. Touche une part pour voir son pourcentage.') : ''}
-  ${R.seriePers[P].length > 1 ? sec('Argent investi au fil du temps', lineChart(R.seriePers[P]), '', 'enter') : ''}
+  ${R.seriePers[P].length > 1 ? sec('Argent investi et valeur actuelle', lineChart(R.seriePers[P], { value: sum(keys, k => R.pl[k].totalBrut) }), '', 'enter', 'La courbe montre les versements cumulés (réels). L\'historique des valeurs passées n\'est pas enregistré : seule la valeur d\'aujourd\'hui est marquée, l\'écart avec la courbe est la plus-value brute.') : ''}
   ${parProd.length > 1 ? sec('Rendement par placement', hbars(parProd), '', '', 'Rendement total avant impôt de chaque placement.') : ''}
   ${keys.map(k => placeBlock(k)).join('')}${objBlock}`;
 }
@@ -850,7 +863,7 @@ function sheetHtml() {
   if (!obj) return '';
   let body = '';
   if (spec.list) {
-    body = obj.map((x, j) => `<div class="lrow">${spec.list.map(([k, t, ph]) => fld(`${editing.path}.${j}.${k}`, x[k], { t, ph })).join('')}<button class="x" data-delin="${editing.path}.${j}" aria-label="Supprimer">×</button></div>`).reverse().join('') + `<div class="addw"><button class="add pill" data-addin="${editing.path}">+ Ajouter</button></div>`;
+    body = obj.map((x, j) => `<div class="lrow">${spec.list.map(([k, t, ph]) => fld(`${editing.path}.${j}.${k}`, x[k], { t, ph })).join('')}<button class="x" data-delin="${editing.path}.${j}" aria-label="Supprimer">×</button></div>`).reverse().join('') + `<div class="addw">${addPill(`data-addin="${editing.path}"`, 'Ajouter')}</div>`;
   } else {
     body = spec.f.map(([k, t, l, opts]) => t === 'chk' ? fld(`${editing.path}.${k}`, k === 'apport' ? get(obj, k) !== false : !!get(obj, k), { t: 'chk', txt: l }) :
       field(l, t === 'sel' ? fld(`${editing.path}.${k}`, get(obj, k), { t: 'sel', opts }) : fld(`${editing.path}.${k}`, get(obj, k), { t }))).join('');
@@ -858,7 +871,7 @@ function sheetHtml() {
     if (spec.lots && obj.isin && ETFQ[obj.isin]) body += `<p class="hint">Cours mis à jour automatiquement (${eur(ETFQ[obj.isin], 2)}). Le champ ci-dessus ne sert que si la mise à jour automatique échoue.</p>`;
     if (spec.lots) {
       const lots = obj.lots || [];
-      body += `<h4>Achats</h4>` + lots.map((l, j) => `<div class="lrow">${fld(`${editing.path}.lots.${j}.date`, l.date, { t: 'month' })}${fld(`${editing.path}.lots.${j}.qty`, l.qty, { ph: 'Qté' })}${spec.lotCost ? fld(`${editing.path}.lots.${j}.montant`, l.montant, { ph: '€ payés' }) : ''}<button class="x" data-delin="${editing.path}.lots.${j}" aria-label="Supprimer">×</button></div>`).join('') + `<div class="addw"><button class="add pill" data-addin="${editing.path}.lots">+ Achat</button></div>`;
+      body += `<h4>Achats</h4>` + lots.map((l, j) => `<div class="lrow">${fld(`${editing.path}.lots.${j}.date`, l.date, { t: 'month' })}${fld(`${editing.path}.lots.${j}.qty`, l.qty, { ph: 'Qté' })}${spec.lotCost ? fld(`${editing.path}.lots.${j}.montant`, l.montant, { ph: '€ payés' }) : ''}<button class="x" data-delin="${editing.path}.lots.${j}" aria-label="Supprimer">×</button></div>`).join('') + `<div class="addw">${addPill(`data-addin="${editing.path}.lots"`, 'Achat')}</div>`;
     }
   }
   const canDel = !spec.list;
@@ -930,7 +943,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 /* ---------- Cours : une seule source, le relais du dépôt privé (budget/cours.json) ---------- */
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '29092026-g';
+const APP_BUILD = '29092026-h';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1031,7 +1044,6 @@ function newItem(path) {
   return {};
 }
 document.addEventListener('change', e => {
-  if (e.target.matches && e.target.matches('select[data-ef]')) { ef = e.target.value; LS.set('cc.ef', ef); render(); return; }
   const el = e.target.closest('[data-p]');
   if (el) {
     const p = el.dataset.p, t = el.dataset.t; let v;
@@ -1071,6 +1083,7 @@ document.addEventListener('click', async e => {
   if ('close' in d) { if (e.target === t) { editing = null; moreOpen = false; render(); } return; }
   if ('done' in d) { if (editing && /^achats\.\d+$/.test(editing.path)) sortAchats(); editing = null; render(); return; }
   if (d.edit) { editing = { path: d.edit }; render(); return; }
+  if (d.ef) { ef = d.ef; LS.set('cc.ef', ef); render(); window.scrollTo(0, 0); return; }
   if (d.pf) { pf = d.pf; LS.set('cc.pf', pf); render(); window.scrollTo(0, 0); return; }
   if (d.bmode) { bmode = d.bmode; LS.set('cc.bmode', bmode); render(); window.scrollTo(0, 0); return; }
   if (d.go) { view = d.go; moreOpen = false; editing = null; render(); window.scrollTo(0, 0); return; }
