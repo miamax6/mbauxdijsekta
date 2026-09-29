@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#edf1f3"><meta name="robots" content="noindex,nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<title>Comptes du foyer</title>
+<style>:root{--bg:#edf1f3;--sf:#fff;--ink:#14232d;--mu:#5d6e79;--ln:#d7dfe4;--pos:#0b6b5a;--neg:#b13b2a;--ca:#2c5ba7;--cb:#a63e78;--s1:#34556e;--s2:#c58b2b;--s3:#12907a;--in:#f4f7f8;--ac:#0b6b5a}
+@media (prefers-color-scheme:dark){:root{--bg:#0f171c;--sf:#18232a;--ink:#e6eef2;--mu:#93a5b0;--ln:#2a3a44;--pos:#4fd1b3;--neg:#ff8a76;--ca:#7aa5f0;--cb:#e88bbd;--s1:#5f88a6;--s2:#d9a24a;--s3:#3fbfa5;--in:#121c22;--ac:#4fd1b3}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Avenir Next","Segoe UI Variable","Segoe UI",system-ui,sans-serif;font-variant-numeric:tabular-nums;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+#app{max-width:760px;margin:0 auto}
+.top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--bg);border-bottom:1px solid var(--ln)}
+h1{font-size:1.25rem;margin:0;font-weight:700;letter-spacing:-.01em}
+main{padding:12px 12px 24px;display:grid;gap:12px}
+.pill{font-size:.78rem;padding:3px 10px;border-radius:99px;border:1px solid var(--ln);color:var(--mu);background:var(--sf)}
+.pill.ok{color:var(--pos);border-color:var(--pos)}.pill.warn{color:var(--s2);border-color:var(--s2)}.pill.bad{color:var(--neg);border-color:var(--neg)}
+.sec,.hero,.person{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:14px}
+.sec>header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+h2{font-size:1rem;margin:0;font-weight:700}h3{font-size:.95rem;margin:0 0 6px;font-weight:700}
+.tot{font-weight:700}.hint{color:var(--mu);font-size:.85rem;margin:8px 0 0}
+.hero .big{font-size:2.5rem;font-weight:800;letter-spacing:-.03em;line-height:1.05}.hero small{display:block;font-size:.9rem;font-weight:500;color:var(--mu);letter-spacing:0}
+.bar{position:relative;display:flex;height:16px;border-radius:8px;overflow:hidden;background:var(--in);margin:14px 0 10px}
+.bar i{display:block;height:100%}.bar u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.55}
+.s1{background:var(--s1)}.s2{background:var(--s2)}.s3{background:var(--s3)}
+.legend{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:.93rem}.legend li{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.legend i{width:10px;height:10px;border-radius:3px;flex:none;align-self:center}.legend em{color:var(--mu);font-style:normal;font-size:.82rem}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.person h3{display:flex;flex-direction:column;gap:0}.person h3 small{font-weight:500;color:var(--mu);font-size:.8rem}
+.person.pa{border-top:4px solid var(--ca)}.person.pb{border-top:4px solid var(--cb)}
+.kv{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid var(--ln);font-size:.93rem}.kv:first-of-type{border-top:0}
+.two .kv{flex-direction:column;gap:0}.kv span{color:var(--mu)}.kv b{font-weight:700}
+.pos{color:var(--pos)}.neg{color:var(--neg)}
+.f{width:100%;min-width:0;font:inherit;color:var(--ink);background:var(--in);border:1px solid var(--ln);border-radius:9px;padding:8px 9px}
+.f:focus{outline:2px solid var(--ac);outline-offset:0;border-color:transparent}
+select.f{padding:8px 4px}input[type=month].f,input[type=date].f{padding:7px 6px}
+.line{display:grid;grid-template-columns:minmax(0,1fr) 5.4rem 5.4rem 2rem;gap:6px;align-items:center;margin-bottom:6px}
+.line.nowho{grid-template-columns:minmax(0,1fr) 5.4rem 2rem}
+.line.sal{grid-template-columns:minmax(0,1fr) 5rem 5rem auto 2rem}
+.line.obj{grid-template-columns:minmax(0,1fr) 4rem 4rem 4.6rem 2rem}
+.line.ach{grid-template-columns:minmax(0,1fr) 4.6rem 4.6rem 4.8rem 2rem}
+.line.acc{display:flex;flex-wrap:wrap}.acc .lab{flex:1 1 38%}.acc .f:not(.lab):not(.bk){flex:0 0 5.4rem;width:5.4rem}.acc .calc,.acc select{flex:0 0 5.4rem}.acc .bk{flex:0 0 5rem;width:5rem}
+.colh{display:grid;grid-template-columns:minmax(0,1fr) 4.6rem 4.6rem 4.8rem 2rem;gap:6px;font-size:.78rem;color:var(--mu);margin-bottom:2px}
+.calc{display:block;text-align:right;padding:8px 4px;font-weight:600;color:var(--mu)}
+.x{border:0;background:transparent;color:var(--mu);font-size:1.3rem;line-height:1;width:2rem;height:2rem;border-radius:8px;cursor:pointer}.x:active{background:var(--in)}
+.add{border:1px dashed var(--ln);background:transparent;color:var(--ac);font:inherit;font-weight:600;padding:9px;border-radius:10px;width:100%;margin-top:4px;cursor:pointer}
+.add:active,.btn:active,.tab:active{transform:scale(.97)}
+.btn{display:inline-block;border:1px solid var(--ln);background:var(--sf);color:var(--ink);font:inherit;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;text-align:center}
+.btn.pri{background:var(--ac);color:var(--bg);border-color:var(--ac)}.btn.danger{color:var(--neg);border-color:var(--neg)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.form{display:grid;gap:8px}.form label,.grid3 label,.inl3 label{display:grid;gap:3px;font-size:.82rem;color:var(--mu)}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(6.5rem,1fr));gap:8px;margin-bottom:6px}
+.inl{display:flex;align-items:center;gap:8px;margin:8px 0}.inl>span{color:var(--mu);font-size:.9rem;flex:none}.inl .f{width:8.5rem}.inl em{color:var(--mu);font-style:normal}
+.inl3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.chk{display:flex;align-items:center;gap:4px;font-size:.78rem;color:var(--mu)}.chk input{width:20px;height:20px;accent-color:var(--ac)}
+.yrs{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(4,minmax(0,1fr)) 2rem;gap:5px;align-items:center;margin-bottom:5px}.yrs b{font-size:.82rem;text-align:right;padding-right:4px}.yrs .f{padding:8px 4px;text-align:right}.yrs .lab{text-align:left}.yrs.tot{border-top:1px solid var(--ln);padding-top:6px}
+.asset{border-top:1px solid var(--ln);padding:10px 0;margin-top:8px}.ahead{display:grid;grid-template-columns:1fr 2rem;gap:6px}.isin{margin:4px 0 6px}.isin .f{font-size:.85rem}
+details{margin-top:8px}summary{cursor:pointer;color:var(--ac);font-weight:600;padding:6px 0}
+.lot{display:grid;grid-template-columns:8.5rem 1fr 1fr 2rem;gap:6px;margin-bottom:5px}
+.three{display:grid;gap:12px}.simu{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:14px}.simu h3 .f{width:6rem}
+.yr{font-size:1rem;font-weight:700;max-width:9rem}
+.warnbox{border:1px solid var(--neg);border-radius:10px;padding:10px;margin-top:8px}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:center;background:var(--sf);border-top:1px solid var(--ln);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.nav .tab{flex:1;max-width:150px}
+.tab{border:0;background:transparent;color:var(--mu);font:inherit;font-size:.72rem;display:grid;justify-items:center;gap:2px;padding:6px 2px;border-radius:10px;cursor:pointer}
+.tab svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tab.on{color:var(--ac);font-weight:700}
+.sheet{position:fixed;inset:0;z-index:7;background:rgba(0,0,0,.35);display:flex;align-items:flex-end}.sheetin{width:100%;max-width:760px;margin:0 auto;background:var(--sf);border-radius:16px 16px 0 0;padding:12px 12px calc(84px + env(safe-area-inset-bottom));display:grid;gap:8px}
+.sheetin button{font:inherit;font-weight:600;color:var(--ink);background:var(--in);border:1px solid var(--ln);border-radius:10px;padding:14px;text-align:left}
+#toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(12px);opacity:0;pointer-events:none;background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:.9rem;transition:opacity .2s cubic-bezier(.23,1,.32,1),transform .2s cubic-bezier(.23,1,.32,1);z-index:9;max-width:90vw}
+#toast.show{opacity:1;transform:translateX(-50%)}
+@media (hover:hover){.add:hover,.btn:hover{border-color:var(--ac)}.x:hover{color:var(--neg)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (min-width:640px){main{padding:16px}.three{grid-template-columns:repeat(3,1fr)}}
+</style></head>
+<body><div id="app"></div>
+<script>
+/* ===== Logique pure : aucun accès au DOM ===== */
+const EMPTY_STATE = () => ({
+  app: 'comptes-couple', schema: 1,
+  settings: {
+    noms: { a: 'Moi', b: 'Conjoint·e' },
+    impotTaux: { a: 0, b: 0 },
+    taxes: { pea: 0.828, av: 0.828, cto: 0.7 },
+    livretA: 0.015,
+    credit: { mensualite: 0, nbMois: 0, debut: '' },
+    vacancesDebut: '',
+    reventeOr: 0.8,
+    simu: { plafond: 0.35, duree: 25, taux: [0.03, 0.035, 0.04] },
+    cours: { orOnce: 0, argentOnce: 0, date: '' }
+  },
+  salaires: [], quotidien: [], loisirs: [], vacances: [], virements: [], comptes: [],
+  interets: { annees: [new Date().getFullYear()], lignes: [] },
+  placements: {
+    peaA: { titre: 'PEA', who: 'a', retrait: '', taxe: 'pea', virements: [], actifs: [] },
+    ctoA: { titre: 'Compte-titres', who: 'a', taxe: 'cto', especes: 0, actifs: [] },
+    avA: { titre: 'Assurance vie', who: 'a', retrait: '', taxe: 'av', fondsEuros: { investi: 0, taux: 0 }, actifs: [] },
+    peaB: { titre: 'PEA', who: 'b', retrait: '', taxe: 'pea', virements: [], actifs: [] },
+    objets: []
+  },
+  achats: [{ annee: String(new Date().getFullYear()), items: [] }]
+});
+
+const num = v => { const n = parseFloat(String(v ?? '').replace(/\s/g, '').replace(',', '.')); return isFinite(n) ? n : 0; };
+const sum = (arr, f = x => x) => arr.reduce((s, x) => s + (f(x) || 0), 0);
+
+function monthsBetween(fromISO, to) { // équivalent DATEDIF(..., "m")
+  if (!fromISO) return 0;
+  const f = new Date(fromISO + (fromISO.length === 7 ? '-01' : ''));
+  let m = (to.getFullYear() - f.getFullYear()) * 12 + (to.getMonth() - f.getMonth());
+  if (to.getDate() < f.getDate()) m--;
+  return Math.max(0, m);
+}
+
+function calcPlacement(p, cfg, now) {
+  const taxe = cfg.taxes[p.taxe] ?? 1;
+  const actifs = (p.actifs || []).map(a => {
+    const qty = sum(a.lots || [], l => num(l.qty));
+    const cout = sum(a.lots || [], l => (l.montant !== undefined && l.montant !== '' && l.montant !== null) ? num(l.montant) : num(a.pru) * num(l.qty));
+    const valeur = num(a.cours) * qty;
+    return { ...a, qty, cout, valeur, pruCalc: qty ? cout / qty : 0, pv: valeur - cout };
+  });
+  const valeurActifs = sum(actifs, a => a.valeur);
+  const coutActifs = sum(actifs, a => a.cout);
+  const hasVirt = Array.isArray(p.virements);
+  const investi = hasVirt ? sum(p.virements, v => num(v.montant)) : coutActifs;
+  const especes = hasVirt ? investi - coutActifs : num(p.especes);
+  let fonds = 0, fondsInvesti = 0;
+  if (p.fondsEuros) { fondsInvesti = num(p.fondsEuros.investi); fonds = fondsInvesti; }
+  const investiTotal = investi + fondsInvesti;
+  // PEA : les espèces sont déjà dans la plus-value ; CTO : espèces à part (comme l'Excel)
+  const pv = hasVirt ? valeurActifs + especes - investi : valeurActifs - investi;
+  const pvNet = pv > 0 ? pv * taxe : pv;
+  const totalApresImpot = hasVirt ? investi + pvNet : investiTotal + pvNet + (p.especes ? num(p.especes) : 0);
+  const totalBrut = valeurActifs + fonds + (hasVirt ? especes : num(p.especes));
+  const premier = hasVirt ? (p.virements.map(v => v.date).sort()[0] || '') : ((actifs.flatMap(a => (a.lots || []).map(l => l.date))).sort()[0] || '');
+  const jours = premier ? Math.max(1, (now - new Date(premier + '-01')) / 864e5) : 0;
+  const rendement = investiTotal ? pv / investiTotal : 0;
+  return { actifs, valeurActifs, coutActifs, investi: investiTotal, especes, pv, pvNet, totalBrut, totalApresImpot, rendement,
+           annualise: jours ? rendement / jours * 365 : 0, premier,
+           retraitMois: p.retrait ? Math.max(0, monthsBetween(now.toISOString().slice(0, 10), new Date(p.retrait))) : null };
+}
+
+function calc(S, now = new Date()) {
+  const cfg = S.settings, R = { cfg };
+  // --- Revenus
+  R.brut = { a: 0, b: 0 }; R.imposable = { a: 0, b: 0 };
+  S.salaires.forEach(s => { R.brut[s.who] += num(s.montant); if (s.imposable) R.imposable[s.who] += num(s.montant); });
+  R.impots = { a: R.imposable.a * num(cfg.impotTaux.a), b: R.imposable.b * num(cfg.impotTaux.b) };
+  R.part = { a: R.brut.a - R.impots.a, b: R.brut.b - R.impots.b };
+  R.brutTotal = R.brut.a + R.brut.b;
+  R.net = R.part.a + R.part.b;
+  R.ratio = { a: R.net ? R.part.a / R.net : 0.5, b: R.net ? R.part.b / R.net : 0.5 };
+  // --- Vacances (moyenne mensuelle depuis la date de départ)
+  R.vacTotal = sum(S.vacances, v => num(v.montant));
+  let moisVac = 0;
+  if (cfg.vacancesDebut) {
+    const d = new Date(cfg.vacancesDebut);
+    moisVac = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()) + now.getDate() / 30;
+  }
+  R.vacMois = moisVac; R.vacMoy = moisVac > 0 ? R.vacTotal / moisVac : 0;
+  const lig = l => l.auto === 'vacances' ? R.vacMoy : num(l.montant);
+  // --- Dépenses
+  const split = list => {
+    const t = { tot: 0, a: 0, b: 0, commun: 0 };
+    list.forEach(l => { const m = lig(l); t.tot += m; if (l.who === 'a') t.a += m; else if (l.who === 'b') t.b += m; else t.commun += m; });
+    t.parA = t.commun * R.ratio.a + t.a; t.parB = t.commun * R.ratio.b + t.b; return t;
+  };
+  R.quot = split(S.quotidien); R.loisirs = split(S.loisirs);
+  R.cible = { besoins: R.net * 0.5, envies: R.net * 0.3, epargne: R.net * 0.2 };
+  R.reste = R.net - R.quot.tot - R.loisirs.tot;
+  R.dispo = { a: R.part.a - R.quot.parA - R.loisirs.parA, b: R.part.b - R.quot.parB - R.loisirs.parB };
+  // --- Virements vers le compte commun
+  R.virements = { a: sum(S.virements, v => num(v.montant) * R.ratio.a), b: sum(S.virements, v => num(v.montant) * R.ratio.b) };
+  R.virementsTot = sum(S.virements, v => num(v.montant));
+  // --- Placements
+  R.pl = {};
+  ['peaA', 'ctoA', 'avA', 'peaB'].forEach(k => R.pl[k] = calcPlacement(S.placements[k], cfg, now));
+  const or = num(cfg.cours.orOnce) / 31.1035;
+  R.objets = S.placements.objets.map(o => ({ ...o, valeur: or * num(o.grammes) * num(o.titre) }));
+  R.objetsBrut = sum(R.objets, o => o.valeur); R.objetsNet = R.objetsBrut * num(cfg.reventeOr);
+  // --- Crédit auto : reste à payer
+  const c = cfg.credit;
+  R.creditReste = -Math.max(0, (num(c.nbMois) - monthsBetween(c.debut, now)) * num(c.mensualite));
+  // --- Comptes
+  const val = k => k === 'peaA' ? R.pl.peaA.totalApresImpot : k === 'peaB' ? R.pl.peaB.totalApresImpot :
+    k === 'ctoA' ? R.pl.ctoA.totalApresImpot : k === 'avA' ? R.pl.avA.totalApresImpot : k === 'objets' ? R.objetsNet : k === 'credit' ? R.creditReste : 0;
+  R.comptes = S.comptes.map(c => ({ ...c, valeur: c.auto ? val(c.auto) : num(c.montant) }));
+  R.patrimoine = sum(R.comptes, c => c.valeur);
+  R.parPersonne = { a: sum(R.comptes.filter(c => c.who === 'a'), c => c.valeur), b: sum(R.comptes.filter(c => c.who === 'b'), c => c.valeur) };
+  R.apport = sum(R.comptes.filter(c => c.apport !== false), c => c.valeur);
+  R.pvTotale = sum(Object.values(R.pl), p => p.pvNet); R.investiTotal = sum(Object.values(R.pl), p => p.investi);
+  // --- Intérêts
+  R.interets = {};
+  S.interets.annees.forEach(y => R.interets[y] = sum(S.interets.lignes, l => num((l.v || {})[y])));
+  // --- Achats / ventes
+  R.achats = S.achats.map(y => ({ annee: y.annee, achats: sum(y.items, i => num(i.achat)), ventes: sum(y.items, i => num(i.vente)) }));
+  R.achats.forEach(y => y.solde = y.ventes - y.achats);
+  R.achatsSolde = sum(R.achats, y => y.solde);
+  // --- Simulateur d'emprunt (mensualités constantes, formule d'annuité)
+  const sm = cfg.simu; R.simu = { mensualite: R.brutTotal * num(sm.plafond), lignes: [] };
+  sm.taux.forEach(t => {
+    const n = num(sm.duree) * 12, r = num(t) / 12;
+    const cap = R.simu.mensualite * (r ? (1 - Math.pow(1 + r, -n)) / r : n);
+    R.simu.lignes.push({ taux: num(t), capital: cap, interets: R.simu.mensualite * n - cap, avecApport: cap + R.apport });
+  });
+  return R;
+}
+
+if (typeof module !== 'undefined') module.exports = { EMPTY_STATE, calc, num, monthsBetween };
+
+</script>
+<script>
+/* ===== Interface ===== */
+const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const eur = (v, d = 0) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: d, minimumFractionDigits: d }).format(v || 0);
+const pc = (v, d = 1) => new Intl.NumberFormat('fr-FR', { style: 'percent', maximumFractionDigits: d }).format(v || 0);
+const dec = v => (v === undefined || v === null || v === '') ? '' : String(Math.round(v * 10000) / 10000).replace('.', ',');
+
+let S = EMPTY_STATE(), R = null, view = 'accueil', moreOpen = false;
+let meta = { sha: '', dirty: false, at: '' }, sync = { state: 'off', msg: '' };
+const cfgDefault = { owner: '', repo: '', path: 'budget/donnees.enc.json', branch: 'main', token: '', pass: '' };
+let CFG = Object.assign({}, cfgDefault, JSON.parse(LS.get('cc.cfg') || '{}'));
+
+const N = k => (S.settings.noms[k] || k);
+const get = (o, p) => p.split('.').reduce((x, k) => x == null ? x : x[k], o);
+const set = (o, p, v) => { const ks = p.split('.'); const last = ks.pop(); const t = ks.reduce((x, k) => x[k], o); t[last] = v; };
+
+/* ---------- Persistance locale + synchro ---------- */
+function saveLocal() { LS.set('cc.state', JSON.stringify(S)); LS.set('cc.meta', JSON.stringify(meta)); }
+function loadLocal() {
+  try { const s = LS.get('cc.state'); if (s) S = Object.assign(EMPTY_STATE(), JSON.parse(s)); } catch (e) {}
+  try { const m = LS.get('cc.meta'); if (m) meta = Object.assign(meta, JSON.parse(m)); } catch (e) {}
+}
+const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s); };
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function deriveKey(pass, salt, iter) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function encrypt(text, pass) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), iter = 250000;
+  const key = await deriveKey(pass, salt, iter);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(text)));
+  return JSON.stringify({ v: 1, kdf: 'PBKDF2-SHA256', iter, salt: b64(salt), iv: b64(iv), ct: b64(ct) });
+}
+async function decrypt(envelope, pass) {
+  const e = JSON.parse(envelope); const key = await deriveKey(pass, unb64(e.salt), e.iter);
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(e.iv) }, key, unb64(e.ct));
+  return new TextDecoder().decode(pt);
+}
+const cfgOK = () => CFG.owner && CFG.repo && CFG.path && CFG.token && CFG.pass;
+const ghUrl = () => `https://api.github.com/repos/${encodeURIComponent(CFG.owner)}/${encodeURIComponent(CFG.repo)}/contents/${CFG.path.split('/').map(encodeURIComponent).join('/')}`;
+const ghHead = () => ({ Authorization: 'Bearer ' + CFG.token, Accept: 'application/vnd.github+json' });
+async function ghRead() {
+  const r = await fetch(`${ghUrl()}?ref=${encodeURIComponent(CFG.branch)}&t=${Date.now()}`, { headers: ghHead(), cache: 'no-store' });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error('GitHub ' + r.status + (r.status === 401 ? ' : jeton refusé' : r.status === 403 ? ' : droits insuffisants' : ''));
+  const j = await r.json(); return { sha: j.sha, text: atob(j.content.replace(/\n/g, '')) };
+}
+async function ghWrite(text, sha) {
+  const body = { message: 'Mise à jour ' + new Date().toISOString().slice(0, 16), content: btoa(text), branch: CFG.branch };
+  if (sha) body.sha = sha;
+  const r = await fetch(ghUrl(), { method: 'PUT', headers: { ...ghHead(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error('GitHub ' + r.status + (r.status === 409 || r.status === 422 ? ' : conflit' : ''));
+  return (await r.json()).content.sha;
+}
+function setSync(state, msg = '') { sync = { state, msg }; const el = document.getElementById('syncpill'); if (el) paintPill(el); }
+function paintPill(el) {
+  const map = { off: ['Local', 'off'], ok: ['Synchronisé', 'ok'], dirty: ['Modifié', 'warn'], busy: ['Synchro…', 'warn'], err: ['Erreur', 'bad'], conflict: ['Conflit', 'bad'] };
+  const [t, c] = map[sync.state] || map.off; el.textContent = t; el.className = 'pill ' + c; el.title = sync.msg;
+}
+async function pull(silent) {
+  if (!cfgOK()) return;
+  setSync('busy');
+  try {
+    const rem = await ghRead();
+    if (!rem) { setSync(meta.dirty || S.salaires.length ? 'dirty' : 'off', 'Aucune donnée distante'); if (S.salaires.length) await push(); return; }
+    if (rem.sha === meta.sha) { setSync(meta.dirty ? 'dirty' : 'ok'); if (meta.dirty) schedulePush(); return; }
+    if (meta.dirty) { setSync('conflict', 'La version distante a changé'); render(); return; }
+    S = Object.assign(EMPTY_STATE(), JSON.parse(await decrypt(rem.text, CFG.pass)));
+    meta = { sha: rem.sha, dirty: false, at: new Date().toISOString() }; saveLocal(); setSync('ok'); R = calc(S); render();
+  } catch (e) { setSync('err', e.name === 'OperationError' ? 'Phrase secrète incorrecte' : e.message); if (!silent) toast(sync.msg); }
+}
+async function push(force) {
+  if (!cfgOK()) return;
+  setSync('busy');
+  try {
+    const rem = await ghRead();
+    if (rem && rem.sha !== meta.sha && !force) { setSync('conflict', 'La version distante a changé'); render(); return; }
+    const sha = await ghWrite(await encrypt(JSON.stringify(S), CFG.pass), rem ? rem.sha : undefined);
+    meta = { sha, dirty: false, at: new Date().toISOString() }; saveLocal(); setSync('ok');
+  } catch (e) { setSync('err', e.message); }
+}
+let pushTimer = null;
+function schedulePush() { if (!cfgOK()) return; clearTimeout(pushTimer); pushTimer = setTimeout(() => push(), 1800); }
+function commit() { R = calc(S); meta.dirty = true; saveLocal(); if (cfgOK() && sync.state !== 'conflict') { setSync('dirty'); schedulePush(); } renderKeepFocus(); }
+
+/* ---------- Petits composants ---------- */
+function fld(path, val, o = {}) {
+  const t = o.t || 'num';
+  if (t === 'chk') return `<label class="chk"><input type="checkbox" data-p="${path}" data-t="chk" ${val ? 'checked' : ''}><span>${esc(o.txt || '')}</span></label>`;
+  if (t === 'sel') return `<select class="f" data-p="${path}" data-t="sel" aria-label="${esc(o.label || '')}">${o.opts.map(([v, l]) => `<option value="${esc(v)}" ${v === val ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+  const v = t === 'pct' ? dec((val || 0) * 100) : t === 'num' ? dec(val) : esc(val);
+  const type = o.pw ? 'password' : t === 'month' ? 'month' : t === 'date' ? 'date' : 'text';
+  return `<input class="f ${o.cls || ''}" type="${type}" data-p="${path}" data-t="${t}" value="${v}" ${type === 'text' ? `inputmode="${t === 'text' ? 'text' : 'decimal'}"` : ''} ${o.ph ? `placeholder="${esc(o.ph)}"` : ''} aria-label="${esc(o.label || o.ph || '')}" ${o.ro ? 'readonly' : ''}>`;
+}
+const whoOpts = (shared) => [...(shared ? [['', 'Commun']] : []), ['a', N('a')], ['b', N('b')]];
+function line(list, i, l, o = {}) {
+  const p = `${list}.${i}`;
+  return `<div class="line ${o.who === false ? 'nowho' : ''}">
+    ${fld(p + '.label', l.label, { t: 'text', ph: 'Libellé', cls: 'lab' })}
+    ${l.auto === 'vacances' ? `<span class="calc" title="Calculé depuis Vacances">${eur(R.vacMoy)}</span>` : fld(p + '.montant', l.montant, { ph: '0' })}
+    ${o.who === false ? '' : fld(p + '.who', l.who, { t: 'sel', opts: whoOpts(o.shared !== false), label: 'Qui' })}
+    ${o.extra || ''}
+    <button class="x" data-del="${p}" aria-label="Supprimer">×</button></div>`;
+}
+const addBtn = (path, txt) => `<button class="add" data-add="${path}">+ ${txt}</button>`;
+const sec = (title, body, right = '') => `<section class="sec"><header><h2>${title}</h2>${right ? `<span class="tot">${right}</span>` : ''}</header>${body}</section>`;
+const kv = (k, v, cls = '') => `<div class="kv"><span>${k}</span><b class="${cls}">${v}</b></div>`;
+const sign = v => v < 0 ? 'neg' : 'pos';
+
+/* ---------- Écrans ---------- */
+function vAccueil() {
+  if (!S.salaires.length) return `<section class="sec empty"><h2>Bienvenue</h2><p>Aucune donnée pour l'instant. Va dans <b>Réglages</b> pour importer ton fichier de départ, ou commence par ajouter les salaires dans <b>Budget</b>.</p></section>`;
+  const pct = v => Math.max(0, Math.min(100, v / R.net * 100));
+  const q = pct(R.quot.tot), l = pct(R.loisirs.tot), r = Math.max(0, 100 - q - l);
+  const person = k => `<div class="person p${k}"><h3>${esc(N(k))} <small>${pc(R.ratio[k], 0)} du foyer</small></h3>
+    ${kv('Net', eur(R.part[k]))}${kv('Quotidien', '− ' + eur(k === 'a' ? R.quot.parA : R.quot.parB))}${kv('Loisirs', '− ' + eur(k === 'a' ? R.loisirs.parA : R.loisirs.parB))}
+    ${kv('Reste', eur(R.dispo[k]), sign(R.dispo[k]))}${kv('Virement compte commun', eur(R.virements[k]))}</div>`;
+  const yrs = S.interets.annees.filter(y => R.interets[y]).map(y => kv('Intérêts ' + y, eur(R.interets[y]))).join('');
+  return `
+  <section class="hero"><div class="big">${eur(R.net)}<small>/mois net du foyer</small></div>
+    <div class="bar" role="img" aria-label="Répartition du budget"><i class="s1" style="width:${q}%"></i><i class="s2" style="width:${l}%"></i><i class="s3" style="width:${r}%"></i>
+      <u style="left:50%" title="Cible quotidien 50 %"></u><u style="left:80%" title="Cible loisirs 30 %"></u></div>
+    <ul class="legend"><li><i class="s1"></i>Quotidien ${eur(R.quot.tot)} <em>${pc(q / 100, 0)} · cible 50 %</em></li>
+      <li><i class="s2"></i>Loisirs ${eur(R.loisirs.tot)} <em>${pc(l / 100, 0)} · cible 30 %</em></li>
+      <li><i class="s3"></i>Reste ${eur(R.reste)} <em>${pc(r / 100, 0)} · cible 20 %</em></li></ul></section>
+  <div class="two">${person('a')}${person('b')}</div>
+  ${sec('Patrimoine', kv('Total', eur(R.patrimoine), 'pos') + kv(N('a'), eur(R.parPersonne.a)) + kv(N('b'), eur(R.parPersonne.b)) +
+    kv('Placements : investi', eur(R.investiTotal)) + kv('Placements : plus-value nette', eur(R.pvTotale), sign(R.pvTotale)) + kv('Apport possible (hors placements)', eur(R.apport)))}
+  ${sec('Achats et ventes', kv('Solde cumulé', eur(R.achatsSolde), sign(R.achatsSolde)) + yrs)}`;
+}
+
+function vBudget() {
+  const sal = S.salaires.map((s, i) => `<div class="line sal">
+    ${fld(`salaires.${i}.label`, s.label, { t: 'text', ph: 'Libellé', cls: 'lab' })}${fld(`salaires.${i}.montant`, s.montant)}
+    ${fld(`salaires.${i}.who`, s.who, { t: 'sel', opts: whoOpts(false) })}
+    ${fld(`salaires.${i}.imposable`, s.imposable, { t: 'chk', txt: 'imp.' })}
+    <button class="x" data-del="salaires.${i}" aria-label="Supprimer">×</button></div>`).join('');
+  const imp = ['a', 'b'].map(k => `<div class="inl"><span>Impôt ${esc(N(k))}</span>${fld(`settings.impotTaux.${k}`, S.settings.impotTaux[k], { t: 'pct' })}<em>= ${eur(R.impots[k])}</em></div>`).join('');
+  const list = (key, o) => S[key].map((l, i) => line(key, i, l, o)).join('');
+  const vac = S.vacances.map((v, i) => line('vacances', i, v, { who: false })).join('');
+  return `
+  ${sec('Revenus', sal + addBtn('salaires', 'Salaire') + imp, eur(R.brutTotal) + ' brut')}
+  ${sec('Quotidien', list('quotidien') + addBtn('quotidien', 'Dépense'), eur(R.quot.tot))}
+  ${sec('Loisirs', list('loisirs') + addBtn('loisirs', 'Loisir'), eur(R.loisirs.tot))}
+  ${sec('Vacances', `<div class="inl"><span>Compté depuis</span>${fld('settings.vacancesDebut', S.settings.vacancesDebut, { t: 'date' })}</div>` + vac + addBtn('vacances', 'Séjour') +
+    kv('Total', eur(R.vacTotal)) + kv('Sur ' + dec(Math.round(R.vacMois * 10) / 10) + ' mois', eur(R.vacMoy) + '/mois'), eur(R.vacTotal))}
+  ${sec('Virements vers le compte commun', list('virements', { who: false }) + addBtn('virements', 'Virement') +
+    kv(esc(N('a')), eur(R.virements.a)) + kv(esc(N('b')), eur(R.virements.b)) + `<p class="hint">Répartis au prorata des salaires nets.</p>`, eur(R.virementsTot))}`;
+}
+
+function vEpargne() {
+  const cc = S.comptes.map((c, i) => {
+    const auto = c.auto ? `<span class="calc" title="Calculé">${eur(R.comptes[i].valeur)}</span>` : fld(`comptes.${i}.montant`, c.montant);
+    return `<div class="line acc">${fld(`comptes.${i}.label`, c.label, { t: 'text', cls: 'lab' })}${auto}
+      ${fld(`comptes.${i}.who`, c.who, { t: 'sel', opts: whoOpts(true) })}
+      ${fld(`comptes.${i}.banque`, c.banque, { t: 'text', ph: 'Banque', cls: 'bk' })}
+      ${fld(`comptes.${i}.apport`, c.apport !== false, { t: 'chk', txt: 'apport' })}
+      <button class="x" data-del="comptes.${i}" aria-label="Supprimer">×</button></div>`;
+  }).join('');
+  const cr = S.settings.credit;
+  const credit = `<div class="inl3"><label>Mensualité${fld('settings.credit.mensualite', cr.mensualite)}</label><label>Nb mois${fld('settings.credit.nbMois', cr.nbMois)}</label><label>Début${fld('settings.credit.debut', cr.debut, { t: 'date' })}</label></div>`;
+  const yrs = S.interets.annees;
+  const head = `<div class="yrs"><span></span>${yrs.map(y => `<b>${y}</b>`).join('')}</div>`;
+  const rows = S.interets.lignes.map((l, i) => `<div class="yrs">${fld(`interets.lignes.${i}.label`, l.label, { t: 'text', cls: 'lab' })}
+     ${yrs.map(y => fld(`interets.lignes.${i}.v.${y}`, (l.v || {})[y], { ph: '–' })).join('')}<button class="x" data-del="interets.lignes.${i}">×</button></div>`).join('');
+  const tot = `<div class="yrs tot"><span>Total</span>${yrs.map(y => `<b>${eur(R.interets[y])}</b>`).join('')}</div>`;
+  return `${sec('Comptes', cc + addBtn('comptes', 'Compte') + kv(esc(N('a')), eur(R.parPersonne.a)) + kv(esc(N('b')), eur(R.parPersonne.b)) + `<p class="hint">Les lignes « calculé » viennent de l'écran Placements. « apport » = compte compté dans l'apport du simulateur.</p>`, eur(R.patrimoine))}
+   ${sec('Crédit auto : reste à payer', credit + kv('Reste', eur(R.creditReste), 'neg'))}
+   ${sec('Intérêts par an', head + rows + tot + addBtn('interets.lignes', 'Compte') + `<button class="add" data-addyear>+ Année</button>`)}`;
+}
+
+function placeBlock(key) {
+  const p = S.placements[key], c = R.pl[key], hasVirt = Array.isArray(p.virements);
+  const actifs = c.actifs.map((a, i) => {
+    const base = `placements.${key}.actifs.${i}`;
+    const lots = (a.lots || []).map((l, j) => `<div class="lot">${fld(`${base}.lots.${j}.date`, l.date, { t: 'month' })}${fld(`${base}.lots.${j}.qty`, l.qty, { ph: 'Qté' })}
+      ${hasVirt ? '' : fld(`${base}.lots.${j}.montant`, l.montant, { ph: '€ payés' })}<button class="x" data-del="${base}.lots.${j}">×</button></div>`).join('');
+    return `<div class="asset"><div class="ahead">${fld(base + '.nom', a.nom, { t: 'text', cls: 'lab' })}<button class="x" data-del="${base}">×</button></div>
+      <div class="isin">${fld(base + '.isin', a.isin, { t: 'text', ph: 'ISIN' })}</div>
+      <div class="grid3"><label>Cours${fld(base + '.cours', a.cours)}</label>${hasVirt || p.fondsEuros ? `<label>PRU${fld(base + '.pru', a.pru)}</label>` : `<label>PRU calculé<span class="calc">${dec(a.pruCalc)}</span></label>`}<label>Quantité<span class="calc">${dec(a.qty)}</span></label></div>
+      ${kv('Valeur', eur(a.valeur, 2))}${kv('Plus-value', eur(a.pv, 2), sign(a.pv))}
+      <details><summary>Achats (${(a.lots || []).length})</summary>${lots}${addBtn(base + '.lots', 'Achat')}</details></div>`;
+  }).join('');
+  const virt = hasVirt ? `<details><summary>Virements versés (${p.virements.length})</summary>${p.virements.map((v, j) => `<div class="lot">${fld(`placements.${key}.virements.${j}.date`, v.date, { t: 'month' })}${fld(`placements.${key}.virements.${j}.montant`, v.montant, { ph: '€' })}<button class="x" data-del="placements.${key}.virements.${j}">×</button></div>`).join('')}${addBtn(`placements.${key}.virements`, 'Virement')}</details>` : '';
+  const fe = p.fondsEuros ? `<div class="inl3"><label>Fonds euros investi${fld(`placements.${key}.fondsEuros.investi`, p.fondsEuros.investi)}</label><label>Taux${fld(`placements.${key}.fondsEuros.taux`, p.fondsEuros.taux, { t: 'pct' })}</label></div>` : '';
+  const esp = (!hasVirt && key === 'ctoA') ? `<div class="inl"><span>Espèces</span>${fld(`placements.${key}.especes`, p.especes)}</div>` : '';
+  const ret = p.retrait !== undefined ? `<div class="inl"><span>Retrait possible le</span>${fld(`placements.${key}.retrait`, p.retrait, { t: 'date' })}${c.retraitMois != null && p.retrait ? `<em>${c.retraitMois >= 12 ? Math.floor(c.retraitMois / 12) + ' an' + (c.retraitMois >= 24 ? 's' : '') + ' ' : ''}${c.retraitMois % 12} mois</em>` : ''}</div>` : '';
+  return sec(`${esc(p.titre)} · ${esc(N(p.who))}`,
+    kv('Investi', eur(c.investi, 2)) + (hasVirt ? kv('Espèces', eur(c.especes, 2)) : '') + kv('Valeur', eur(c.totalBrut, 2)) +
+    kv('Plus-value nette', eur(c.pvNet, 2), sign(c.pvNet)) + kv('Rendement', pc(c.rendement) + ' · ' + pc(c.annualise) + '/an') + kv('Total après impôt', eur(c.totalApresImpot, 2), 'pos') +
+    ret + esp + fe + actifs + addBtn(`placements.${key}.actifs`, 'Actif') + virt, eur(c.totalApresImpot));
+}
+function vPlacements() {
+  const cs = S.settings.cours;
+  const objets = R.objets.map((o, i) => `<div class="line obj">${fld(`placements.objets.${i}.label`, o.label, { t: 'text', cls: 'lab' })}${fld(`placements.objets.${i}.grammes`, o.grammes, { ph: 'g' })}${fld(`placements.objets.${i}.titre`, o.titre, { ph: 'titre' })}<span class="calc">${eur(o.valeur)}</span><button class="x" data-del="placements.objets.${i}">×</button></div>`).join('');
+  return `${sec('Cours (saisie manuelle)', `<div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', cs.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', cs.argentOnce)}</label><label>Date${fld('settings.cours.date', cs.date, { t: 'date' })}</label></div><p class="hint">Les cours des ETF se saisissent sur chaque actif.</p>`)}
+  ${placeBlock('peaA')}${placeBlock('ctoA')}${placeBlock('avA')}${placeBlock('peaB')}
+  ${sec('Objets en or · ' + esc(N('b')), objets + addBtn('placements.objets', 'Objet') + `<div class="inl"><span>Coefficient de revente</span>${fld('settings.reventeOr', S.settings.reventeOr, { t: 'pct' })}</div>` + kv('Valeur brute', eur(R.objetsBrut)) + kv('Après marge de revente', eur(R.objetsNet), 'pos'), eur(R.objetsNet))}`;
+}
+
+function vAchats() {
+  const blocks = S.achats.map((y, i) => {
+    const t = R.achats[i];
+    const items = y.items.map((it, j) => `<div class="line ach">${fld(`achats.${i}.items.${j}.label`, it.label, { t: 'text', cls: 'lab' })}${fld(`achats.${i}.items.${j}.achat`, it.achat, { ph: 'Achat' })}${fld(`achats.${i}.items.${j}.vente`, it.vente, { ph: 'Vente' })}${fld(`achats.${i}.items.${j}.who`, it.who, { t: 'sel', opts: whoOpts(true) })}<button class="x" data-del="achats.${i}.items.${j}">×</button></div>`).join('');
+    return sec(fld(`achats.${i}.annee`, y.annee, { t: 'text', cls: 'yr' }), `<div class="colh"><span></span><span>Achat</span><span>Vente</span></div>` + items + addBtn(`achats.${i}.items`, 'Ligne') + kv('Achats', eur(t.achats)) + kv('Ventes', eur(t.ventes)) + kv('Solde', eur(t.solde), sign(t.solde)), eur(t.solde));
+  }).join('');
+  return blocks + `<button class="add" data-addyearachat>+ Année</button>` + sec('Total', kv('Solde cumulé', eur(R.achatsSolde), sign(R.achatsSolde)));
+}
+
+function vSimu() {
+  const sm = S.settings.simu;
+  const res = R.simu.lignes.map((l, i) => `<div class="simu"><h3>${fld(`settings.simu.taux.${i}`, l.taux, { t: 'pct' })}</h3>${kv('Capital empruntable', eur(l.capital))}${kv('Intérêts sur la durée', eur(l.interets))}${kv('Capital + apport', eur(l.avecApport), 'pos')}</div>`).join('');
+  return sec('Capacité d\'emprunt', `<div class="grid3"><label>Taux d'endettement${fld('settings.simu.plafond', sm.plafond, { t: 'pct' })}</label><label>Durée (ans)${fld('settings.simu.duree', sm.duree)}</label><label>Revenus bruts<span class="calc">${eur(R.brutTotal)}</span></label></div>` +
+    kv('Mensualité maximale', eur(R.simu.mensualite), 'pos') + kv('Apport (comptes liquides)', eur(R.apport)) + `<p class="hint">Calcul par annuité constante. L'ancien Excel multipliait le capital par le taux et la durée, ce qui ne donne pas un vrai coût de crédit.</p>`) +
+    `<div class="three">${res}</div>`;
+}
+
+function vReglages() {
+  const s = S.settings, st = { off: 'Non configurée', ok: 'À jour', dirty: 'Modifications à envoyer', busy: 'En cours', err: 'Erreur : ' + sync.msg, conflict: 'Conflit : version distante différente' }[sync.state];
+  const conflict = sync.state === 'conflict' ? `<div class="warnbox"><b>Deux versions existent.</b><div class="btnrow"><button class="btn" data-act="keeplocal">Garder cet appareil</button><button class="btn" data-act="keepremote">Prendre la version distante</button></div></div>` : '';
+  return `
+  ${sec('Synchronisation chiffrée', `<p class="hint">Les données partent chiffrées (AES-256) vers un dépôt GitHub privé. Le jeton et la phrase secrète restent dans ce navigateur.</p>
+    <div class="form">
+      <label>Compte GitHub${fld('cfg.owner', CFG.owner, { t: 'text', ph: 'ex : mon-compte' })}</label>
+      <label>Dépôt privé${fld('cfg.repo', CFG.repo, { t: 'text', ph: 'nom du dépôt' })}</label>
+      <label>Fichier${fld('cfg.path', CFG.path, { t: 'text' })}</label>
+      <label>Branche${fld('cfg.branch', CFG.branch, { t: 'text' })}</label>
+      <label>Jeton d'accès${fld('cfg.token', CFG.token, { t: 'text', ph: 'github_pat_…', pw: 1 })}</label>
+      <label>Phrase secrète${fld('cfg.pass', CFG.pass, { t: 'text', ph: 'Sans elle, données illisibles', pw: 1 })}</label></div>
+    ${kv('État', esc(st))}${conflict}
+    <div class="btnrow"><button class="btn pri" data-act="syncnow">Synchroniser maintenant</button></div>`)}
+  ${sec('Sauvegarde et import', `<div class="btnrow"><button class="btn" data-act="export">Exporter (fichier lisible)</button><label class="btn">Importer un fichier<input type="file" accept="application/json,.json" data-act="import" hidden></label></div>
+    <p class="hint">Le fichier exporté contient tes chiffres en clair : garde-le hors de tout dossier public.</p>`)}
+  ${sec('Prénoms et fiscalité', `<div class="grid3"><label>Prénom 1${fld('settings.noms.a', s.noms.a, { t: 'text' })}</label><label>Prénom 2${fld('settings.noms.b', s.noms.b, { t: 'text' })}</label></div>
+    <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>
+    <p class="hint">Ces trois taux sont la part qui reste après impôt (0,828 = 17,2 % prélevés). À faire valider par toi : ils étaient écrits en dur dans l'Excel.</p>
+    <div class="grid3"><label>Livret A (comparaison)${fld('settings.livretA', s.livretA, { t: 'pct' })}</label></div>`)}
+  ${sec('Vider cet appareil', `<button class="btn danger" data-act="reset">Effacer les données locales</button><p class="hint">Ne touche pas au dépôt GitHub.</p>`)}`;
+}
+
+const VIEWS = { accueil: ['Accueil', vAccueil], budget: ['Budget', vBudget], epargne: ['Épargne', vEpargne], placements: ['Placements', vPlacements], achats: ['Achats et ventes', vAchats], simu: ['Emprunt', vSimu], reglages: ['Réglages', vReglages] };
+const ICONS = { accueil: 'M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z', budget: 'M4 6h16M4 12h16M4 18h10', epargne: 'M12 3c5 0 8 3 8 7s-3 8-8 8-8-4-8-8 3-7 8-7zm0 5v5m-2-3h4', placements: 'M4 19V9m6 10V5m6 14v-7m4 7H2', more: 'M5 12h.01M12 12h.01M19 12h.01' };
+const tab = (k, label) => `<button class="tab ${view === k ? 'on' : ''}" data-go="${k}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS[k]}"/></svg><span>${label}</span></button>`;
+
+function render() {
+  R = R || calc(S);
+  const [title, fn] = VIEWS[view];
+  document.getElementById('app').innerHTML = `
+  <header class="top"><h1>${title}</h1><span id="syncpill" class="pill off"></span></header>
+  <main>${fn()}</main>
+  <nav class="nav">${tab('accueil', 'Accueil')}${tab('budget', 'Budget')}${tab('epargne', 'Épargne')}${tab('placements', 'Placements')}
+    <button class="tab ${['achats', 'simu', 'reglages'].includes(view) ? 'on' : ''}" data-more><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS.more}"/></svg><span>Plus</span></button></nav>
+  ${moreOpen ? `<div class="sheet" data-close><div class="sheetin"><button data-go="achats">Achats et ventes</button><button data-go="simu">Emprunt</button><button data-go="reglages">Réglages</button></div></div>` : ''}
+  <div id="toast" role="status"></div>`;
+  paintPill(document.getElementById('syncpill'));
+}
+function renderKeepFocus() {
+  setTimeout(() => {
+    const a = document.activeElement, p = a && a.dataset && a.dataset.p, y = window.scrollY;
+    render(); window.scrollTo(0, y);
+    if (p) { const el = document.querySelector(`[data-p="${p}"]`); if (el && el.type !== 'checkbox' && el.tagName !== 'SELECT') try { el.focus({ preventScroll: true }); } catch (e) {} }
+  }, 0);
+}
+function toast(t) { const el = document.getElementById('toast'); if (!el) return; el.textContent = t; el.className = 'show'; setTimeout(() => el.className = '', 3200); }
+
+/* ---------- Événements ---------- */
+const NEW = {
+  salaires: () => ({ label: '', montant: 0, who: 'a', imposable: true }), quotidien: () => ({ label: '', montant: 0, who: '' }), loisirs: () => ({ label: '', montant: 0, who: '' }),
+  vacances: () => ({ label: '', montant: 0 }), virements: () => ({ label: '', montant: 0 }), comptes: () => ({ label: '', banque: '', who: 'a', montant: 0 }),
+  'interets.lignes': () => ({ label: '', who: 'a', v: {} }), 'placements.objets': () => ({ label: '', grammes: 0, titre: 1 })
+};
+function newItem(path) {
+  if (NEW[path]) return NEW[path]();
+  if (/\.actifs$/.test(path)) return { nom: '', isin: '', cours: 0, pru: 0, lots: [] };
+  if (/\.lots$/.test(path)) return { date: new Date().toISOString().slice(0, 7), qty: 0 };
+  if (/\.virements$/.test(path)) return { date: new Date().toISOString().slice(0, 7), montant: 0 };
+  if (/\.items$/.test(path)) return { label: '', achat: 0, vente: 0, who: 'a' };
+  return {};
+}
+document.addEventListener('change', e => {
+  const el = e.target.closest('[data-p]');
+  if (el) {
+    const p = el.dataset.p, t = el.dataset.t; let v;
+    if (t === 'chk') v = el.checked; else if (t === 'sel' || t === 'text' || t === 'month' || t === 'date') v = el.value;
+    else if (t === 'pct') v = num(el.value) / 100; else v = el.value.trim() === '' ? '' : num(el.value);
+    if (p.startsWith('cfg.')) { CFG[p.slice(4)] = v; LS.set('cc.cfg', JSON.stringify(CFG)); render(); return; }
+    set(S, p, v); commit(); return;
+  }
+  if (e.target.dataset && e.target.dataset.act === 'import') importFile(e.target.files[0]);
+});
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button,[data-close]'); if (!t) return;
+  const d = t.dataset, y = window.scrollY;
+  if (d.go) { view = d.go; moreOpen = false; render(); window.scrollTo(0, 0); return; }
+  if ('more' in d) { moreOpen = true; render(); return; }
+  if ('close' in d && e.target === t) { moreOpen = false; render(); return; }
+  if (d.add) { const arr = get(S, d.add); arr.push(newItem(d.add)); commit(); return; }
+  if (d.del) { const ks = d.del.split('.'), i = +ks.pop(); get(S, ks.join('.')).splice(i, 1); commit(); return; }
+  if ('addyear' in d) { const a = S.interets.annees; a.push(a[a.length - 1] + 1); commit(); return; }
+  if ('addyearachat' in d) { S.achats.push({ annee: String(new Date().getFullYear() + S.achats.length), items: [] }); commit(); return; }
+  if (d.act === 'syncnow') { await pull(false); if (sync.state === 'dirty') await push(); if (sync.state === 'ok') toast('Synchronisé'); render(); return; }
+  if (d.act === 'keeplocal') { await push(true); render(); return; }
+  if (d.act === 'keepremote') { meta.dirty = false; meta.sha = ''; await pull(false); render(); return; }
+  if (d.act === 'export') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' })); a.download = 'comptes-couple_donnees_' + new Date().toISOString().slice(0, 10) + '.json'; a.click(); return; }
+  if (d.act === 'reset') { if (confirm('Effacer les données de cet appareil ?')) { LS.del('cc.state'); LS.del('cc.meta'); S = EMPTY_STATE(); meta = { sha: '', dirty: false, at: '' }; R = calc(S); render(); } return; }
+});
+async function importFile(f) {
+  if (!f) return;
+  try {
+    const j = JSON.parse(await f.text());
+    if (j.app !== 'comptes-couple') throw new Error('Ce fichier n\'est pas un fichier de données de l\'appli.');
+    S = Object.assign(EMPTY_STATE(), j); R = calc(S); meta.dirty = true; saveLocal(); view = 'accueil'; render(); toast('Fichier importé'); schedulePush();
+  } catch (e) { toast('Import impossible : ' + e.message); }
+}
+
+/* ---------- Démarrage ---------- */
+loadLocal(); R = calc(S); render();
+if (cfgOK()) pull(true);
+window.addEventListener('online', () => { if (cfgOK()) pull(true); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && cfgOK() && !meta.dirty) pull(true); });
+
+</script></body></html>
