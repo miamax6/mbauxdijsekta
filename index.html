@@ -766,6 +766,7 @@ function vReglages() {
   ${sec('Cours de secours', `<div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', s.cours.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', s.cours.argentOnce)}</label><label>Date${fld('settings.cours.date', s.cours.date, { t: 'date' })}</label></div><div class="inl"><span>Coefficient de revente or</span>${fld('settings.reventeOr', s.reventeOr, { t: 'pct' })}</div>`, '', '', 'Les cours de l\'or, de l\'argent et des cryptos se mettent à jour tout seuls. Ces valeurs ne servent que si le service est injoignable.')}
   ${sec('Prénoms et fiscalité', `<div class="grid3"><label>Prénom 1${fld('settings.noms.a', s.noms.a, { t: 'text' })}</label><label>Prénom 2${fld('settings.noms.b', s.noms.b, { t: 'text' })}</label></div>
     <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>`, '', '', 'Part qui reste après impôt (82,8 % = 17,2 % prélevés). Ces taux étaient écrits en dur dans l\'Excel : à valider.')}
+  ${sec('À propos', kv('Version de l\'appli', APP_BUILD), '', '', 'Si tu ne vois pas une nouveauté, ce numéro te dit quelle version ton appareil affiche.')}
   ${sec('Vider cet appareil', `<button class="btn danger" data-act="reset">Effacer les données locales</button>`, '', '', 'Ne touche pas au dépôt GitHub.')}`;
 }
 
@@ -861,6 +862,7 @@ document.addEventListener('mouseover', e => {
 window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: true });
 
 /* ---------- Cours en direct : or, argent, crypto, ETF ---------- */
+const APP_BUILD = '29092026-c';
 let LIVE_ERR = {}, FMPLOG = [];
 const fmpKey = () => String(S.settings.fmpKey || '').trim();
 const fmpToday = () => new Date().toISOString().slice(0, 10);
@@ -1106,6 +1108,6 @@ document.addEventListener('visibilitychange', () => {
   if (cfgOK() && !meta.dirty) pull(true);
   if (!METALS.date || Date.now() - new Date(METALS.date) > 30 * 60 * 1000) fetchLive();
 });
-try { if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js'); } catch (e) {}
+try { if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }); } catch (e) {}
 
 </script></body></html>
