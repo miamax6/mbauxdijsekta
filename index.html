@@ -165,6 +165,8 @@ button.ct{cursor:pointer}button.ct:active{transform:scale(.97)}
   .mtop>*{margin:0 0 18px}
   .mflow{column-width:340px;column-gap:18px}
   .mflow>*{break-inside:avoid;margin:0 0 18px}
+  .mprods{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px;align-items:start}
+  .mprods>*{margin:0}
   main>.seg,.mtop>.seg{max-width:460px}
   .nav{left:0;top:0;bottom:0;right:auto;width:214px;max-width:none;margin:0;border-radius:0;flex-direction:column;justify-content:flex-start;gap:4px;padding:78px 10px 16px;background:var(--sf);box-shadow:1px 0 0 var(--ln);backdrop-filter:none}
   .nav::before{content:"Comptes du foyer";position:absolute;top:24px;left:22px;font-weight:800;font-size:1.05rem;letter-spacing:-.01em}
@@ -213,6 +215,11 @@ small.mu{color:var(--mu)!important;font-weight:600}
 .hchips .ci{cursor:help}.hchips span[data-tip]{cursor:default}
 .lleg{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 2px;font-size:.78rem;color:var(--mu)}.lleg span{display:inline-flex;align-items:center;gap:6px}.lleg i{width:10px;height:10px;border-radius:50%;display:inline-block}
 .lleg b{color:var(--ink)}
+
+/* ---- v6 : sablier « retrait possible » (plus petit que le i, placé en haut) ---- */
+.ht .hg{align-self:flex-start;margin:2px 0 0 -2px;font-size:.6rem;line-height:1;cursor:help;user-select:none;filter:saturate(.85)}
+
+.chg{white-space:nowrap}
 </style></head>
 <body><div id="app"></div>
 <script>
@@ -600,12 +607,12 @@ function lineChart(pts, now) {
   const d = pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join(' ');
   const area = `${d} L${x(n - 1)},${H - pad} L${x(0)},${H - pad} Z`;
   const lab = m => { const [Y, M] = m.split('-'); return ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'][+M - 1] + ' ' + Y.slice(2); };
-  const last = pts[n - 1].v, gain = now ? now.value - last : 0;
+  const last = pts[n - 1].v, gain = now ? now.value - last : 0, lblV = now && now.net ? 'nette' : 'brute';
   const extra = now ? `<line x1="${x(n - 1)}" x2="${x(n - 1)}" y1="${y(last)}" y2="${y(now.value)}" stroke="${gain >= 0 ? '#2a8562' : '#b8483d'}" stroke-width="2.5" stroke-dasharray="3 3"/><circle cx="${x(n - 1)}" cy="${y(now.value)}" r="5.5" fill="${gain >= 0 ? '#2a8562' : '#b8483d'}"/>` : '';
   return `<svg class="line" viewBox="0 0 ${W} ${H}" role="img" aria-label="Argent investi et valeur actuelle"><defs><linearGradient id="lg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3f7691" stop-opacity=".4"/><stop offset="1" stop-color="#3f7691" stop-opacity="0"/></linearGradient></defs>
     <path d="${area}" fill="url(#lg)"/><path d="${d}" fill="none" stroke="#3f7691" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${extra}<circle cx="${x(n - 1)}" cy="${y(last)}" r="5" fill="#3f7691"/></svg>
     <div class="lax"><span>${lab(pts[0].m)}</span><span>${lab(pts[n - 1].m)}</span></div>
-    <div class="lleg"><span><i style="background:#3f7691"></i>Investi <b>${eur(last)}</b></span>${now ? `<span><i style="background:${gain >= 0 ? '#2a8562' : '#b8483d'}"></i>Valeur brute aujourd'hui <b>${eur(now.value)}</b></span><span>Plus-value brute <b class="${gain >= 0 ? 'pos' : 'neg'}">${gain >= 0 ? '+' : ''}${eur(gain)}</b></span>` : ''}</div>`;
+    <div class="lleg"><span><i style="background:#3f7691"></i>Investi <b>${eur(last)}</b></span>${now ? `<span><i style="background:${gain >= 0 ? '#2a8562' : '#b8483d'}"></i>Valeur ${lblV} aujourd'hui <b>${eur(now.value)}</b></span><span>Plus-value ${lblV} <b class="${gain >= 0 ? 'pos' : 'neg'}">${gain >= 0 ? '+' : ''}${eur(gain)}</b></span>` : ''}</div>`;
 }
 function gauge(reel, cible, lower, tip) {
   const ratio = cible > 0 ? reel / cible : 0, w = Math.max(0, Math.min(100, ratio * 100)), ok = lower ? reel <= cible : reel >= cible;
@@ -746,12 +753,12 @@ function placeBlock(key) {
     <div class="pm1" data-tip="Plus-value brute ÷ argent investi, avant impôt.\n${eur(c.pv)} ÷ ${eur(c.investi)}."><small>Rendement total</small><b class="${sign(c.rendement)}">${signed(c.rendement)} ${moji(c.rendement)}</b></div>
     <div class="pm1" data-tip="Taux annuel qui tient compte de la date de chaque versement (méthode XIRR d'Excel).\nAvec des versements progressifs, il est plus haut que « total ÷ durée ».\nSur peu de recul, il varie beaucoup."><small>Par an (pondéré)</small><b class="${sign(c.xirr)}">${signed(c.xirr)} ${moji(c.xirr)}</b></div>
     <div class="pm1" data-tip="Plus-value après impôt à la sortie (tu en conserves ${pc(taxe, 1)}).\n${eur(c.pvNet)} ÷ ${eur(c.investi)} = ${signed(netRend)}."><small>Plus-value nette</small><b class="${sign(c.pvNet)}">${eur(c.pvNet)} ${moji(netRend)}</b></div></div>`;
-  const retrait = p.retrait && c.retraitMois != null ? kv('Retrait possible', c.retraitMois > 0 ? `${dureeTxt(c.retraitMois)} · ${moisAnnee(p.retrait)}` : 'maintenant', '', 'Date à partir de laquelle le retrait est possible sans perdre l\'avantage fiscal.') : '';
+  const hg = p.retrait && c.retraitMois != null ? `<span class="hg" data-tip="${esc(c.retraitMois > 0 ? 'Retrait possible dans ' + dureeTxt(c.retraitMois) + ' (' + moisAnnee(p.retrait) + ').' : 'Retrait possible dès maintenant.')}\nDate à partir de laquelle le retrait est possible sans perdre l'avantage fiscal." aria-label="Retrait possible">⏳</span>` : '';
   const assets = c.actifs.map((a, i) => assetRow(key, i, a, c.valeurActifs)).join('');
   const last = hasVirt && p.virements.length ? p.virements[p.virements.length - 1] : null;
-  return `<section class="sec prod"><header><div class="ht"><h2>${esc(p.titre)}</h2></div><span class="tot">${eur(c.totalApresImpot)}</span></header>
+  return `<section class="sec prod"><header><div class="ht"><h2>${esc(p.titre)}</h2>${hg}</div><span class="tot">${eur(c.totalApresImpot)}</span></header>
     ${tiles}
-    <div class="dl">${kv('Investi', eur(c.investi, 2))}${hasVirt ? kv('Espèces en attente', eur(c.especes, 2), '', 'Argent versé sur le compte mais pas encore investi : versements − achats. Calculé tout seul.') : ''}${kv('Valeur brute', eur(c.totalBrut, 2))}${retrait}</div>
+    <div class="dl">${kv('Investi', eur(c.investi, 2))}${hasVirt ? kv('Espèces en attente', eur(c.especes, 2), '', 'Argent versé sur le compte mais pas encore investi : versements − achats. Calculé tout seul.') : ''}${kv('Valeur nette', eur(c.totalApresImpot, 2), '', 'Après impôt sur la plus-value (tu en conserves ' + pc(taxe, 1) + '). Valeur brute avant impôt : ' + eur(c.totalBrut, 2) + '.')}</div>
     <h4 class="sub">Actifs</h4>${assets}
     <div class="addw">${addPill(`data-add="placements.${key}.actifs"`, 'Actif')}</div>
     ${hasVirt ? `<button class="add ghost" data-qv="placements.${key}.virements">+ Versement du mois${last ? ' (' + eur(num(last.montant)) + ')' : ''}</button><button class="add ghost" data-edit="placements.${key}.virements">Tous les versements (${p.virements.length})</button>` : ''}
@@ -785,7 +792,7 @@ function vPlacements() {
   <section class="hero small"><small>Plus-value nette · ${nm(P)}</small><div class="big">${eur(pp.pvNet)}</div>
     <div class="hchips">${chipT(signed(pp.rendement) + ' net', 'Plus-value nette ÷ argent investi.')}${chipT(signed(pp.xirrNet) + ' par an (pondéré)', 'Taux annuel après impôt, en tenant compte de la date de chaque versement (méthode XIRR). Sur peu de recul, il varie beaucoup.')}${chipT('Investi ' + eur(pp.investi), tInv)}${chipT('Valeur nette ' + eur(net), tNet)}</div></section>
   ${rep.length ? sec('Répartition de mes actifs', donut(rep, { center: eur(sum(rep, x => x.v)), top: 'valeur brute', label: 'Répartition des actifs' }), '', 'enter', 'Part de chaque actif dans la valeur de tes placements (espèces en attente et fonds euros compris) : sert à rééquilibrer. Touche une part pour voir son pourcentage.') : ''}
-  ${R.seriePers[P].length > 1 ? sec('Argent investi et valeur actuelle', lineChart(R.seriePers[P], { value: sum(keys, k => R.pl[k].totalBrut) }), '', 'enter', 'La courbe montre les versements cumulés (réels). L\'historique des valeurs passées n\'est pas enregistré : seule la valeur d\'aujourd\'hui est marquée, l\'écart avec la courbe est la plus-value brute.') : ''}
+  ${R.seriePers[P].length > 1 ? sec('Argent investi et valeur actuelle', lineChart(R.seriePers[P], { value: sum(keys, k => R.pl[k].totalApresImpot), net: true }), '', 'enter', 'La courbe montre les versements cumulés (réels). L\'historique des valeurs passées n\'est pas enregistré : seule la valeur nette d\'aujourd\'hui (après impôt à la sortie) est marquée ; l\'écart avec la courbe est la plus-value nette.') : ''}
   ${parProd.length > 1 ? sec('Rendement par placement', hbars(parProd), '', '', 'Rendement total avant impôt de chaque placement.') : ''}
   ${keys.map(k => placeBlock(k)).join('')}${objBlock}`;
 }
@@ -888,9 +895,9 @@ const isDesk = () => window.matchMedia('(min-width: 900px)').matches;
 function layoutMain(html) {
   if (!isDesk()) return html;
   const d = document.createElement('div'); d.innerHTML = html;
-  const top = [], flow = [];
-  [...d.children].forEach(el => (/\b(hero|seg|cours|cats|two)\b/.test(el.className) ? top : flow).push(el.outerHTML));
-  return `<div class="mtop">${top.join('')}</div><div class="mflow">${flow.join('')}</div>`;
+  const top = [], flow = [], prods = [];
+  [...d.children].forEach(el => (/\b(hero|seg|cours|cats|two)\b/.test(el.className) ? top : /\bprod\b/.test(el.className) ? prods : flow).push(el.outerHTML));
+  return `<div class="mtop">${top.join('')}</div>${flow.length ? `<div class="mflow">${flow.join('')}</div>` : ''}${prods.length ? `<div class="mprods">${prods.join('')}</div>` : ''}`;
 }
 let wasDesk = isDesk();
 window.addEventListener('resize', () => { const d = isDesk(); if (d !== wasDesk) { wasDesk = d; render(); } });
@@ -943,7 +950,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 /* ---------- Cours : une seule source, le relais du dépôt privé (budget/cours.json) ---------- */
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '29092026-h';
+const APP_BUILD = '29092026-i';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
