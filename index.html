@@ -676,10 +676,10 @@ function coursPanel(P, keys) {
     tiles.push(`<div class="ct gold"><span>Or (once)</span><b>${eur(num(R.cours.orOnce))}</b><em>${auto ? 'auto' : 'secours'}</em></div>`);
     if (num(R.cours.argentOnce)) tiles.push(`<div class="ct gold"><span>Argent (once)</span><b>${eur(num(R.cours.argentOnce), 2)}</b><em>${auto ? 'auto' : 'secours'}</em></div>`);
   }
-  if (hasCrypto(P) && CRYPTO.btc) [['Bitcoin', CRYPTO.btc], ['Ethereum', CRYPTO.eth], ['Solana', CRYPTO.sol]].forEach(([n, v]) => { if (v) tiles.push(`<div class="ct crypto"><span>${n}</span><b>${eur(v, v < 100 ? 2 : 0)}</b><em>auto</em></div>`); });
+  if (hasCrypto(P) && (CRYPTO.btc || CRYPTO.eth || CRYPTO.sol)) [['Bitcoin', CRYPTO.btc], ['Ethereum', CRYPTO.eth], ['Solana', CRYPTO.sol]].forEach(([n, v]) => { if (v) tiles.push(`<div class="ct crypto"><span>${n}</span><b>${eur(v, v < 100 ? 2 : 0)}</b><em>auto</em></div>`); });
   const errs = Object.entries(LIVE_ERR).filter(([, m]) => m);
   const st = metalsState === 'busy' ? 'mise à jour…' : (auto ? 'dernière mise à jour : ' + fmt(METALS.date) : 'cours de secours (Réglages)');
-  const asked = hasCrypto(P) && !CRYPTO.btc && !errs.some(([k]) => k === 'Crypto') && metalsState !== 'busy' ? '<div class="mst">Crypto : en attente du premier cours…</div>' : '';
+  const asked = hasCrypto(P) && !(CRYPTO.btc || CRYPTO.eth || CRYPTO.sol) && !errs.some(([k]) => k === 'Crypto') && metalsState !== 'busy' ? '<div class="mst">Crypto : en attente du premier cours…</div>' : '';
   return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Or, argent et crypto se mettent à jour tout seuls. Les ETF se mettent à jour si ta clé FMP les couvre (Réglages) ; sinon touche un ETF pour saisir son cours.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
     <div class="ctg">${tiles.join('')}</div><div class="mst">${st}</div>${asked}${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
 }
@@ -762,7 +762,7 @@ function vReglages() {
     <label class="chk"><input type="checkbox" data-act="showsecrets" ${showSecrets ? 'checked' : ''}><span>Afficher la clé</span></label>
     ${kv('Requêtes utilisées aujourd\'hui', fmpCount() + ' / 250')}
     <div class="btnrow"><button class="btn pri" data-act="fmptest">Tester la clé</button><button class="btn" data-act="metalsforce">Actualiser tous les cours</button></div>
-    ${FMPLOG.length ? `<div class="fmplog">${FMPLOG.map(x => `<div class="${x.ok === false ? 'neg' : x.ok ? 'pos' : ''}"><b>${x.ok === null ? '…' : x.ok ? 'OK' : 'ÉCHEC'}</b> ${esc(x.l)}${x.m ? ' : ' + esc(x.m) : ''}</div>`).join('')}</div>` : ''}`, '', '', 'La clé est enregistrée dans tes données chiffrées : elle se synchronise entre tes appareils, mais elle apparaît en clair dans le fichier « Exporter ». Elle ne doit jamais être écrite dans la page publique.\nLa formule gratuite est limitée à 250 requêtes par jour et, d\'après FMP, aux bourses américaines : les ETF de la Bourse de Paris peuvent être refusés. Le test te dit ce qui passe.')}
+    ${FMPLOG.length ? `<div class="fmplog">${FMPLOG.map(x => `<div class="${x.ok === false ? 'neg' : x.ok ? 'pos' : ''}"><b>${x.ok === null ? '…' : x.ok ? 'OK' : 'ÉCHEC'}</b> ${esc(x.l)}${x.m ? ' : ' + esc(x.m) : ''}</div>`).join('')}</div>` : ''}`, '', '', 'La clé est enregistrée dans tes données chiffrées : elle se synchronise entre tes appareils, mais elle apparaît en clair dans le fichier « Exporter ». Elle ne doit jamais être écrite dans la page publique.\nLa formule gratuite est limitée à 250 requêtes par jour et, d\'après FMP, aux bourses américaines : les ETF de la Bourse de Paris sont refusés (c\'est le cas de ta clé). Pour eux, l\'appli essaie Yahoo Finance (non officiel, sans clé).')}
   ${sec('Cours de secours', `<div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', s.cours.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', s.cours.argentOnce)}</label><label>Date${fld('settings.cours.date', s.cours.date, { t: 'date' })}</label></div><div class="inl"><span>Coefficient de revente or</span>${fld('settings.reventeOr', s.reventeOr, { t: 'pct' })}</div>`, '', '', 'Les cours de l\'or, de l\'argent et des cryptos se mettent à jour tout seuls. Ces valeurs ne servent que si le service est injoignable.')}
   ${sec('Prénoms et fiscalité', `<div class="grid3"><label>Prénom 1${fld('settings.noms.a', s.noms.a, { t: 'text' })}</label><label>Prénom 2${fld('settings.noms.b', s.noms.b, { t: 'text' })}</label></div>
     <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>`, '', '', 'Part qui reste après impôt (82,8 % = 17,2 % prélevés). Ces taux étaient écrits en dur dans l\'Excel : à valider.')}
@@ -899,77 +899,114 @@ async function fetchMetals() {
 }
 async function fetchCrypto() {
   if (!S.comptes.some(c => /crypto/i.test(c.label))) return '';
-  let errs = [];
+  const errs = [], got = { btc: null, eth: null, sol: null };
   if (fmpKey()) {
-    try {
-      const [b, e, s, fx] = await Promise.all([fmpQuote('BTCUSD'), fmpQuote('ETHUSD'), fmpQuote('SOLUSD'), fmpQuote('EURUSD')]);
-      CRYPTO = { btc: b / fx, eth: e / fx, sol: s / fx, date: new Date().toISOString(), src: 'fmp' };
-      LS.set('cc.crypto', JSON.stringify(CRYPTO)); return '';
-    } catch (e) { errs.push('FMP : ' + errTxt(e)); }
+    const [b, e, s, fx] = await Promise.allSettled([fmpQuote('BTCUSD'), fmpQuote('ETHUSD'), fmpQuote('SOLUSD'), fmpQuote('EURUSD')]);
+    if (fx.status !== 'fulfilled') errs.push('FMP (EUR/USD) : ' + errTxt(fx.reason));
+    else [['btc', b, 'Bitcoin'], ['eth', e, 'Ethereum'], ['sol', s, 'Solana']].forEach(([k, r, n]) => { if (r.status === 'fulfilled') got[k] = r.value / fx.value; else errs.push('FMP (' + n + ') : ' + errTxt(r.reason)); });
   }
-  try {
-    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=eur', { cache: 'no-store' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const j = await r.json();
-    if (!(j.bitcoin && j.bitcoin.eur)) throw new Error('réponse inattendue');
-    CRYPTO = { btc: j.bitcoin.eur, eth: j.ethereum && j.ethereum.eur, sol: j.solana && j.solana.eur, date: new Date().toISOString(), src: 'coingecko' };
-    LS.set('cc.crypto', JSON.stringify(CRYPTO)); return '';
-  } catch (e) { errs.push('CoinGecko : ' + errTxt(e)); }
-  return errs.join(' · ');
-}
-/* ETF : ISIN -> symbole (une seule fois, gardé sur l'appareil) puis cours. La formule gratuite FMP est limitée aux bourses US. */
-async function fetchEtfs() {
-  if (!fmpKey()) return '';
-  if (LS.get('cc.etfoff') === fmpToday()) return LS.get('cc.etfmsg') || 'ETF non couverts par la clé';
-  const isins = [...new Set(Object.values(S.placements).flatMap(p => (p.actifs || []).map(a => a.isin)).filter(Boolean))];
-  let sym = {}; try { sym = JSON.parse(LS.get('cc.sym') || '{}'); } catch (e) {}
-  let ok = 0, last = '';
-  for (const isin of isins) {
+  const missing = Object.keys(got).filter(k => !got[k]);
+  if (missing.length) {
     try {
-      if (!sym[isin]) {
-        const j = await fmp('search-isin', { isin }), l = Array.isArray(j) ? j : [];
-        const eur = l.filter(x => !x.currency || String(x.currency).toUpperCase() === 'EUR');
-        const pick = eur.find(x => /\.PA$/i.test(x.symbol || '')) || eur.find(x => /paris|euronext|pa$/i.test(`${x.exchange || ''} ${x.exchangeFullName || ''}`)) || eur[0];
-        if (!pick || !pick.symbol) throw new Error(l.length ? 'aucune cotation en euros pour cet ISIN' : 'ISIN inconnu de FMP');
-        sym[isin] = pick.symbol; LS.set('cc.sym', JSON.stringify(sym));
+      const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=eur', { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json(), m = { btc: j.bitcoin, eth: j.ethereum, sol: j.solana };
+      missing.forEach(k => { if (m[k] && m[k].eur) got[k] = m[k].eur; });
+    } catch (e) { errs.push('CoinGecko : ' + errTxt(e)); }
+  }
+  if (got.btc || got.eth || got.sol) { CRYPTO = { ...got, date: new Date().toISOString() }; LS.set('cc.crypto', JSON.stringify(CRYPTO)); }
+  return Object.values(got).every(Boolean) ? '' : errs.join(' · ') || 'aucun cours reçu';
+}
+/* ETF : FMP d'abord (si ta formule le permet), puis Yahoo Finance (service non officiel, sans clé).
+   Garde-fous : cotation en euros uniquement, et cours ignoré s'il s'écarte de plus de 40 % du cours saisi. */
+async function yahooPrice(isin, sym) {
+  if (!sym[isin]) {
+    const r = await fetch('https://query2.finance.yahoo.com/v1/finance/search?' + new URLSearchParams({ q: isin, quotesCount: 6, newsCount: 0 }), { cache: 'no-store' });
+    if (!r.ok) throw new Error('recherche HTTP ' + r.status);
+    const l = ((await r.json()).quotes || []).filter(x => x.symbol);
+    const pick = l.find(x => /\.PA$/i.test(x.symbol)) || l.find(x => /\.(DE|MI|AS|BR)$/i.test(x.symbol)) || l[0];
+    if (!pick) throw new Error('ISIN inconnu de Yahoo');
+    sym[isin] = pick.symbol;
+  }
+  const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(sym[isin]) + '?interval=1d&range=1d', { cache: 'no-store' });
+  if (!r.ok) throw new Error('cours HTTP ' + r.status);
+  const m = (((await r.json()).chart || {}).result || [])[0];
+  const meta = m && m.meta;
+  if (!meta || !(meta.regularMarketPrice > 0)) throw new Error('aucun cours pour ' + sym[isin]);
+  if (meta.currency && String(meta.currency).toUpperCase() !== 'EUR') throw new Error(sym[isin] + ' coté en ' + meta.currency + ', pas en euros');
+  return meta.regularMarketPrice;
+}
+async function fetchEtfs(force) {
+  const today = fmpToday();
+  if (force) ['cc.etfoff', 'cc.yoff'].forEach(k => LS.del(k));
+  const isins = [...new Set(Object.values(S.placements).flatMap(p => (p.actifs || []).map(a => a.isin)).filter(Boolean))];
+  let sym = {}, ysym = {}; try { sym = JSON.parse(LS.get('cc.sym') || '{}'); ysym = JSON.parse(LS.get('cc.ysym') || '{}'); } catch (e) {}
+  let fmpOk = !!fmpKey() && LS.get('cc.etfoff') !== today, yahooOk = LS.get('cc.yoff') !== today;
+  const notes = [], okList = [];
+  const sane = (isin, px) => {
+    const ref = Object.values(S.placements).flatMap(p => p.actifs || []).find(a => a.isin === isin), man = ref ? num(ref.cours) : 0;
+    if (man > 0 && Math.abs(px / man - 1) > 0.4) throw new Error('écart suspect : ' + px.toFixed(2) + ' contre ' + man + ' saisi (cours ignoré)');
+    return px;
+  };
+  for (const isin of isins) {
+    let px = null;
+    if (fmpOk) {
+      try {
+        if (!sym[isin]) {
+          const j = await fmp('search-isin', { isin }), l = Array.isArray(j) ? j : [];
+          const eur = l.filter(x => !x.currency || String(x.currency).toUpperCase() === 'EUR');
+          const pick = eur.find(x => /\.PA$/i.test(x.symbol || '')) || eur.find(x => /paris|euronext|pa$/i.test(`${x.exchange || ''} ${x.exchangeFullName || ''}`)) || eur[0];
+          if (!pick || !pick.symbol) throw new Error(l.length ? 'aucune cotation en euros pour cet ISIN' : 'ISIN inconnu de FMP');
+          sym[isin] = pick.symbol; LS.set('cc.sym', JSON.stringify(sym));
+        }
+        px = sane(isin, await fmpQuote(sym[isin]));
+      } catch (e) {
+        const m = errTxt(e);
+        if (/\b(402|403)\b|premium|subscription|upgrade|restricted|not available/i.test(m)) { fmpOk = false; LS.set('cc.etfoff', today); notes.push('FMP : ETF non couverts par ta formule'); }
+        else if (/suspect/.test(m)) notes.push('FMP ' + isin + ' : ' + m);
       }
-      const px = await fmpQuote(sym[isin]);
-      const ref = Object.values(S.placements).flatMap(p => p.actifs || []).find(a => a.isin === isin), man = ref ? num(ref.cours) : 0;
-      if (man > 0 && Math.abs(px / man - 1) > 0.4) { delete sym[isin]; LS.set('cc.sym', JSON.stringify(sym)); throw new Error('écart suspect sur ' + isin + ' : ' + px.toFixed(2) + ' contre ' + man + ' saisi (cours ignoré)'); }
-      ETFQ[isin] = px; ok++;
-    } catch (e) {
-      last = errTxt(e);
-      if (/\b(402|403)\b|premium|subscription|upgrade|restricted|not available/i.test(last)) { LS.set('cc.etfoff', fmpToday()); LS.set('cc.etfmsg', 'ETF européens non couverts par cette formule (' + last.slice(0, 90) + ')'); break; }
     }
+    if (px === null && yahooOk) {
+      try { px = sane(isin, await yahooPrice(isin, ysym)); LS.set('cc.ysym', JSON.stringify(ysym)); }
+      catch (e) {
+        const m = errTxt(e); notes.push('Yahoo ' + (isin) + ' : ' + m);
+        if (/connexion refusée|Failed to fetch/i.test(m)) { yahooOk = false; LS.set('cc.yoff', today); }
+      }
+    }
+    if (px !== null) { ETFQ[isin] = px; okList.push(isin); }
   }
   LS.set('cc.etfq', JSON.stringify(ETFQ));
-  return ok === isins.length ? '' : (LS.get('cc.etfoff') === fmpToday() ? LS.get('cc.etfmsg') : `${ok}/${isins.length} ETF mis à jour${last ? ' · ' + last : ''}`);
+  if (okList.length === isins.length) return '';
+  const uniq = [...new Set(notes)].slice(0, 3);
+  return `${okList.length}/${isins.length} ETF mis à jour${uniq.length ? ' · ' + uniq.join(' · ') : ''}`;
 }
 async function fetchLive(force) {
   metalsState = 'busy'; if (view === 'placements') render();
   const stale = !LS.get('cc.fmpT') || Date.now() - +LS.get('cc.fmpT') > 60 * 60 * 1000;
-  const useFmp = fmpKey() && (force === true || stale);
-  const [a, b, c] = await Promise.all([fetchMetals(), fetchCrypto(), useFmp ? fetchEtfs() : Promise.resolve('')]);
-  if (useFmp) LS.set('cc.fmpT', String(Date.now()));
+  const doEtf = force === true || stale;
+  const [a, b, c] = await Promise.all([fetchMetals(), fetchCrypto(), doEtf ? fetchEtfs(force === true) : Promise.resolve('')]);
+  if (doEtf) LS.set('cc.fmpT', String(Date.now()));
   LIVE_ERR = { 'Or / argent': a, 'Crypto': b, 'ETF': c };
   metalsState = (a || b || c) ? 'err' : 'ok'; R = recalc(); render();
 }
 async function fmpTest() {
   FMPLOG = [{ l: 'Test en cours…', ok: null, m: '' }]; render();
   const out = [], step = async (l, f) => { try { out.push({ l, ok: true, m: await f() }); } catch (e) { out.push({ l, ok: false, m: errTxt(e) }); } };
-  if (!fmpKey()) out.push({ l: 'Clé', ok: false, m: 'aucune clé saisie' });
+  if (!fmpKey()) out.push({ l: 'Clé FMP', ok: false, m: 'aucune clé saisie' });
   else {
-    await step('Change EUR/USD', async () => 'USD par euro : ' + (await fmpQuote('EURUSD')));
-    await step('Bitcoin (BTCUSD)', async () => (await fmpQuote('BTCUSD')) + ' USD');
-    await step('Or (GCUSD)', async () => (await fmpQuote('GCUSD')) + ' USD/once');
-    const isin = (Object.values(S.placements).flatMap(p => (p.actifs || []).map(a => a.isin)).filter(Boolean))[0];
-    if (isin) await step('ETF ' + isin + ' (Bourse de Paris)', async () => {
-      const j = await fmp('search-isin', { isin }), l = Array.isArray(j) ? j : [];
-      if (!l.length) throw new Error('ISIN inconnu de FMP');
-      const s = (l.find(x => /\.PA$/i.test(x.symbol || '')) || l[0]).symbol; return s + ' : ' + (await fmpQuote(s));
-    });
+    await step('FMP · change EUR/USD', async () => 'USD par euro : ' + (await fmpQuote('EURUSD')));
+    await step('FMP · Bitcoin', async () => (await fmpQuote('BTCUSD')) + ' USD');
+    await step('FMP · Ethereum', async () => (await fmpQuote('ETHUSD')) + ' USD');
+    await step('FMP · Solana', async () => (await fmpQuote('SOLUSD')) + ' USD');
+    await step('FMP · or', async () => (await fmpQuote('GCUSD')) + ' USD/once');
   }
-  FMPLOG = out; render();
+  await step('CoinGecko · crypto', async () => { const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur', { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status); return (await r.json()).bitcoin.eur + ' €'; });
+  const isin = (Object.values(S.placements).flatMap(p => (p.actifs || []).map(a => a.isin)).filter(Boolean))[0];
+  if (isin) {
+    if (fmpKey()) await step('FMP · ETF ' + isin, async () => { const j = await fmp('search-isin', { isin }), l = Array.isArray(j) ? j : []; if (!l.length) throw new Error('ISIN inconnu de FMP'); const s = (l.find(x => /\.PA$/i.test(x.symbol || '')) || l[0]).symbol; return s + ' : ' + (await fmpQuote(s)); });
+    await step('Yahoo · ETF ' + isin, async () => { const s = {}; const p = await yahooPrice(isin, s); return s[isin] + ' : ' + p + ' €'; });
+  }
+  FMPLOG = out; render(); fetchLive(true);
 }
 
 /* ---------- Événements ---------- */
@@ -995,7 +1032,9 @@ document.addEventListener('change', e => {
     if (t === 'chk') v = el.checked; else if (t === 'sel' || t === 'text' || t === 'month' || t === 'date') v = el.value;
     else if (t === 'pct') v = num(el.value) / 100; else v = el.value.trim() === '' ? '' : num(el.value);
     if (p.startsWith('cfg.')) { CFG[p.slice(4)] = v; LS.set('cc.cfg', JSON.stringify(CFG)); render(); return; }
-    set(S, p, v); commit(); return;
+    set(S, p, v); commit();
+    if (p === 'settings.fmpKey') { LS.del('cc.etfoff'); LS.del('cc.yoff'); setTimeout(() => fetchLive(true), 700); }
+    return;
   }
   if (e.target.dataset && e.target.dataset.act === 'showsecrets') { showSecrets = e.target.checked; render(); return; }
   if (e.target.dataset && e.target.dataset.act === 'import') importFile(e.target.files[0]);
