@@ -1,9 +1,16 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#eef1f3"><meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#2f6b82"><meta name="robots" content="noindex,nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Comptes">
 <title>Comptes du foyer</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <style>:root{--bg:#eef1f3;--sf:#fff;--ink:#1c2733;--mu:#66727e;--ln:#e0e5e9;--in:#f3f5f7;--track:#e6eaee;--pos:#2a8562;--neg:#b8483d;--ac:#2f6b82;--ac2:#4a8ba3;--ca:#c8453a;--cat:#c8453a;--cb:#e2b23c;--cbt:#9a7410;--onb:#3a2c00;--mint:#5aa58a;--coral:#c8695e;--shadow:0 4px 16px rgba(30,50,70,.08)}
 @media (prefers-color-scheme:dark){:root{--bg:#12181d;--sf:#1b242b;--ink:#e8eef2;--mu:#98a6b1;--ln:#2a353e;--in:#151d23;--track:#26313a;--pos:#5fc59f;--neg:#e58a7e;--ac:#7db3c8;--ac2:#5f97ad;--ca:#d9584c;--cat:#ff8a7d;--cb:#e8bd4a;--cbt:#e8bd4a;--onb:#2a2000;--shadow:0 4px 16px rgba(0,0,0,.35)}}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
@@ -119,6 +126,61 @@ circle.seg{cursor:pointer;transition:opacity .22s cubic-bezier(.23,1,.32,1),stro
 .hswitch{display:flex;align-items:center;gap:8px;background:var(--in);border:0;border-radius:12px;padding:7px 10px 7px 12px;color:var(--ink);font:inherit;cursor:pointer;text-align:left;transition:transform .16s cubic-bezier(.23,1,.32,1)}
 .hswitch h2{font-size:1.02rem}.hswitch .ic{width:18px;height:18px;color:var(--ac);flex:none}.hswitch:active{transform:scale(.96)}
 .split.two{grid-template-columns:1fr 1fr}.hint.tight{margin:-2px 4px 0}
+
+/* ---- v3 : bulles d'aide, info, couleurs des personnes, cours, mise en page PC ---- */
+.ht{display:flex;align-items:center;gap:8px;min-width:0}
+.info{flex:none;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--mu);background:transparent;color:var(--mu);font:italic 700 .72rem/1 Georgia,serif;display:inline-grid;place-items:center;padding:0;cursor:pointer;margin-left:6px;transition:transform .16s cubic-bezier(.23,1,.32,1),color .16s,border-color .16s}
+.ht .info{margin-left:0}.info:active{transform:scale(.9)}@media (hover:hover){.info:hover{color:var(--ac);border-color:var(--ac)}}
+#tip{position:fixed;z-index:20;max-width:min(320px,calc(100vw - 16px));background:#1c2733;color:#f2f5f7;padding:10px 12px;border-radius:12px;font-size:.84rem;line-height:1.4;white-space:pre-line;box-shadow:0 8px 24px rgba(0,0,0,.28);opacity:0;pointer-events:none;transform:translateY(4px);transition:opacity .16s cubic-bezier(.23,1,.32,1),transform .16s cubic-bezier(.23,1,.32,1)}
+#tip.show{opacity:1;transform:none}
+[data-tip]{cursor:help}.gauge{position:relative}.gauge::after{content:"";position:absolute;inset:-9px 0}
+.pn.a,.ca{color:var(--cat)}.pn.b,.cb{color:var(--cbt)}.pn{font-weight:800}
+.hero .pn.a{color:#ff9b90}.hero .pn.b{color:#ffd974}
+.salc{background:var(--in);border-radius:16px;padding:12px}.salc.pa{border-left:5px solid var(--ca)}.salc.pb{border-left:5px solid var(--cb)}
+.salc h3{margin:0 0 2px}.salc.pa h3{color:var(--cat)}.salc.pb h3{color:var(--cbt)}
+.sbig{font-size:1.5rem;font-weight:800;letter-spacing:-.02em}.sbig small{display:block;font-size:.74rem;color:var(--mu);font-weight:600;letter-spacing:0}
+.sl{display:grid;gap:2px;margin:8px 0;font-size:.85rem}.sl div{display:flex;justify-content:space-between;gap:6px}.sl span{color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hsel{font:inherit;font-weight:800;font-size:1.02rem;color:var(--ink);background:var(--in);border:0;border-radius:12px;padding:8px 10px;max-width:100%;cursor:pointer}
+.hsel:focus{outline:2px solid var(--ac)}
+.cours .refresh{width:38px;height:38px;border-radius:50%;border:0;background:var(--in);color:var(--ac);font-size:1.25rem;font-weight:800;cursor:pointer}.cours .refresh:active{transform:scale(.94)}
+.ctg{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.ct{display:grid;gap:1px;text-align:left;font:inherit;color:var(--ink);background:var(--in);border:0;border-radius:14px;padding:9px 11px;min-width:0}
+button.ct{cursor:pointer}button.ct:active{transform:scale(.97)}
+.ct span{font-size:.72rem;color:var(--mu);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ct b{font-size:1.02rem;font-weight:800}.ct em{font-style:normal;font-size:.68rem;color:var(--mu)}
+.ct.gold{background:linear-gradient(120deg,#efe6c4,#e2d09a);color:#3a3010}.ct.gold span,.ct.gold em{color:#5c4d1c}
+.ct.crypto{background:color-mix(in srgb,var(--ac) 12%,var(--in))}
+.mst{font-size:.76rem;color:var(--mu);margin-top:8px}
+.ra{text-align:right;display:grid;justify-items:end}.ra small{font-size:.74rem;font-weight:700}
+.dl{margin:6px 0 2px}.sub{margin:12px 0 2px;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mu)}
+.btnline{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btnline .add{margin-top:8px}
+.kv span{display:inline-flex;align-items:center}
+.pmain .pm1 b{font-size:.94rem}
+@media (max-width:420px){.btnline{grid-template-columns:1fr}}
+/* --- PC : pleine largeur, menu à gauche, colonnes multiples --- */
+.tab.extra{display:none}
+@media (min-width:900px){
+  body{padding-bottom:28px}
+  #app{max-width:none;padding-left:228px}
+  .top{padding:14px 28px}
+  h1{font-size:1.6rem}
+  main{display:block;padding:8px 28px 28px;column-width:340px;column-gap:18px}
+  main>*{break-inside:avoid;margin:0 0 18px}
+  main>.hero,main>.seg,main>.cours,main>.cats,main>.two,main>.add{column-span:all}
+  main>.seg{max-width:460px}
+  .nav{left:0;top:0;bottom:0;right:auto;width:214px;max-width:none;margin:0;border-radius:0;flex-direction:column;justify-content:flex-start;gap:4px;padding:78px 10px 16px;background:var(--sf);box-shadow:1px 0 0 var(--ln);backdrop-filter:none}
+  .nav::before{content:"Comptes du foyer";position:absolute;top:24px;left:22px;font-weight:800;font-size:1.05rem;letter-spacing:-.01em}
+  .tab{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;flex:none;font-size:.95rem;padding:11px 14px}
+  .te{height:auto}
+  .tab.plus{display:none}.tab.extra{display:flex}
+  .sheet{align-items:center}
+  .sheetin{max-width:540px;border-radius:24px;padding-bottom:20px;max-height:84vh}
+  #toast{bottom:28px}
+  .hero .big{font-size:3rem}
+  .cats .cv{font-size:1.4rem}
+  .dsvg{width:240px}
+  .sec>.row:hover{cursor:pointer}
+}
+@media (min-width:1700px){main{column-width:380px}}
 </style></head>
 <body><div id="app"></div>
 <script>
@@ -140,7 +202,7 @@ const EMPTY_STATE = () => ({
   interets: { annees: [new Date().getFullYear()], lignes: [] },
   placements: {
     peaA: { titre: 'PEA', who: 'a', retrait: '', taxe: 'pea', virements: [], actifs: [] },
-    ctoA: { titre: 'Compte-titres', who: 'a', taxe: 'cto', especes: 0, actifs: [] },
+    ctoA: { titre: 'Compte-titres', who: 'a', taxe: 'cto', virements: [], actifs: [] },
     avA: { titre: 'Assurance vie', who: 'a', retrait: '', taxe: 'av', fondsEuros: { investi: 0, taux: 0 }, actifs: [] },
     peaB: { titre: 'PEA', who: 'b', retrait: '', taxe: 'pea', virements: [], actifs: [] },
     objets: []
@@ -330,9 +392,22 @@ const set = (o, p, v) => { const ks = p.split('.'); const last = ks.pop(); const
 
 /* ---------- Persistance locale + synchro ---------- */
 function saveLocal() { LS.set('cc.state', JSON.stringify(S)); LS.set('cc.meta', JSON.stringify(meta)); }
+/* Ancienne version : espèces du compte-titres saisies à la main -> versements reconstitués depuis les achats */
+function migrate(s) {
+  const c = s.placements && s.placements.ctoA;
+  if (!c || Array.isArray(c.virements)) return false;
+  const ev = {};
+  (c.actifs || []).forEach(a => (a.lots || []).forEach(l => { ev[l.date] = (ev[l.date] || 0) + num(l.montant); }));
+  const ks = Object.keys(ev).sort();
+  if (!ks.length) { c.virements = []; delete c.especes; return true; }
+  ev[ks[0]] += num(c.especes);
+  c.virements = ks.map(k => ({ date: k, montant: Math.round(ev[k] * 100) / 100 }));
+  delete c.especes; return true;
+}
 function loadLocal() {
   try { const s = LS.get('cc.state'); if (s) S = Object.assign(EMPTY_STATE(), JSON.parse(s)); } catch (e) {}
   try { const m = LS.get('cc.meta'); if (m) meta = Object.assign(meta, JSON.parse(m)); } catch (e) {}
+  if (migrate(S)) { meta.dirty = true; saveLocal(); }
 }
 const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s); };
 const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -381,7 +456,8 @@ async function pull(silent) {
     if (rem.sha === meta.sha) { setSync(meta.dirty ? 'dirty' : 'ok'); if (meta.dirty) schedulePush(); return; }
     if (meta.dirty) { setSync('conflict', 'La version distante a changé'); render(); return; }
     S = Object.assign(EMPTY_STATE(), JSON.parse(await decrypt(rem.text, CFG.pass)));
-    meta = { sha: rem.sha, dirty: false, at: new Date().toISOString() }; saveLocal(); setSync('ok'); R = recalc(); render();
+    const mg = migrate(S);
+    meta = { sha: rem.sha, dirty: mg, at: new Date().toISOString() }; saveLocal(); setSync(mg ? 'dirty' : 'ok'); if (mg) schedulePush(); R = recalc(); render(); if (typeof fetchLive === 'function') fetchLive();
   } catch (e) { setSync('err', e.name === 'OperationError' ? 'Phrase secrète incorrecte' : e.message); if (!silent) toast(sync.msg); }
 }
 async function push(force) {
@@ -401,6 +477,7 @@ function commit() { R = recalc(); meta.dirty = true; saveLocal(); if (cfgOK() &&
 
 /* ---------- Petits composants ---------- */
 let ef = ['a', 'b'].includes(LS.get('cc.ef')) ? LS.get('cc.ef') : 'all', showSecrets = false, pf = LS.get('cc.pf') === 'b' ? 'b' : 'a';
+let CRYPTO = JSON.parse(LS.get('cc.crypto') || 'null') || {};
 const PAL = ['#3f7691', '#5a9a86', '#7b8fbf', '#8a7ba6', '#9bb06a', '#6b8a9a', '#b58b6e', '#4d6a8c'];
 const ICONS = {
   home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
@@ -420,20 +497,23 @@ const ICONS = {
   layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
   coins: '<circle cx="9" cy="9" r="6"/><path d="M15.5 10.5A6 6 0 1 1 10 18"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
-  swap: '<path d="M7 9l5-5 5 5M7 15l5 5 5-5"/>',
   dot: '<circle cx="12" cy="12" r="3"/>'
 };
 const ico = n => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ICONS.dot}</svg>`;
 const EMO2ICO = { '🛒': 'cart', '🎉': 'smile', '💼': 'briefcase', '🏖️': 'sun', '🏦': 'bank', '🐖': 'wallet', '🪙': 'coins', '🥇': 'gold', '🧾': 'receipt', '📈': 'trend', '🚘': 'car', '🧩': 'layers', '💸': 'coins', '🛍️': 'bag', '💚': 'plus' };
 const stripEmoji = s => String(s).replace(/^(?:\p{Extended_Pictographic}\uFE0F?\s*)+/u, '');
 const sign = v => v < 0 ? 'neg' : 'pos';
-const sec = (title, body, right = '', cls = '') => `<section class="sec ${cls}"><header><h2>${stripEmoji(title)}</h2>${right ? `<span class="tot">${right}</span>` : ''}</header>${body}</section>`;
-const kv = (k, v, cls = '') => `<div class="kv"><span>${k}</span><b class="${cls}">${v}</b></div>`;
+const info = t => `<button class="info" data-tip="${esc(t)}" aria-label="Information">i</button>`;
+const sec = (title, body, right = '', cls = '', tip = '') => `<section class="sec ${cls}"><header><div class="ht"><h2>${stripEmoji(title)}</h2>${tip ? info(tip) : ''}</div>${right ? `<span class="tot">${right}</span>` : ''}</header>${body}</section>`;
+const kv = (k, v, cls = '', tip = '') => `<div class="kv"><span>${k}${tip ? info(tip) : ''}</span><b class="${cls}">${v}</b></div>`;
 const whoOpts = shared => [...(shared ? [['', 'Commun']] : []), ['a', N('a')], ['b', N('b')]];
 const chip = w => w === 'a' ? `<i class="chip pa">${esc(N('a'))}</i>` : w === 'b' ? `<i class="chip pb">${esc(N('b'))}</i>` : '';
-/* Emojis de performance, mêmes seuils que ton Excel */
-const moji = r => r > 0.2 ? '🤯' : r > 0.10 ? '🚀👽' : r > 0.07 ? '🚀' : r > 0.02 ? '👍' : r >= 0 ? '🙂' : '😭';
+const nm = k => `<span class="pn ${k}">${esc(N(k))}</span>`;
+/* Emojis de performance : seulement dans les 3 rectangles de chaque placement */
+const moji = r => r > 0.2 ? '🤯' : r > 0.07 ? '🚀' : r > 0.02 ? '👍' : r >= 0 ? '🙂' : '😭';
 const signed = (v, d = 1) => (v > 0 ? '+' : '') + pc(v, d);
+const dureeTxt = m => { const y = Math.floor(m / 12), mo = m % 12, p = []; if (y) p.push(y + ' an' + (y > 1 ? 's' : '')); if (mo) p.push(mo + ' mois'); return p.join(' ') || 'maintenant'; };
+const moisAnnee = iso => new Date(iso).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
 function fld(path, val, o = {}) {
   const t = o.t || 'num';
@@ -460,13 +540,13 @@ function donut(items, o = {}) {
   return `<div class="donutw"><div class="dsvg"><svg viewBox="0 0 ${size} ${size}" role="img" aria-label="${esc(o.label || 'Répartition')}"><circle r="${r}" cx="${size / 2}" cy="${size / 2}" fill="none" stroke="var(--track)" stroke-width="${th}"/>${segs}</svg>
     <div class="dcen" data-t="${esc(o.top || '')}" data-c="${esc(o.center || eur(tot))}"><small>${o.top || ''}</small><b>${o.center || eur(tot)}</b></div></div><ul class="dleg">${legend}</ul></div>`;
 }
-function hbars(items, o = {}) {
+function hbars(items) {
   const max = Math.max(1, ...items.map(i => Math.abs(i.v)));
-  return `<div class="hb">${items.map((d, i) => `<div class="hbr"><span class="hl">${esc(d.l)}</span><div class="hbt"><i style="width:${Math.abs(d.v) / max * 100}%;background:${d.c || (d.v < 0 ? 'var(--neg)' : PAL[i % PAL.length])}"></i></div><b>${d.t !== undefined ? d.t : eur(d.v)}</b></div>`).join('')}</div>`;
+  return `<div class="hb">${items.map((d, i) => `<div class="hbr" ${d.tip ? `data-tip="${esc(d.tip)}"` : ''}><span class="hl">${esc(d.l)}</span><div class="hbt"><i style="width:${Math.abs(d.v) / max * 100}%;background:${d.c || (d.v < 0 ? 'var(--neg)' : PAL[i % PAL.length])}"></i></div><b>${d.t !== undefined ? d.t : eur(d.v)}</b></div>`).join('')}</div>`;
 }
 function vbars(items) {
   const max = Math.max(1, ...items.map(i => Math.abs(i.v))), H = 110;
-  return `<div class="vb">${items.map(d => { const h = Math.max(3, Math.abs(d.v) / max * H); return `<div class="vbc"><b class="${d.v < 0 ? 'neg' : 'pos'}">${eur(d.v)}</b><div class="vbb" style="height:${h}px;background:${d.c || (d.v < 0 ? 'linear-gradient(var(--neg),#ff9a8a)' : 'linear-gradient(var(--mint),#7fe8cf)')}"></div><span>${esc(d.l)}</span></div>`; }).join('')}</div>`;
+  return `<div class="vb">${items.map(d => { const h = Math.max(3, Math.abs(d.v) / max * H); return `<div class="vbc"><b class="${d.v < 0 ? 'neg' : 'pos'}">${eur(d.v)}</b><div class="vbb" style="height:${h}px;background:${d.c || (d.v < 0 ? 'linear-gradient(var(--neg),#e0a49c)' : 'linear-gradient(var(--mint),#a9d4c3)')}"></div><span>${esc(d.l)}</span></div>`; }).join('')}</div>`;
 }
 function lineChart(pts) {
   if (pts.length < 2) return '';
@@ -478,9 +558,9 @@ function lineChart(pts) {
     <path d="${area}" fill="url(#lg)"/><path d="${d}" fill="none" stroke="#3f7691" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${x(pts.length - 1)}" cy="${y(pts.at(-1).v)}" r="5" fill="#c8453a"/></svg>
     <div class="lax"><span>${lab(pts[0].m)}</span><b>${eur(pts.at(-1).v)}</b><span>${lab(pts.at(-1).m)}</span></div>`;
 }
-function gauge(reel, cible, lower) {
+function gauge(reel, cible, lower, tip) {
   const ratio = cible > 0 ? reel / cible : 0, w = Math.max(0, Math.min(100, ratio * 100)), ok = lower ? reel <= cible : reel >= cible;
-  return `<div class="gauge" role="img" aria-label="${pc(ratio, 0)} de la cible"><i class="${ok ? 'gok' : 'gko'}" style="width:${w}%"></i></div>`;
+  return `<div class="gauge" ${tip ? `data-tip="${esc(tip)}"` : ''} role="img" aria-label="${pc(ratio, 0)} de la cible"><i class="${ok ? 'gok' : 'gko'}" style="width:${w}%"></i></div>`;
 }
 function gap(reel, cible, lower) {
   const d = reel - cible, ok = lower ? d <= 0 : d >= 0;
@@ -489,30 +569,37 @@ function gap(reel, cible, lower) {
 const row = (path, icon, title, sub, amount, cls = '') => `<button class="row" data-edit="${path}"><span class="ri">${ico(EMO2ICO[icon] || icon)}</span><span class="rt"><b>${esc(title || 'Sans nom')}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="ra ${cls}">${amount}</span></button>`;
 const addBtn = (path, txt) => `<button class="add" data-add="${path}">+ ${txt}</button>`;
 
+/* Textes des bulles d'aide sur les jauges du budget */
+const REGLE = 'Règle 50/30/20 : 50 % du net pour les besoins, 30 % pour les envies, 20 % pour l\'épargne.';
+function tipCat(nom, pctC, reel, base, cible) {
+  return `${nom} : ${eur(reel)} = ${pc(base ? reel / base : 0, 0)} du net.\n${REGLE}\nCible ${pctC} = ${eur(cible)} : ${reel <= cible ? eur(cible - reel) + ' de marge' : eur(reel - cible) + ' de dépassement'}.`;
+}
+const tipReste = (reel, base, cible) => `Reste = net − quotidien − loisirs = ${eur(reel)} (${pc(base ? reel / base : 0, 0)} du net).\nObjectif d'épargne (20 %) : ${eur(cible)}.\nCe n'est pas de l'épargne réelle : les dépenses non listées (achats, santé, cadeaux, imprévus) n'y sont pas.`;
+
 /* ---------- Écrans ---------- */
 function vAccueil() {
-  if (!S.salaires.length) return `<section class="sec empty"><h2>👋 Bienvenue</h2><p>Aucune donnée pour l'instant. Va dans <b>Plus → Réglages</b> pour importer ton fichier de départ, ou commence par le <b>Budget</b>.</p></section>`;
-  const totPl = R.investiTotal, rend = totPl ? R.pvTotale / totPl : 0;
+  if (!S.salaires.length) return `<section class="sec empty"><h2>Bienvenue</h2><p>Aucune donnée pour l'instant. Va dans <b>Réglages</b> pour importer ton fichier de départ, ou commence par le <b>Budget</b>.</p></section>`;
+  const rend = R.investiTotal ? R.pvTotale / R.investiTotal : 0;
   const q = R.quot.tot, l = R.loisirs.tot, r = Math.max(0, R.reste);
-  const person = k => `<div class="person p${k}"><h3>${esc(N(k))}</h3><div class="pbig ${sign(R.dispo[k])}">${eur(R.dispo[k])}</div><small>reste possible ce mois</small>
-    ${gauge(R.dispo[k], R.part[k] * 0.2, false)}<div class="pl">${eur(R.part[k])} net · ${pc(R.ratio[k], 0)}</div><div class="pl">Patrimoine ${eur(R.parPersonne[k])}</div></div>`;
+  const person = k => `<div class="person p${k}"><h3>${esc(N(k))}</h3><div class="pbig ${sign(R.dispo[k])}">${eur(R.dispo[k])}</div><small>reste pour épargne ce mois</small>
+    ${gauge(R.dispo[k], R.part[k] * 0.2, false, tipReste(R.dispo[k], R.part[k], R.part[k] * 0.2))}<div class="pl">${eur(R.part[k])} net · ${pc(R.ratio[k], 0)}</div><div class="pl">Patrimoine ${eur(R.parPersonne[k])}</div></div>`;
   return `
   <section class="hero"><small>Patrimoine du foyer</small><div class="big">${eur(R.patrimoine)}</div>
-    <div class="hchips"><span>${moji(rend)} ${signed(rend)} sur les placements</span><span>${eur(R.pvTotale)} de plus-value nette</span><span>Apport ${eur(R.apport)}</span></div></section>
-  ${sec('🍰 Où est l\'argent', donut(Object.entries(R.repart).map(([l, v]) => ({ l, v })), { center: eur(R.patrimoine), top: 'positif', label: 'Répartition du patrimoine' }), '', 'enter')}
-  ${sec('🧾 Budget du mois', donut([{ l: 'Quotidien', v: q, c: '#4a6fa5' }, { l: 'Loisirs', v: l, c: '#4f9a94' }, { l: 'Reste à épargner', v: r, c: '#86a862' }], { center: eur(R.net), top: 'net / mois', label: 'Répartition du budget' }), '', 'enter')}
+    <div class="hchips"><span>${signed(rend)} sur les placements</span><span>${eur(R.pvTotale)} de plus-value nette</span><span>Apport ${eur(R.apport)}</span></div></section>
+  ${sec('Où est l\'argent', donut(Object.entries(R.repart).map(([l, v]) => ({ l, v })), { center: eur(R.patrimoine), top: 'positif', label: 'Répartition du patrimoine' }), '', 'enter')}
+  ${sec('Budget du mois', donut([{ l: 'Quotidien', v: q, c: '#4a6fa5' }, { l: 'Loisirs', v: l, c: '#4f9a94' }, { l: 'Reste pour épargne', v: r, c: '#86a862' }], { center: eur(R.net), top: 'net / mois', label: 'Répartition du budget' }), '', 'enter')}
   <div class="two">${person('a')}${person('b')}</div>`;
 }
 
-function catCard(icon, titre, pctCible, reel, cible, lower, note, gapHtml) {
-  return `<div class="cat"><h3>${titre}<small>${pctCible}</small></h3><div class="cv">${eur(reel)}</div>${gauge(reel, cible, lower)}<div class="cm">cible ${eur(cible)}</div><div class="cm">${gapHtml || gap(reel, cible, lower)}</div>${note ? `<div class="cm">${note}</div>` : ''}</div>`;
+function catCard(titre, pctCible, reel, cible, lower, note, gapHtml, tip) {
+  return `<div class="cat"><h3>${titre}<small>${pctCible}</small></h3><div class="cv">${eur(reel)}</div>${gauge(reel, cible, lower, tip)}<div class="cm">cible ${eur(cible)}</div><div class="cm">${gapHtml || gap(reel, cible, lower)}</div>${note ? `<div class="cm">${note}</div>` : ''}</div>`;
 }
 function persRow(k) {
   const part = R.part[k], q = k === 'a' ? R.quot.parA : R.quot.parB, l = k === 'a' ? R.loisirs.parA : R.loisirs.parB, d = R.dispo[k];
   return `<div class="prow p${k}"><div class="ph"><b>${esc(N(k))}</b><span>${eur(part)} net · ${pc(R.ratio[k], 1)}</span></div><div class="pg">
-    <div><span>Quotidien</span><b>${eur(q)}</b>${gauge(q, part * 0.5, true)}<em>cible ${eur(part * 0.5)}</em></div>
-    <div><span>Loisirs</span><b>${eur(l)}</b>${gauge(l, part * 0.3, true)}<em>cible ${eur(part * 0.3)}</em></div>
-    <div><span>Reste (papier)</span><b class="${sign(d)}">${eur(d)}</b>${gauge(d, part * 0.2, false)}<em>cible ${eur(part * 0.2)}</em></div></div></div>`;
+    <div><span>Quotidien</span><b>${eur(q)}</b>${gauge(q, part * 0.5, true, tipCat('Quotidien de ' + N(k), '50 %', q, part, part * 0.5))}<em>cible ${eur(part * 0.5)}</em></div>
+    <div><span>Loisirs</span><b>${eur(l)}</b>${gauge(l, part * 0.3, true, tipCat('Loisirs de ' + N(k), '30 %', l, part, part * 0.3))}<em>cible ${eur(part * 0.3)}</em></div>
+    <div><span>Reste pour épargne</span><b class="${sign(d)}">${eur(d)}</b>${gauge(d, part * 0.2, false, tipReste(d, part, part * 0.2))}<em>cible ${eur(part * 0.2)}</em></div></div></div>`;
 }
 function vBudget() {
   const toggle = `<div class="seg" role="tablist"><button class="${bmode === 'tableau' ? 'on' : ''}" data-bmode="tableau">Tableau de bord</button><button class="${bmode === 'saisie' ? 'on' : ''}" data-bmode="saisie">Modifier</button></div>`;
@@ -521,28 +608,35 @@ function vBudget() {
 function vBudgetTableau() {
   if (!S.salaires.length) return `<section class="sec empty"><p>Ajoute d'abord les salaires dans « Modifier ».</p></section>`;
   const lig = l => l.auto === 'vacances' ? R.vacMoy : num(l.montant);
-  const top = [...S.quotidien.map(l => ({ l: l.label, v: lig(l), c: '#4a6fa5' })), ...S.loisirs.map(l => ({ l: l.label, v: lig(l), c: '#4f9a94' }))].filter(x => x.v > 0).sort((a, b) => b.v - a.v).slice(0, 8);
-  const v = S.virements.map(x => `<div class="vr"><span>${esc(x.label || '–')}</span><b>${eur(num(x.montant) * R.ratio.a)}</b><b>${eur(num(x.montant) * R.ratio.b)}</b></div>`).join('');
+  const who = t => t.who === 'a' ? 'Payé par ' + N('a') : t.who === 'b' ? 'Payé par ' + N('b') : `Commun : ${N('a')} ${eur(t.v * R.ratio.a)} · ${N('b')} ${eur(t.v * R.ratio.b)} (au prorata des salaires)`;
+  const top = [...S.quotidien.map(l => ({ l: l.label, v: lig(l), c: '#4a6fa5', cat: 'Quotidien', who: l.who })), ...S.loisirs.map(l => ({ l: l.label, v: lig(l), c: '#4f9a94', cat: 'Loisirs', who: l.who }))]
+    .filter(x => x.v > 0).sort((a, b) => b.v - a.v).slice(0, 8).map(t => ({ ...t, tip: `${t.l} : ${eur(t.v)} par mois = ${pc(t.v / R.net, 1)} du net.\n${t.cat}. ${who(t)}` }));
+  const v = S.virements.map(x => `<div class="vr"><span>${esc(x.label || '–')}</span><b class="ca">${eur(num(x.montant) * R.ratio.a)}</b><b class="cb">${eur(num(x.montant) * R.ratio.b)}</b></div>`).join('');
+  const salc = k => `<div class="salc p${k}"><h3>${esc(N(k))}</h3><div class="sbig">${eur(R.part[k])}<small> net / mois</small></div>
+    <div class="sl">${S.salaires.filter(s => s.who === k).map(s => `<div><span>${esc(s.label || '–')}</span><b>${eur(num(s.montant))}</b></div>`).join('')}</div>
+    <div class="pl">brut ${eur(R.brut[k])} · impôt estimé ${eur(R.impots[k])}</div><div class="pl">${pc(R.ratio[k], 1)} du net du foyer</div></div>`;
   return `
   <section class="hero small"><small>Net disponible par mois</small><div class="big">${eur(R.net)}</div><div class="hchips"><span>${eur(R.brutTotal)} brut</span><span>− ${eur(R.impots.a + R.impots.b)} d'impôt</span></div></section>
-  ${sec('🍰 Où part l\'argent', donut([{ l: 'Quotidien', v: R.quot.tot, c: '#4a6fa5' }, { l: 'Loisirs', v: R.loisirs.tot, c: '#4f9a94' }, { l: 'Reste à épargner', v: Math.max(0, R.reste), c: '#86a862' }], { center: eur(R.net), top: 'net / mois' }), '', 'enter')}
-  <div class="cats">${catCard('🛒', 'Quotidien', '50 %', R.quot.tot, R.cible.besoins, true)}${catCard('🎉', 'Loisirs', '30 %', R.loisirs.tot, R.cible.envies, true, `dont vacances ${eur(R.vacMoy)}`)}${catCard('', 'Reste', 'épargne 20 %', R.reste, R.cible.epargne, false, 'sur le papier, pas épargné', `<span>objectif d'épargne ${eur(R.cible.epargne)}</span>`)}</div>
-  <p class="hint tight">Reste = net − dépenses listées (${eur(R.net)} − ${eur(R.quot.tot)} − ${eur(R.loisirs.tot)}). Il ne contient pas les dépenses non listées (achats, santé, cadeaux, imprévus) : l'épargne réelle est plus basse.</p>
-  ${sec('🔝 Les plus grosses dépenses', hbars(top.map(t => ({ l: t.l, v: t.v, c: t.c }))), 'par mois')}
-  ${sec('👫 Par personne', persRow('a') + persRow('b') + `<p class="hint">Dépenses communes au prorata des salaires nets ; les lignes attribuées comptent en entier pour la personne.</p>`)}
-  ${sec('🏦 Virements vers le compte commun', `<div class="vr vh"><span></span><b>${esc(N('a'))}</b><b>${esc(N('b'))}</b></div>${v}<div class="vr vt"><span>Total</span><b>${eur(R.virements.a)}</b><b>${eur(R.virements.b)}</b></div>`, eur(R.virementsTot))}`;
+  ${sec('Salaires', `<div class="two sal">${salc('a')}${salc('b')}</div>`, '', '', 'Net = brut − impôt estimé (taux de chaque personne, réglé dans « Modifier »). La part de chacun sert à répartir les dépenses communes au prorata des salaires nets.')}
+  ${sec('Où part l\'argent', donut([{ l: 'Quotidien', v: R.quot.tot, c: '#4a6fa5' }, { l: 'Loisirs', v: R.loisirs.tot, c: '#4f9a94' }, { l: 'Reste pour épargne', v: Math.max(0, R.reste), c: '#86a862' }], { center: eur(R.net), top: 'net / mois' }), '', 'enter')}
+  <div class="cats">${catCard('Quotidien', '50 %', R.quot.tot, R.cible.besoins, true, '', '', tipCat('Quotidien', '50 %', R.quot.tot, R.net, R.cible.besoins))}
+    ${catCard('Loisirs', '30 %', R.loisirs.tot, R.cible.envies, true, `dont vacances ${eur(R.vacMoy)}`, '', tipCat('Loisirs', '30 %', R.loisirs.tot, R.net, R.cible.envies))}
+    ${catCard('Reste pour épargne', '20 %', R.reste, R.cible.epargne, false, 'sur le papier', `<span>objectif ${eur(R.cible.epargne)}</span>`, tipReste(R.reste, R.net, R.cible.epargne))}</div>
+  ${sec('Plus grosses dépenses', hbars(top), 'par mois', '', 'Passe la souris (ou touche) une barre pour voir sa part du net et qui paie.')}
+  ${sec('Par personne', persRow('a') + persRow('b'), '', '', 'Dépenses communes réparties au prorata des salaires nets. Les lignes attribuées à une personne comptent en entier pour elle.')}
+  ${sec('Virements vers le compte commun', `<div class="vr vh"><span></span><b class="ca">${esc(N('a'))}</b><b class="cb">${esc(N('b'))}</b></div>${v}<div class="vr vt"><span>Total</span><b class="ca">${eur(R.virements.a)}</b><b class="cb">${eur(R.virements.b)}</b></div>`, eur(R.virementsTot), '', 'Chaque virement est réparti au prorata des salaires nets.')}`;
 }
 function vBudgetSaisie() {
   const lig = l => l.auto === 'vacances' ? R.vacMoy : num(l.montant);
   const list = (key, icon) => S[key].map((l, i) => row(`${key}.${i}`, icon, l.label, chip(l.who) + (l.auto ? ' auto' : ''), eur(lig(l)))).join('');
-  const sal = S.salaires.map((s, i) => row(`salaires.${i}`, '💼', s.label, chip(s.who) + (s.imposable ? ' imposable' : ''), eur(num(s.montant)))).join('');
-  const imp = ['a', 'b'].map(k => `<div class="inl"><span>Taux d'impôt ${esc(N(k))}</span>${fld(`settings.impotTaux.${k}`, S.settings.impotTaux[k], { t: 'pct' })}<em>= ${eur(R.impots[k])}</em></div>`).join('');
+  const sal = S.salaires.map((s, i) => row(`salaires.${i}`, 'briefcase', s.label, chip(s.who) + (s.imposable ? ' imposable' : ''), eur(num(s.montant)))).join('');
+  const imp = ['a', 'b'].map(k => `<div class="inl"><span>Taux d'impôt ${nm(k)}</span>${fld(`settings.impotTaux.${k}`, S.settings.impotTaux[k], { t: 'pct' })}<em>= ${eur(R.impots[k])}</em></div>`).join('');
   return `
-  ${sec('💼 Revenus', sal + addBtn('salaires', 'Salaire') + imp, eur(R.brutTotal) + ' brut')}
-  ${sec('🛒 Quotidien', list('quotidien', '🛒') + addBtn('quotidien', 'Dépense'), eur(R.quot.tot))}
-  ${sec('🎉 Loisirs', list('loisirs', '🎉') + addBtn('loisirs', 'Loisir'), eur(R.loisirs.tot))}
-  ${sec('☀️ Vacances', `<div class="inl"><span>Compté depuis</span>${fld('settings.vacancesDebut', S.settings.vacancesDebut, { t: 'date' })}</div>` + S.vacances.map((v, i) => row(`vacances.${i}`, '🏖️', v.label, '', eur(num(v.montant)))).join('') + addBtn('vacances', 'Séjour') + kv('Moyenne', eur(R.vacMoy) + '/mois'), eur(R.vacTotal))}
-  ${sec('🏦 Virements compte commun', S.virements.map((v, i) => row(`virements.${i}`, '🏦', v.label, 'réparti au prorata', eur(num(v.montant)))).join('') + addBtn('virements', 'Virement'), eur(R.virementsTot))}`;
+  ${sec('Revenus', sal + addBtn('salaires', 'Salaire') + imp, eur(R.brutTotal) + ' brut')}
+  ${sec('Quotidien', list('quotidien', 'cart') + addBtn('quotidien', 'Dépense'), eur(R.quot.tot))}
+  ${sec('Loisirs', list('loisirs', 'smile') + addBtn('loisirs', 'Loisir'), eur(R.loisirs.tot))}
+  ${sec('Vacances', `<div class="inl"><span>Compté depuis</span>${fld('settings.vacancesDebut', S.settings.vacancesDebut, { t: 'date' })}</div>` + S.vacances.map((v, i) => row(`vacances.${i}`, 'sun', v.label, '', eur(num(v.montant)))).join('') + addBtn('vacances', 'Séjour') + kv('Moyenne', eur(R.vacMoy) + '/mois'), eur(R.vacTotal))}
+  ${sec('Virements compte commun', S.virements.map((v, i) => row(`virements.${i}`, 'bank', v.label, 'réparti au prorata', eur(num(v.montant)))).join('') + addBtn('virements', 'Virement'), eur(R.virementsTot))}`;
 }
 
 function vEpargne() {
@@ -552,82 +646,95 @@ function vEpargne() {
   const cc = idx.map(i => { const c = S.comptes[i]; return row(`comptes.${i}`, icon(c), c.label, chip(c.who) + (c.banque && c.banque !== '-' ? ` <i class="chip bk">${esc(c.banque)}</i>` : '') + (c.auto ? ' auto' : ''), eur(R.comptes[i].valeur), sign(R.comptes[i].valeur)); }).join('');
   const totF = sum(idx, i => R.comptes[i].valeur), repF = {};
   idx.forEach(i => { const c = R.comptes[i]; if (c.valeur > 0 && c.auto !== 'credit') repF[c.cat] = (repF[c.cat] || 0) + c.valeur; });
-  const title = f === 'all' ? 'Tous les comptes' : `Comptes de ${esc(N(f))} et communs`;
-  const split = f === 'all' ? kv(esc(N('a')), eur(R.parPersonne.a)) + kv(esc(N('b')), eur(R.parPersonne.b)) + kv('Commun', eur(R.parPersonne.commun)) : kv(esc(N(f)), eur(R.parPersonne[f])) + kv('Commun', eur(R.parPersonne.commun));
+  const split = f === 'all' ? kv(nm('a'), eur(R.parPersonne.a)) + kv(nm('b'), eur(R.parPersonne.b)) + kv('Commun', eur(R.parPersonne.commun)) : kv(nm(f), eur(R.parPersonne[f])) + kv('Commun', eur(R.parPersonne.commun));
   const yrs = S.interets.annees, iv = yrs.map(y => ({ l: String(y), v: R.interets[y] || 0, c: 'linear-gradient(var(--ac),#7fa8bb)' }));
   const rows = S.interets.lignes.map((l, i) => row(`interets.lignes.${i}`, 'coins', l.label, chip(l.who), eur(sum(yrs, y => num((l.v || {})[y]))))).join('');
   const cr = S.settings.credit;
+  const opts = [['all', 'Tous les comptes'], ['a', 'Comptes de ' + N('a')], ['b', 'Comptes de ' + N('b')]].map(([v, l]) => `<option value="${v}" ${f === v ? 'selected' : ''}>${esc(l)}</option>`).join('');
   return `
   ${sec('Répartition', donut(Object.entries(repF).map(([l, v]) => ({ l, v })), { center: eur(Object.values(repF).reduce((a, b) => a + b, 0)), top: f === 'all' ? 'patrimoine' : esc(N(f)) }), '', 'enter')}
-  <section class="sec"><header><button class="hswitch" data-ef aria-label="Changer l'affichage des comptes"><h2>${title}</h2>${ico('swap')}</button><span class="tot">${eur(totF)}</span></header>
-    ${cc}${addBtn('comptes', 'Compte')}<div class="split ${f === 'all' ? '' : 'two'}">${split}</div>
-    <p class="hint">Touche le titre pour passer de tous les comptes à ${esc(N('a'))}, puis ${esc(N('b'))}. Banques : CA = Crédit Agricole · F = Fortuneo · HB = Hello bank. « Commun » = argent à vous deux, même si le compte est chez l'un de vous. « auto » = calculé depuis Placements.</p></section>
+  <section class="sec"><header><div class="ht"><select class="hsel" data-ef aria-label="Comptes à afficher">${opts}</select>${info('Choisis tous les comptes ou ceux d\'une personne : les comptes communs restent affichés.\nBanques : CA = Crédit Agricole · F = Fortuneo · HB = Hello bank.\nCommun = argent à vous deux, même si le compte est chez l\'un de vous.\nauto = calculé depuis Placements.')}</div><span class="tot">${eur(totF)}</span></header>
+    ${cc}${addBtn('comptes', 'Compte')}<div class="split ${f === 'all' ? '' : 'two'}">${split}</div></section>
   ${sec('Intérêts par an', vbars(iv) + rows + addBtn('interets.lignes', 'Compte') + `<button class="add" data-addyear>+ Année</button>`)}
   ${sec('Crédit auto', `<div class="grid3"><label>Mensualité${fld('settings.credit.mensualite', cr.mensualite)}</label><label>Nb de mois${fld('settings.credit.nbMois', cr.nbMois)}</label><label>Début${fld('settings.credit.debut', cr.debut, { t: 'date' })}</label></div>` + kv('Reste à payer', eur(R.creditReste), 'neg'))}`;
 }
 
+/* ---------- Placements ---------- */
+const hasCrypto = P => S.comptes.some(c => /crypto/i.test(c.label) && (c.who === P || (c.who !== 'a' && c.who !== 'b')));
+function coursPanel(P, keys) {
+  const tiles = [];
+  keys.forEach(k => R.pl[k].actifs.forEach((a, i) => tiles.push(`<button class="ct" data-edit="placements.${k}.actifs.${i}" title="${esc(a.nom)}"><span>${esc(a.nom)}</span><b>${eur(num(a.cours), 2)}</b><em>à saisir</em></button>`)));
+  const auto = !!(METALS.orOnce && R.cours === METALS);
+  const wm = keys.includes('ctoA') || (P === 'b' && S.placements.objets.length);
+  const fmt = d => d ? new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+  if (wm) {
+    tiles.push(`<div class="ct gold"><span>Or (once)</span><b>${eur(num(R.cours.orOnce))}</b><em>${auto ? 'live' : 'secours'}</em></div>`);
+    if (num(R.cours.argentOnce)) tiles.push(`<div class="ct gold"><span>Argent (once)</span><b>${eur(num(R.cours.argentOnce), 2)}</b><em>${auto ? 'live' : 'secours'}</em></div>`);
+  }
+  if (hasCrypto(P) && CRYPTO.btc) [['Bitcoin', CRYPTO.btc], ['Ethereum', CRYPTO.eth], ['Solana', CRYPTO.sol]].forEach(([n, v]) => { if (v) tiles.push(`<div class="ct crypto"><span>${n}</span><b>${eur(v, v < 100 ? 2 : 0)}</b><em>live</em></div>`); });
+  const st = metalsState === 'busy' ? 'mise à jour…' : metalsState === 'err' ? 'service injoignable : derniers cours connus' : auto ? 'cours live du ' + fmt(METALS.date) : 'cours de secours (Réglages)';
+  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Or, argent et crypto se mettent à jour tout seuls. Les ETF n\'ont pas de source gratuite fiable : touche un ETF pour saisir son cours.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
+    <div class="ctg">${tiles.join('')}</div><div class="mst ${metalsState === 'err' ? 'neg' : ''}">${st}</div></section>`;
+}
 function assetRow(key, i, a) {
   const perf = a.cout ? a.pv / a.cout : 0;
-  return row(`placements.${key}.actifs.${i}`, '🧩', a.nom, `${dec(a.qty)} × ${eur(num(a.cours), 2)} · <span class="${sign(a.pv)}">${signed(perf)} ${moji(perf)}</span>`, eur(a.valeur));
+  return row(`placements.${key}.actifs.${i}`, 'layers', a.nom, `${dec(a.qty)} × ${eur(num(a.cours), 2)}`, `${eur(a.valeur)}<small class="${sign(a.pv)}">${signed(perf)}</small>`);
 }
 function placeBlock(key, icon) {
-  const p = S.placements[key], c = R.pl[key], hasVirt = Array.isArray(p.virements);
-  const ret = p.retrait ? `<div class="cm">Retrait possible dans ${c.retraitMois >= 12 ? Math.floor(c.retraitMois / 12) + ' an' + (c.retraitMois >= 24 ? 's' : '') + ' ' : ''}${c.retraitMois % 12} mois</div>` : '';
+  const p = S.placements[key], c = R.pl[key], hasVirt = Array.isArray(p.virements), taxe = R.cfg.taxes[p.taxe];
+  const netRend = c.investi ? c.pvNet / c.investi : 0;
+  const tiles = `<div class="pmain">
+    <div class="pm1" data-tip="Plus-value brute ÷ argent investi, avant impôt.\n${eur(c.pv)} ÷ ${eur(c.investi)}."><small>Rendement total</small><b class="${sign(c.rendement)}">${signed(c.rendement)} ${moji(c.rendement)}</b></div>
+    <div class="pm1" data-tip="Taux annuel qui tient compte de la date de chaque versement (méthode XIRR d'Excel).\nAvec des versements progressifs, il est plus haut que « total ÷ durée ».\nSur peu de recul, il varie beaucoup."><small>Par an (pondéré)</small><b class="${sign(c.xirr)}">${signed(c.xirr)} ${moji(c.xirr)}</b></div>
+    <div class="pm1" data-tip="Plus-value après impôt à la sortie (tu en conserves ${pc(taxe, 1)}).\n${eur(c.pvNet)} ÷ ${eur(c.investi)} = ${signed(netRend)}."><small>Plus-value nette</small><b class="${sign(c.pvNet)}">${eur(c.pvNet)} ${moji(netRend)}</b></div></div>`;
+  const retrait = p.retrait && c.retraitMois != null ? kv('Retrait possible', c.retraitMois > 0 ? `${dureeTxt(c.retraitMois)} · ${moisAnnee(p.retrait)}` : 'maintenant', '', 'Date à partir de laquelle le retrait est possible sans perdre l\'avantage fiscal.') : '';
   const assets = c.actifs.map((a, i) => assetRow(key, i, a)).join('');
-  const perfBars = c.actifs.length > 1 ? hbars(c.actifs.map(a => ({ l: a.nom, v: a.cout ? a.pv / a.cout * 100 : 0, t: signed(a.cout ? a.pv / a.cout : 0) + ' ' + moji(a.cout ? a.pv / a.cout : 0) }))) : '';
-  return `<section class="sec prod"><header><h2>${esc(p.titre)} <em>${chip(p.who)}</em></h2><span class="tot">${eur(c.totalApresImpot)}</span></header>
-    <div class="pmain"><div class="pm1"><small>Rendement total</small><b class="${sign(c.rendement)}">${signed(c.rendement)} ${moji(c.rendement)}</b></div><div class="pm1"><small>Par an (pondéré)</small><b class="${sign(c.xirr)}">${signed(c.xirr)} ${moji(c.xirr)}</b></div><div class="pm1"><small>Plus-value nette</small><b class="${sign(c.pvNet)}">${eur(c.pvNet)}</b></div></div>
-    ${kv('Investi', eur(c.investi, 2))}${hasVirt ? kv('Espèces en attente', eur(c.especes, 2)) : ''}${kv('Valeur brute', eur(c.totalBrut, 2))}${ret}
-    ${perfBars}${assets}${addBtn(`placements.${key}.actifs`, 'Actif')}
-    ${hasVirt ? `<button class="add ghost" data-edit="placements.${key}.virements">Virements versés (${p.virements.length})</button>` : ''}
+  const last = hasVirt && p.virements.length ? p.virements[p.virements.length - 1] : null;
+  return `<section class="sec prod"><header><div class="ht"><h2>${esc(p.titre)} ${chip(p.who)}</h2></div><span class="tot">${eur(c.totalApresImpot)}</span></header>
+    ${tiles}
+    <div class="dl">${kv('Investi', eur(c.investi, 2))}${hasVirt ? kv('Espèces en attente', eur(c.especes, 2), '', 'Argent versé sur le compte mais pas encore investi : versements − achats. Calculé tout seul.') : ''}${kv('Valeur brute', eur(c.totalBrut, 2))}${retrait}</div>
+    <h4 class="sub">Actifs</h4>${assets}
+    <div class="btnline"><button class="add" data-add="placements.${key}.actifs">+ Actif</button>${hasVirt ? `<button class="add ghost" data-qv="placements.${key}.virements">+ Versement du mois${last ? ' (' + eur(num(last.montant)) + ')' : ''}</button>` : ''}</div>
+    ${hasVirt ? `<button class="add ghost" data-edit="placements.${key}.virements">Tous les versements (${p.virements.length})</button>` : ''}
     ${p.fondsEuros ? `<div class="inl3"><label>Fonds euros investi${fld(`placements.${key}.fondsEuros.investi`, p.fondsEuros.investi)}</label><label>Taux${fld(`placements.${key}.fondsEuros.taux`, p.fondsEuros.taux, { t: 'pct' })}</label></div>` : ''}
-    ${key === 'ctoA' ? `<div class="inl"><span>Espèces</span>${fld(`placements.${key}.especes`, p.especes)}</div>` : ''}</section>`;
-}
-function metalsBanner() {
-  const cs = R.cours, auto = !!(METALS.orOnce && R.cours === METALS);
-  const when = auto ? new Date(METALS.date).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : (cs.date || '–');
-  const st = metalsState === 'busy' ? 'mise à jour…' : metalsState === 'err' ? 'échec, cours de secours' : auto ? 'live · ' + when : 'cours de secours du ' + when;
-  return `<section class="metals"><div class="mt"><span>Or</span><b>${eur(num(cs.orOnce))}</b><small>/once</small></div><div class="mt"><span>Argent</span><b>${eur(num(cs.argentOnce), 2)}</b><small>/once</small></div>
-    <button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button><div class="mst ${metalsState === 'err' ? 'neg' : ''}">${st}</div></section>`;
+    ${!hasVirt && key === 'ctoA' ? `<div class="inl"><span>Espèces</span>${fld(`placements.${key}.especes`, p.especes)}</div>` : ''}</section>`;
 }
 function vPlacements() {
   const P = pf, pp = R.plParPers[P], keys = ['peaA', 'peaB', 'ctoA', 'avA'].filter(k => S.placements[k].who === P);
-  const icons = { peaA: 'trend', peaB: 'trend', ctoA: 'gold', avA: 'layers' };
-  const label = k => { const p = S.placements[k]; return k === 'ctoA' ? 'Métaux' : p.titre; };
-  const parProd = keys.map(k => ({ l: label(k), v: R.pl[k].rendement * 100, t: signed(R.pl[k].rendement) + ' ' + moji(R.pl[k].rendement) }));
+  const label = k => k === 'ctoA' ? 'Métaux' : S.placements[k].titre;
+  const parProd = keys.map(k => ({ l: label(k), v: R.pl[k].rendement * 100, t: signed(R.pl[k].rendement) }));
   const objets = R.objets.map((o, i) => row(`placements.objets.${i}`, 'gold', o.label, `${dec(o.grammes)} g · titre ${dec(o.titre)}`, eur(o.valeur))).join('');
   const seg = `<div class="seg pers" role="tablist"><button class="a ${P === 'a' ? 'on' : ''}" data-pf="a">${esc(N('a'))}</button><button class="b ${P === 'b' ? 'on' : ''}" data-pf="b">${esc(N('b'))}</button></div>`;
   const objBlock = P === 'b' ? sec('Objets en or', objets + addBtn('placements.objets', 'Objet') + kv('Valeur brute', eur(R.objetsBrut)) + kv('Après marge de revente (' + pc(S.settings.reventeOr, 0) + ')', eur(R.objetsNet), 'pos'), eur(R.objetsNet)) : '';
-  return `${seg}${metalsBanner()}
-  <section class="hero small"><small>Plus-value nette · ${esc(N(P))}</small><div class="big">${eur(pp.pvNet)}</div>
-    <div class="hchips"><span>${moji(pp.rendement)} ${signed(pp.rendement)} net</span><span>${signed(pp.xirrNet)} par an (pondéré)</span><span>Investi ${eur(pp.investi)}</span><span>Valeur ${eur(pp.total + (P === 'b' ? R.objetsNet : 0))}${P === 'b' ? ' avec l\'or' : ''}</span></div></section>
+  return `${seg}${coursPanel(P, keys)}
+  <section class="hero small"><small>Plus-value nette · ${nm(P)}</small><div class="big">${eur(pp.pvNet)}</div>
+    <div class="hchips"><span>${signed(pp.rendement)} net</span><span>${signed(pp.xirrNet)} par an (pondéré)</span><span>Investi ${eur(pp.investi)}</span><span>Valeur ${eur(pp.total + (P === 'b' ? R.objetsNet : 0))}${P === 'b' ? ' avec l\'or' : ''}</span></div></section>
   ${R.seriePers[P].length > 1 ? sec('Argent investi au fil du temps', lineChart(R.seriePers[P]), '', 'enter') : ''}
-  ${parProd.length > 1 ? sec('Rendement par placement', hbars(parProd)) : ''}
-  ${keys.map(k => placeBlock(k, icons[k])).join('')}${objBlock}`;
+  ${parProd.length > 1 ? sec('Rendement par placement', hbars(parProd), '', '', 'Rendement total avant impôt de chaque placement.') : ''}
+  ${keys.map(k => placeBlock(k)).join('')}${objBlock}`;
 }
 
 function vAchats() {
   const bars = R.achats.map(y => ({ l: y.annee, v: y.solde }));
   const blocks = S.achats.map((y, i) => {
     const t = R.achats[i];
-    const items = y.items.map((it, j) => row(`achats.${i}.items.${j}`, num(it.vente) > 0 && !num(it.achat) ? '💚' : '🛍️', it.label, chip(it.who), num(it.vente) > 0 && !num(it.achat) ? '+' + eur(num(it.vente)) : '− ' + eur(num(it.achat)), num(it.vente) > 0 && !num(it.achat) ? 'pos' : '')).join('');
-    return sec(`📅 ${esc(y.annee)}`, items + addBtn(`achats.${i}.items`, 'Ligne') + kv('Achats', eur(t.achats)) + kv('Ventes', eur(t.ventes)) + kv('Solde', eur(t.solde), sign(t.solde)), eur(t.solde));
+    const items = y.items.map((it, j) => row(`achats.${i}.items.${j}`, num(it.vente) > 0 && !num(it.achat) ? 'plus' : 'bag', it.label, chip(it.who), num(it.vente) > 0 && !num(it.achat) ? '+' + eur(num(it.vente)) : '− ' + eur(num(it.achat)), num(it.vente) > 0 && !num(it.achat) ? 'pos' : '')).join('');
+    return sec(esc(y.annee), items + addBtn(`achats.${i}.items`, 'Ligne') + kv('Achats', eur(t.achats)) + kv('Ventes', eur(t.ventes)) + kv('Solde', eur(t.solde), sign(t.solde)), eur(t.solde));
   }).join('');
   return `<section class="hero small"><small>Solde cumulé achats / ventes</small><div class="big">${eur(R.achatsSolde)}</div></section>
-    ${sec('📊 Solde par année', vbars(bars), '', 'enter')}${blocks}<button class="add" data-addyearachat>+ Année</button>`;
+    ${sec('Solde par année', vbars(bars), '', 'enter')}${blocks}<button class="add" data-addyearachat>+ Année</button>`;
 }
 
 function vSimu() {
   const sm = S.settings.simu, ls = R.simu.lignes;
-  const bars = ls.map((l, i) => ({ l: pc(l.taux, 1), v: l.capital, c: 'linear-gradient(var(--ac),#7fa8bb)' }));
+  const bars = ls.map(l => ({ l: pc(l.taux, 1), v: l.capital, c: 'linear-gradient(var(--ac),#7fa8bb)' }));
   const dn = ls[1] || ls[0];
   return `<section class="hero small"><small>Mensualité maximale</small><div class="big">${eur(R.simu.mensualite)}</div><div class="hchips"><span>${pc(sm.plafond, 0)} des revenus bruts</span><span>${sm.duree} ans</span></div></section>
-  ${sec('🏡 Capital empruntable selon le taux', vbars(bars), '', 'enter')}
-  ${dn ? sec(`🍰 Coût total à ${pc(dn.taux, 1)}`, donut([{ l: 'Capital', v: dn.capital, c: '#3f7691' }, { l: 'Intérêts', v: dn.interets, c: '#b58b6e' }], { center: eur(dn.capital + dn.interets), top: 'à rembourser' })) : ''}
-  ${sec('⚙️ Hypothèses', `<div class="grid3"><label>Endettement${fld('settings.simu.plafond', sm.plafond, { t: 'pct' })}</label><label>Durée (ans)${fld('settings.simu.duree', sm.duree)}</label><label>Revenus bruts<span class="calc">${eur(R.brutTotal)}</span></label></div>
+  ${sec('Capital empruntable selon le taux', vbars(bars), '', 'enter')}
+  ${dn ? sec(`Coût total à ${pc(dn.taux, 1)}`, donut([{ l: 'Capital', v: dn.capital, c: '#3f7691' }, { l: 'Intérêts', v: dn.interets, c: '#b58b6e' }], { center: eur(dn.capital + dn.interets), top: 'à rembourser' })) : ''}
+  ${sec('Hypothèses', `<div class="grid3"><label>Endettement${fld('settings.simu.plafond', sm.plafond, { t: 'pct' })}</label><label>Durée (ans)${fld('settings.simu.duree', sm.duree)}</label><label>Revenus bruts<span class="calc">${eur(R.brutTotal)}</span></label></div>
     <div class="grid3">${ls.map((l, i) => `<label>Taux ${i + 1}${fld(`settings.simu.taux.${i}`, l.taux, { t: 'pct' })}</label>`).join('')}</div>` +
-    ls.map(l => kv(`À ${pc(l.taux, 1)} : capital + apport`, eur(l.avecApport), 'pos')).join('') + kv('Apport (comptes marqués « apport »)', eur(R.apport)) +
-    `<p class="hint">Calcul par annuité constante. L'ancien Excel multipliait le capital par le taux et la durée, ce qui ne donne pas un vrai coût de crédit.</p>`)}`;
+    ls.map(l => kv(`À ${pc(l.taux, 1)} : capital + apport`, eur(l.avecApport), 'pos')).join('') + kv('Apport', eur(R.apport), '', 'Somme des comptes marqués « apport » (livrets, PEL, LEP…).'), '', '', 'Calcul par annuité constante. L\'ancien Excel multipliait le capital par le taux et la durée, ce qui ne donne pas un vrai coût de crédit.')}`;
 }
 
 function vReglages() {
@@ -643,15 +750,14 @@ function vReglages() {
     <label class="chk"><input type="checkbox" data-act="showsecrets" ${showSecrets ? 'checked' : ''}><span>Afficher le jeton et la phrase</span></label>
     <p class="hint">Sans la phrase secrète, les données du dépôt sont illisibles pour tout le monde, toi compris.</p>
     ${kv('État', esc(st))}${conflict}<div class="btnrow"><button class="btn pri" data-act="syncnow">Synchroniser maintenant</button></div>`)}
-  ${sec('💾 Sauvegarde et import', `<div class="btnrow"><button class="btn" data-act="export">Exporter (fichier lisible)</button><label class="btn">Importer un fichier<input type="file" accept="application/json,.json" data-act="import" hidden></label></div><p class="hint">Le fichier exporté contient tes chiffres en clair : garde-le hors de tout dossier public.</p>`)}
-  ${sec('🥇 Cours de secours', `<p class="hint">Les cours de l'or et de l'argent se mettent à jour tout seuls (xaus.com). Ces valeurs ne servent que si le service est injoignable.</p><div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', s.cours.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', s.cours.argentOnce)}</label><label>Date${fld('settings.cours.date', s.cours.date, { t: 'date' })}</label></div><div class="inl"><span>Coefficient de revente or</span>${fld('settings.reventeOr', s.reventeOr, { t: 'pct' })}</div>`)}
-  ${sec('👫 Prénoms et fiscalité', `<div class="grid3"><label>Prénom 1${fld('settings.noms.a', s.noms.a, { t: 'text' })}</label><label>Prénom 2${fld('settings.noms.b', s.noms.b, { t: 'text' })}</label></div>
-    <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>
-    <p class="hint">Part qui reste après impôt (82,8 % = 17,2 % prélevés). Ces taux étaient écrits en dur dans l'Excel : à valider.</p>`)}
-  ${sec('🧹 Vider cet appareil', `<button class="btn danger" data-act="reset">Effacer les données locales</button><p class="hint">Ne touche pas au dépôt GitHub.</p>`)}`;
+  ${sec('Sauvegarde et import', `<div class="btnrow"><button class="btn" data-act="export">Exporter (fichier lisible)</button><label class="btn">Importer un fichier<input type="file" accept="application/json,.json" data-act="import" hidden></label></div><p class="hint">Le fichier exporté contient tes chiffres en clair : garde-le hors de tout dossier public.</p>`)}
+  ${sec('Cours de secours', `<div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', s.cours.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', s.cours.argentOnce)}</label><label>Date${fld('settings.cours.date', s.cours.date, { t: 'date' })}</label></div><div class="inl"><span>Coefficient de revente or</span>${fld('settings.reventeOr', s.reventeOr, { t: 'pct' })}</div>`, '', '', 'Les cours de l\'or, de l\'argent et des cryptos se mettent à jour tout seuls. Ces valeurs ne servent que si le service est injoignable.')}
+  ${sec('Prénoms et fiscalité', `<div class="grid3"><label>Prénom 1${fld('settings.noms.a', s.noms.a, { t: 'text' })}</label><label>Prénom 2${fld('settings.noms.b', s.noms.b, { t: 'text' })}</label></div>
+    <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>`, '', '', 'Part qui reste après impôt (82,8 % = 17,2 % prélevés). Ces taux étaient écrits en dur dans l\'Excel : à valider.')}
+  ${sec('Vider cet appareil', `<button class="btn danger" data-act="reset">Effacer les données locales</button>`, '', '', 'Ne touche pas au dépôt GitHub.')}`;
 }
 
-/* ---------- Fiche d'édition (feuille du bas) ---------- */
+/* ---------- Fiche d'édition (feuille du bas / fenêtre) ---------- */
 function specFor(path) {
   const who = sh => ['who', 'sel', 'Pour', whoOpts(sh)];
   let m;
@@ -663,8 +769,11 @@ function specFor(path) {
   if (/^interets\.lignes\.\d+$/.test(path)) return { title: 'Intérêts d\'un compte', f: [['label', 'text', 'Compte'], who(false), ...S.interets.annees.map(y => ['v.' + y, 'num', 'Intérêts ' + y + ' (€)'])] };
   if (/^placements\.objets\.\d+$/.test(path)) return { title: 'Objet en or', f: [['label', 'text', 'Objet'], ['grammes', 'num', 'Poids (g)'], ['titre', 'num', 'Titre (1 = pur, 0,585 = 14 carats)']] };
   if ((m = path.match(/^achats\.(\d+)\.items\.\d+$/))) return { title: 'Achat ou vente', f: [['label', 'text', 'Libellé'], ['achat', 'num', 'Achat (€)'], ['vente', 'num', 'Vente (€)'], who(true)] };
-  if ((m = path.match(/^placements\.(\w+)\.actifs\.\d+$/))) { const p = S.placements[m[1]]; const pru = Array.isArray(p.virements) || p.fondsEuros; return { title: 'Actif', f: [['nom', 'text', 'Nom'], ['isin', 'text', 'Code ISIN'], ['cours', 'num', 'Cours actuel (€)'], ...(pru ? [['pru', 'num', 'Prix de revient moyen (€)']] : [])], lots: true, hasVirt: Array.isArray(p.virements) }; }
-  if (/^placements\.\w+\.virements$/.test(path)) return { title: 'Virements versés', list: [['date', 'month', ''], ['montant', 'num', '€']] };
+  if ((m = path.match(/^placements\.(\w+)\.actifs\.\d+$/))) {
+    const key = m[1], p = S.placements[key], lotCost = key === 'ctoA' || !Array.isArray(p.virements), pru = (Array.isArray(p.virements) && key !== 'ctoA') || p.fondsEuros;
+    return { title: 'Actif', f: [['nom', 'text', 'Nom'], ['isin', 'text', 'Code ISIN'], ['cours', 'num', 'Cours actuel (€)'], ...(pru ? [['pru', 'num', 'Prix de revient moyen (€)']] : [])], lots: true, lotCost };
+  }
+  if (/^placements\.\w+\.virements$/.test(path)) return { title: 'Versements sur le compte', list: [['date', 'month', ''], ['montant', 'num', '€']] };
   return { title: 'Modifier', f: [] };
 }
 function sheetHtml() {
@@ -673,14 +782,14 @@ function sheetHtml() {
   if (!obj) return '';
   let body = '';
   if (spec.list) {
-    body = obj.map((x, j) => `<div class="lrow">${spec.list.map(([k, t, ph]) => fld(`${editing.path}.${j}.${k}`, x[k], { t, ph })).join('')}<button class="x" data-delin="${editing.path}.${j}" aria-label="Supprimer">×</button></div>`).join('') + `<button class="add" data-addin="${editing.path}">+ Ajouter</button>`;
+    body = obj.map((x, j) => `<div class="lrow">${spec.list.map(([k, t, ph]) => fld(`${editing.path}.${j}.${k}`, x[k], { t, ph })).join('')}<button class="x" data-delin="${editing.path}.${j}" aria-label="Supprimer">×</button></div>`).reverse().join('') + `<button class="add" data-addin="${editing.path}">+ Ajouter</button>`;
   } else {
-    body = spec.f.map(([k, t, l, opts]) => t === 'chk' ? fld(`${editing.path}.${k}`, get(obj, k) !== false && (k === 'apport' ? true : !!get(obj, k)), { t: 'chk', txt: l }) :
-      field(l, t === 'sel' ? fld(`${editing.path}.${k}`, get(obj, k), { t: 'sel', opts }) : fld(`${editing.path}.${k}`, get(obj, k), { t })) ).join('');
+    body = spec.f.map(([k, t, l, opts]) => t === 'chk' ? fld(`${editing.path}.${k}`, k === 'apport' ? get(obj, k) !== false : !!get(obj, k), { t: 'chk', txt: l }) :
+      field(l, t === 'sel' ? fld(`${editing.path}.${k}`, get(obj, k), { t: 'sel', opts }) : fld(`${editing.path}.${k}`, get(obj, k), { t }))).join('');
     if (spec.note) body += `<p class="hint">${spec.note}</p>`;
     if (spec.lots) {
-      const c = editing.path.split('.'); const lots = obj.lots || [];
-      body += `<h4>Achats</h4>` + lots.map((l, j) => `<div class="lrow">${fld(`${editing.path}.lots.${j}.date`, l.date, { t: 'month' })}${fld(`${editing.path}.lots.${j}.qty`, l.qty, { ph: 'Qté' })}${spec.hasVirt ? '' : fld(`${editing.path}.lots.${j}.montant`, l.montant, { ph: '€ payés' })}<button class="x" data-delin="${editing.path}.lots.${j}" aria-label="Supprimer">×</button></div>`).join('') + `<button class="add" data-addin="${editing.path}.lots">+ Achat</button>`;
+      const lots = obj.lots || [];
+      body += `<h4>Achats</h4>` + lots.map((l, j) => `<div class="lrow">${fld(`${editing.path}.lots.${j}.date`, l.date, { t: 'month' })}${fld(`${editing.path}.lots.${j}.qty`, l.qty, { ph: 'Qté' })}${spec.lotCost ? fld(`${editing.path}.lots.${j}.montant`, l.montant, { ph: '€ payés' }) : ''}<button class="x" data-delin="${editing.path}.lots.${j}" aria-label="Supprimer">×</button></div>`).join('') + `<button class="add" data-addin="${editing.path}.lots">+ Achat</button>`;
     }
   }
   const canDel = !spec.list;
@@ -690,21 +799,29 @@ function sheetHtml() {
 
 const VIEWS = { accueil: ['Accueil', vAccueil], budget: ['Budget', vBudget], epargne: ['Épargne', vEpargne], placements: ['Placements', vPlacements], achats: ['Achats et ventes', vAchats], simu: ['Emprunt', vSimu], reglages: ['Réglages', vReglages] };
 const TABS = [['accueil', 'home', 'Accueil'], ['budget', 'receipt', 'Budget'], ['epargne', 'wallet', 'Épargne'], ['placements', 'trend', 'Placements']];
+const EXTRA = [['achats', 'bag', 'Achats et ventes'], ['simu', 'home', 'Emprunt'], ['reglages', 'sliders', 'Réglages']];
 let lastView = null;
 function render() {
   R = R || recalc();
   const [title, fn] = VIEWS[view];
   const fresh = lastView !== view; lastView = view;
+  hideTip();
   document.getElementById('app').innerHTML = `
   <header class="top"><h1>${title}</h1><span id="syncpill" class="pill off"></span></header>
   <main class="${fresh ? 'anim' : ''}">${fn()}</main>
   <nav class="nav">${TABS.map(([k, e, l]) => `<button class="tab ${view === k ? 'on' : ''}" data-go="${k}"><span class="te">${ico(e)}</span><span>${l}</span></button>`).join('')}
-    <button class="tab ${['achats', 'simu', 'reglages'].includes(view) ? 'on' : ''}" data-more><span class="te">${ico('dots')}</span><span>Plus</span></button></nav>
+    <button class="tab plus ${['achats', 'simu', 'reglages'].includes(view) ? 'on' : ''}" data-more><span class="te">${ico('dots')}</span><span>Plus</span></button>
+    ${EXTRA.map(([k, e, l]) => `<button class="tab extra ${view === k ? 'on' : ''}" data-go="${k}"><span class="te">${ico(e)}</span><span>${l}</span></button>`).join('')}</nav>
   ${moreOpen ? `<div class="sheet" data-close><div class="sheetin more"><button data-go="achats">${ico('bag')}Achats et ventes</button><button data-go="simu">${ico('home')}Emprunt</button><button data-go="reglages">${ico('sliders')}Réglages</button></div></div>` : ''}
   ${sheetHtml()}<div id="toast" role="status"></div>`;
   paintPill(document.getElementById('syncpill'));
 }
-function renderKeepFocus() {
+/* Un rendu déclenché pendant un appui est repoussé après le clic : sinon le bouton visé disparaît sous le doigt */
+let ptrDown = false, pendingRender = false;
+['pointerdown'].forEach(t => document.addEventListener(t, () => { ptrDown = true; }, true));
+['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, () => setTimeout(() => { ptrDown = false; if (pendingRender) { pendingRender = false; renderKeepFocus(true); } }, 80), true));
+function renderKeepFocus(now) {
+  if (ptrDown && !now) { pendingRender = true; return; }
   setTimeout(() => {
     const a = document.activeElement, p = a && a.dataset && a.dataset.p, y = window.scrollY, sb = document.querySelector('.sbody'), sy = sb ? sb.scrollTop : 0;
     render(); window.scrollTo(0, y); const nb = document.querySelector('.sbody'); if (nb) nb.scrollTop = sy;
@@ -713,10 +830,25 @@ function renderKeepFocus() {
 }
 function toast(t) { const el = document.getElementById('toast'); if (!el) return; el.textContent = t; el.className = 'show'; setTimeout(() => el.className = '', 3200); }
 
-/* ---------- Cours de l'or et de l'argent (automatiques) ---------- */
-let metalsErr = '';
+/* ---------- Bulles d'aide ---------- */
+let tipEl = null, tipFor = null;
+function hideTip() { if (tipEl) tipEl.className = ''; tipFor = null; }
+function showTip(el) {
+  if (!tipEl) { tipEl = document.createElement('div'); tipEl.id = 'tip'; tipEl.setAttribute('role', 'tooltip'); document.body.appendChild(tipEl); }
+  tipEl.textContent = el.dataset.tip; tipEl.className = 'show'; tipFor = el;
+  const r = el.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+  let x = r.left + r.width / 2 - w / 2; x = Math.max(8, Math.min(window.innerWidth - w - 8, x));
+  let y = r.top - h - 10; if (y < 8) y = r.bottom + 10;
+  tipEl.style.left = x + 'px'; tipEl.style.top = y + 'px';
+}
+document.addEventListener('mouseover', e => {
+  if (!window.matchMedia('(hover: hover)').matches) return;
+  const t = e.target.closest('[data-tip]'); if (t) { if (t !== tipFor) showTip(t); } else if (tipFor) hideTip();
+});
+window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: true });
+
+/* ---------- Cours en direct : or, argent, crypto ---------- */
 async function fetchMetals() {
-  metalsState = 'busy'; if (view === 'placements') render();
   try {
     const r = await fetch('https://xaus.com/api/v1/spot?currency=EUR&compact=1', { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -724,9 +856,23 @@ async function fetchMetals() {
     if (!(or > 0)) throw new Error('réponse inattendue');
     const fx = j.fx_rate > 0 ? j.fx_rate : (j.spot_usd_oz > 0 ? or / j.spot_usd_oz : 0), ag = j.silver_usd_oz > 0 && fx > 0 ? j.silver_usd_oz * fx : 0;
     METALS = { orOnce: or, argentOnce: ag, date: j.updated_at || new Date().toISOString() };
-    LS.set('cc.metals', JSON.stringify(METALS)); metalsState = 'ok'; R = recalc();
-  } catch (e) { metalsState = 'err'; metalsErr = e.message; R = recalc(); }
-  render();
+    LS.set('cc.metals', JSON.stringify(METALS)); return true;
+  } catch (e) { return false; }
+}
+async function fetchCrypto() {
+  if (!S.comptes.some(c => /crypto/i.test(c.label))) return true;
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=eur', { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    CRYPTO = { btc: j.bitcoin && j.bitcoin.eur, eth: j.ethereum && j.ethereum.eur, sol: j.solana && j.solana.eur, date: new Date().toISOString() };
+    LS.set('cc.crypto', JSON.stringify(CRYPTO)); return !!CRYPTO.btc;
+  } catch (e) { return false; }
+}
+async function fetchLive() {
+  metalsState = 'busy'; if (view === 'placements') render();
+  const [a, b] = await Promise.all([fetchMetals(), fetchCrypto()]);
+  metalsState = a && b ? 'ok' : 'err'; R = recalc(); render();
 }
 
 /* ---------- Événements ---------- */
@@ -739,12 +885,13 @@ const thisMonth = () => new Date().toISOString().slice(0, 7);
 function newItem(path) {
   if (NEW[path]) return NEW[path]();
   if (/\.actifs$/.test(path)) return { nom: '', isin: '', cours: 0, pru: 0, lots: [] };
-  if (/\.lots$/.test(path)) return { date: thisMonth(), qty: 0 };
+  if (/\.lots$/.test(path)) return { date: thisMonth(), qty: 0, ...(/\.(ctoA|avA)\./.test(path) ? { montant: 0 } : {}) };
   if (/\.virements$/.test(path)) return { date: thisMonth(), montant: 0 };
   if (/\.items$/.test(path)) return { label: '', achat: 0, vente: 0, who: 'a' };
   return {};
 }
 document.addEventListener('change', e => {
+  if (e.target.matches && e.target.matches('select[data-ef]')) { ef = e.target.value; LS.set('cc.ef', ef); render(); return; }
   const el = e.target.closest('[data-p]');
   if (el) {
     const p = el.dataset.p, t = el.dataset.t; let v;
@@ -759,7 +906,7 @@ document.addEventListener('change', e => {
 const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 function bump(el) {
   if (REDUCED || !el || !el.animate) return;
-  el.animate([{ transform: 'scale(1)' }, { transform: 'scale(.95)', offset: .25 }, { transform: 'scale(1.03)', offset: .6 }, { transform: 'scale(1)' }], { duration: 440, easing: 'cubic-bezier(.23,1,.32,1)' });
+  el.animate([{ transform: 'scale(1)' }, { transform: 'scale(.965)', offset: .3 }, { transform: 'scale(1.02)', offset: .68 }, { transform: 'scale(1)' }], { duration: 780, easing: 'cubic-bezier(.33,1,.68,1)' });
 }
 function donutTap(w, i) {
   const segs = [...w.querySelectorAll('circle.seg')], lis = [...w.querySelectorAll('.dleg li')], cen = w.querySelector('.dcen');
@@ -770,30 +917,32 @@ function donutTap(w, i) {
   const li = lis[i];
   cen.querySelector('small').textContent = same ? cen.dataset.t : `${li.children[1].textContent} · ${li.children[3].textContent}`;
   cen.querySelector('b').textContent = same ? cen.dataset.c : li.children[2].textContent;
-  if (!same && !REDUCED) cen.animate([{ transform: 'scale(.9)', opacity: .4 }, { transform: 'scale(1)', opacity: 1 }], { duration: 300, easing: 'cubic-bezier(.23,1,.32,1)' });
+  if (!same && !REDUCED) cen.animate([{ transform: 'scale(.9)', opacity: .4 }, { transform: 'scale(1)', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.33,1,.68,1)' });
 }
 document.addEventListener('click', async e => {
+  const tp = e.target.closest('[data-tip]');
+  if (tp) { if (tipFor === tp) hideTip(); else showTip(tp); if (tp.classList.contains('info')) return; } else hideTip();
   const sg = e.target.closest('circle.seg, .dleg li');
   if (sg) { const w = sg.closest('.donutw'); donutTap(w, +sg.dataset.i); bump(w.querySelector('.dsvg')); return; }
-  const card = e.target.closest('.cat,.person,.hero,.pm1,.metals,.dsvg,.vbc,.hbr,.prow,.split .kv,.pmain');
+  const card = e.target.closest('.cat,.person,.hero,.pm1,.dsvg,.vbc,.hbr,.prow,.split .kv,.pmain,.salc,.ct');
   if (card && !e.target.closest('button,input,select,label')) bump(card);
   const t = e.target.closest('button,[data-close]'); if (!t) return;
   const d = t.dataset;
   if ('close' in d) { if (e.target === t) { editing = null; moreOpen = false; render(); } return; }
   if ('done' in d) { editing = null; render(); return; }
   if (d.edit) { editing = { path: d.edit }; render(); return; }
-  if ('ef' in d) { ef = ef === 'all' ? 'a' : ef === 'a' ? 'b' : 'all'; LS.set('cc.ef', ef); render(); return; }
   if (d.pf) { pf = d.pf; LS.set('cc.pf', pf); render(); window.scrollTo(0, 0); return; }
   if (d.bmode) { bmode = d.bmode; LS.set('cc.bmode', bmode); render(); window.scrollTo(0, 0); return; }
   if (d.go) { view = d.go; moreOpen = false; editing = null; render(); window.scrollTo(0, 0); return; }
   if ('more' in d) { moreOpen = true; render(); return; }
-  if (d.add) { const arr = get(S, d.add); arr.push(newItem(d.add)); if (/\.(virements|lots)$/.test(d.add)) { editing = editing || null; } else editing = { path: d.add + '.' + (arr.length - 1) }; commit(); return; }
+  if (d.qv) { const arr = get(S, d.qv), m = thisMonth(); if (!arr.some(v => v.date === m)) arr.push({ date: m, montant: arr.length ? num(arr[arr.length - 1].montant) : 0 }); editing = { path: d.qv }; commit(); return; }
+  if (d.add) { const arr = get(S, d.add); arr.push(newItem(d.add)); editing = { path: d.add + '.' + (arr.length - 1) }; commit(); return; }
   if (d.addin) { get(S, d.addin).push(newItem(d.addin)); commit(); return; }
   if (d.delin) { const ks = d.delin.split('.'), i = +ks.pop(); get(S, ks.join('.')).splice(i, 1); commit(); return; }
   if (d.delete) { const ks = d.delete.split('.'), i = +ks.pop(); get(S, ks.join('.')).splice(i, 1); editing = null; commit(); return; }
   if ('addyear' in d) { const a = S.interets.annees; a.push(a[a.length - 1] + 1); commit(); return; }
   if ('addyearachat' in d) { S.achats.push({ annee: String(new Date().getFullYear() + S.achats.length), items: [] }); commit(); return; }
-  if (d.act === 'metals') { fetchMetals(); return; }
+  if (d.act === 'metals') { fetchLive(); return; }
   if (d.act === 'syncnow') { await pull(false); if (sync.state === 'dirty') await push(); if (sync.state === 'ok') toast('Synchronisé'); render(); return; }
   if (d.act === 'keeplocal') { await push(true); render(); return; }
   if (d.act === 'keepremote') { meta.dirty = false; meta.sha = ''; await pull(false); render(); return; }
@@ -805,19 +954,20 @@ async function importFile(f) {
   try {
     const j = JSON.parse(await f.text());
     if (j.app !== 'comptes-couple') throw new Error('Ce fichier n\'est pas un fichier de données de l\'appli.');
-    S = Object.assign(EMPTY_STATE(), j); R = recalc(); meta.dirty = true; saveLocal(); view = 'accueil'; render(); toast('Fichier importé'); schedulePush();
+    S = Object.assign(EMPTY_STATE(), j); migrate(S); R = recalc(); meta.dirty = true; saveLocal(); view = 'accueil'; render(); toast('Fichier importé'); schedulePush(); fetchLive();
   } catch (e) { toast('Import impossible : ' + e.message); }
 }
 
 /* ---------- Démarrage ---------- */
 loadLocal(); R = recalc(); render();
-fetchMetals();
+fetchLive();
 if (cfgOK()) pull(true);
-window.addEventListener('online', () => { if (cfgOK()) pull(true); fetchMetals(); });
+window.addEventListener('online', () => { if (cfgOK()) pull(true); fetchLive(); });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   if (cfgOK() && !meta.dirty) pull(true);
-  if (!METALS.date || Date.now() - new Date(METALS.date) > 30 * 60 * 1000) fetchMetals();
+  if (!METALS.date || Date.now() - new Date(METALS.date) > 30 * 60 * 1000) fetchLive();
 });
+try { if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js'); } catch (e) {}
 
 </script></body></html>
