@@ -715,10 +715,10 @@ function coursPanel(P, keys) {
   }
   if (hasCrypto(P) && (CRYPTO.btc || CRYPTO.eth || CRYPTO.sol)) [['Bitcoin', CRYPTO.btc, CHG.btc], ['Ethereum', CRYPTO.eth, CHG.eth], ['Solana', CRYPTO.sol, CHG.sol]].forEach(([n, x, c]) => { if (x) tiles.push(tile('cry', n, eur(x, x < 100 ? 2 : 0), c)); });
   const errs = Object.entries(LIVE_ERR).filter(([, m]) => m), ed = LS.get('cc.etfdate');
-  const st = metalsState === 'busy' ? 'mise à jour…' : (ed ? 'dernier passage du relais : ' + fmtDT(ed) : 'aucun relevé du relais pour l\'instant');
+  const st = metalsState === 'busy' ? (LIVE_MSG || 'mise à jour…') : (ed ? 'dernier passage du relais : ' + fmtDT(ed) : 'aucun relevé du relais pour l\'instant');
   const leg = [['etf', 'ETF'], ['etc', 'ETC et métaux'], ['cry', 'Crypto']].filter(([c]) => present.has(c)).map(([c, l]) => `<span><i class="lg ${c}"></i>${l}</span>`).join('');
   return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Une seule source : le relais de ton dépôt privé (toutes les heures en séance). Le bouton ↻ le relance tout de suite si ton jeton a le droit « Actions ». Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique). Touche un ETF pour corriger son cours à la main si besoin.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
-    <div class="ctg">${tiles.join('')}</div><div class="legend2">${leg}</div><div class="mst">${st}</div>${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
+    <div class="ctg">${tiles.join('')}</div><div class="legend2">${leg}</div><div class="mst" data-live>${st}</div>${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
 }
 function assetRow(key, i, a, base) {
   const perf = a.cout ? a.pv / a.cout : 0;
@@ -928,8 +928,9 @@ document.addEventListener('mouseover', e => {
 window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: true });
 
 /* ---------- Cours : une seule source, le relais du dépôt privé (budget/cours.json) ---------- */
-let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 5000, LAST_LIVE = 0;
-const APP_BUILD = '29092026-f';
+let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
+const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
+const APP_BUILD = '29092026-g';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -992,13 +993,21 @@ function applyFeed(feed, isins) {
 async function fetchLive(force) {
   if (force !== true && Date.now() - LAST_LIVE < 120000) return;
   LAST_LIVE = Date.now();
-  metalsState = 'busy'; if (view === 'placements' || view === 'reglages') render();
+  metalsState = 'busy'; LIVE_MSG = ''; if (view === 'placements' || view === 'reglages') render();
   const isins = allIsins();
   let feed = await readFeed(isins), errs = {};
   if (!feed.err) { errs = applyFeed(feed, isins); R = recalc(); render(); }          // les derniers cours s'affichent tout de suite
   if (force === true && !feed.err && cfgOK()) {
     const t = await triggerRelay(), before = feed.date;
-    if (t.ok) { for (let i = 0; i < 16; i++) { await new Promise(r => setTimeout(r, RELAY_POLL_MS)); const f = await readFeed(isins, true); if (!f.err && f.date !== before) { feed = f; errs = applyFeed(f, isins); break; } } }
+    if (t.ok) {
+      const t0 = Date.now(); setLiveMsg('relais lancé…');
+      for (let i = 0; i < 30; i++) {
+        await new Promise(r => setTimeout(r, i === 0 ? RELAY_POLL_MS * 3 : RELAY_POLL_MS));
+        setLiveMsg('relais en cours… ' + Math.round((Date.now() - t0) / 1000) + ' s');
+        const f = await readFeed(isins, true);
+        if (!f.err && f.date !== before) { feed = f; errs = applyFeed(f, isins); break; }
+      }
+    }
     else errs['Relais'] = t.msg + ' : cours du dernier passage utilisés (passage automatique toutes les heures en séance)';
   }
   if (feed.err) errs['Relais'] = feed.err;
