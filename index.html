@@ -950,7 +950,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 /* ---------- Cours : une seule source, le relais du dépôt privé (budget/cours.json) ---------- */
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '29092026-j';
+const APP_BUILD = '29092026-k';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1071,7 +1071,8 @@ function closeOverlay() {
   }
   return false;
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && closeOverlay()) e.preventDefault(); });
+const isEsc = e => e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27;
+window.addEventListener('keydown', e => { if (isEsc(e) && closeOverlay()) { e.preventDefault(); e.stopPropagation(); } }, true);
 const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 function bump(el) {
   if (REDUCED || !el || !el.animate) return;
@@ -1138,6 +1139,24 @@ document.addEventListener('visibilitychange', () => {
   if (cfgOK() && !meta.dirty) pull(true);
   if (!METALS.date || Date.now() - new Date(METALS.date) > 30 * 60 * 1000) fetchLive();
 });
+/* Si une version plus récente est en ligne, la page se recharge toute seule (pas au milieu d'une saisie, une fois par version et par 5 min) */
+let lastVerCheck = 0;
+async function checkVersion() {
+  if (Date.now() - lastVerCheck < 60000 || !/^https?:/.test(location.protocol)) return;
+  lastVerCheck = Date.now();
+  try {
+    const r = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const m = (await r.text()).match(/APP_BUILD = '([^']+)'/);
+    if (!m || m[1] === APP_BUILD || editing) return;
+    let last = {}; try { last = JSON.parse(sessionStorage.getItem('cc.reloaded') || '{}'); } catch (e) {}
+    if (last.v === m[1] && Date.now() - last.t < 300000) return;
+    try { sessionStorage.setItem('cc.reloaded', JSON.stringify({ v: m[1], t: Date.now() })); } catch (e) {}
+    location.reload();
+  } catch (e) {}
+}
+setTimeout(checkVersion, 1500);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkVersion(); });
 try { if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }); } catch (e) {}
 
 </script></body></html>
