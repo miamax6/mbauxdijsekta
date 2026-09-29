@@ -181,6 +181,9 @@ button.ct{cursor:pointer}button.ct:active{transform:scale(.97)}
   .sec>.row:hover{cursor:pointer}
 }
 @media (min-width:1700px){main{column-width:380px}}
+
+.fmplog{display:grid;gap:4px;margin-top:10px;font-size:.84rem;background:var(--in);border-radius:12px;padding:10px 12px}.fmplog b{font-weight:800}
+.mst b{font-weight:800}.ct em{text-transform:none}
 </style></head>
 <body><div id="app"></div>
 <script>
@@ -196,7 +199,8 @@ const EMPTY_STATE = () => ({
     vacancesDebut: '',
     reventeOr: 0.8,
     simu: { plafond: 0.35, duree: 25, taux: [0.03, 0.035, 0.04] },
-    cours: { orOnce: 0, argentOnce: 0, date: '' }
+    cours: { orOnce: 0, argentOnce: 0, date: '' },
+    fmpKey: ''
   },
   salaires: [], quotidien: [], loisirs: [], vacances: [], virements: [], comptes: [],
   interets: { annees: [new Date().getFullYear()], lignes: [] },
@@ -233,13 +237,14 @@ function monthsBetween(fromISO, to) { // équivalent DATEDIF(..., "m")
   return Math.max(0, m);
 }
 
-function calcPlacement(p, cfg, now) {
+function calcPlacement(p, cfg, now, quotes) {
   const taxe = cfg.taxes[p.taxe] ?? 1;
   const actifs = (p.actifs || []).map(a => {
+    const q = quotes && a.isin && quotes[a.isin] > 0 ? quotes[a.isin] : null, cours = q !== null ? q : num(a.cours);
     const qty = sum(a.lots || [], l => num(l.qty));
     const cout = sum(a.lots || [], l => (l.montant !== undefined && l.montant !== '' && l.montant !== null) ? num(l.montant) : num(a.pru) * num(l.qty));
-    const valeur = num(a.cours) * qty;
-    return { ...a, qty, cout, valeur, pruCalc: qty ? cout / qty : 0, pv: valeur - cout };
+    const valeur = cours * qty;
+    return { ...a, cours, auto: q !== null, qty, cout, valeur, pruCalc: qty ? cout / qty : 0, pv: valeur - cout };
   });
   const valeurActifs = sum(actifs, a => a.valeur);
   const coutActifs = sum(actifs, a => a.cout);
@@ -271,7 +276,7 @@ function calcPlacement(p, cfg, now) {
            retraitMois: p.retrait ? Math.max(0, monthsBetween(now.toISOString().slice(0, 10), new Date(p.retrait))) : null };
 }
 
-function calc(S, now = new Date(), cours = null) {
+function calc(S, now = new Date(), cours = null, quotes = null) {
   const cfg = S.settings, R = { cfg };
   const cs = (cours && num(cours.orOnce) > 0) ? cours : cfg.cours; R.cours = cs;
   // --- Revenus
@@ -306,7 +311,7 @@ function calc(S, now = new Date(), cours = null) {
   R.virementsTot = sum(S.virements, v => num(v.montant));
   // --- Placements
   R.pl = {};
-  ['peaA', 'ctoA', 'avA', 'peaB'].forEach(k => R.pl[k] = calcPlacement(S.placements[k], cfg, now));
+  ['peaA', 'ctoA', 'avA', 'peaB'].forEach(k => R.pl[k] = calcPlacement(S.placements[k], cfg, now, quotes));
   const or = num(cs.orOnce) / 31.1035;
   R.objets = S.placements.objets.map(o => ({ ...o, valeur: or * num(o.grammes) * num(o.titre) }));
   R.objetsBrut = sum(R.objets, o => o.valeur); R.objetsNet = R.objetsBrut * num(cfg.reventeOr);
@@ -380,8 +385,8 @@ const eur = (v, d = 0) => new Intl.NumberFormat('fr-FR', { style: 'currency', cu
 const pc = (v, d = 1) => new Intl.NumberFormat('fr-FR', { style: 'percent', maximumFractionDigits: d }).format(v || 0);
 const dec = v => (v === undefined || v === null || v === '') ? '' : String(Math.round(v * 10000) / 10000).replace('.', ',');
 
-let S = EMPTY_STATE(), R = null, view = 'accueil', moreOpen = false, bmode = LS.get('cc.bmode') || 'tableau', editing = null, METALS = JSON.parse(LS.get('cc.metals') || 'null') || {}, metalsState = 'idle';
-const recalc = () => calc(S, new Date(), METALS.orOnce ? METALS : null);
+let S = EMPTY_STATE(), R = null, view = 'accueil', moreOpen = false, bmode = LS.get('cc.bmode') || 'tableau', editing = null, METALS = JSON.parse(LS.get('cc.metals') || 'null') || {}, ETFQ = JSON.parse(LS.get('cc.etfq') || '{}'), metalsState = 'idle';
+const recalc = () => calc(S, new Date(), METALS.orOnce ? METALS : null, ETFQ);
 let meta = { sha: '', dirty: false, at: '' }, sync = { state: 'off', msg: '' };
 const cfgDefault = { owner: '', repo: '', path: 'budget/donnees.enc.json', branch: 'main', token: '', pass: '' };
 let CFG = Object.assign({}, cfgDefault, JSON.parse(LS.get('cc.cfg') || '{}'));
@@ -663,18 +668,20 @@ function vEpargne() {
 const hasCrypto = P => S.comptes.some(c => /crypto/i.test(c.label) && (c.who === P || (c.who !== 'a' && c.who !== 'b')));
 function coursPanel(P, keys) {
   const tiles = [];
-  keys.forEach(k => R.pl[k].actifs.forEach((a, i) => tiles.push(`<button class="ct" data-edit="placements.${k}.actifs.${i}" title="${esc(a.nom)}"><span>${esc(a.nom)}</span><b>${eur(num(a.cours), 2)}</b><em>à saisir</em></button>`)));
+  keys.forEach(k => R.pl[k].actifs.forEach((a, i) => tiles.push(`<button class="ct" data-edit="placements.${k}.actifs.${i}" title="${esc(a.nom)}"><span>${esc(a.nom)}</span><b>${eur(num(a.cours), 2)}</b><em>${a.auto ? 'auto' : 'à saisir'}</em></button>`)));
   const auto = !!(METALS.orOnce && R.cours === METALS);
   const wm = keys.includes('ctoA') || (P === 'b' && S.placements.objets.length);
   const fmt = d => d ? new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
   if (wm) {
-    tiles.push(`<div class="ct gold"><span>Or (once)</span><b>${eur(num(R.cours.orOnce))}</b><em>${auto ? 'live' : 'secours'}</em></div>`);
-    if (num(R.cours.argentOnce)) tiles.push(`<div class="ct gold"><span>Argent (once)</span><b>${eur(num(R.cours.argentOnce), 2)}</b><em>${auto ? 'live' : 'secours'}</em></div>`);
+    tiles.push(`<div class="ct gold"><span>Or (once)</span><b>${eur(num(R.cours.orOnce))}</b><em>${auto ? 'auto' : 'secours'}</em></div>`);
+    if (num(R.cours.argentOnce)) tiles.push(`<div class="ct gold"><span>Argent (once)</span><b>${eur(num(R.cours.argentOnce), 2)}</b><em>${auto ? 'auto' : 'secours'}</em></div>`);
   }
-  if (hasCrypto(P) && CRYPTO.btc) [['Bitcoin', CRYPTO.btc], ['Ethereum', CRYPTO.eth], ['Solana', CRYPTO.sol]].forEach(([n, v]) => { if (v) tiles.push(`<div class="ct crypto"><span>${n}</span><b>${eur(v, v < 100 ? 2 : 0)}</b><em>live</em></div>`); });
-  const st = metalsState === 'busy' ? 'mise à jour…' : metalsState === 'err' ? 'service injoignable : derniers cours connus' : auto ? 'cours live du ' + fmt(METALS.date) : 'cours de secours (Réglages)';
-  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Or, argent et crypto se mettent à jour tout seuls. Les ETF n\'ont pas de source gratuite fiable : touche un ETF pour saisir son cours.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
-    <div class="ctg">${tiles.join('')}</div><div class="mst ${metalsState === 'err' ? 'neg' : ''}">${st}</div></section>`;
+  if (hasCrypto(P) && CRYPTO.btc) [['Bitcoin', CRYPTO.btc], ['Ethereum', CRYPTO.eth], ['Solana', CRYPTO.sol]].forEach(([n, v]) => { if (v) tiles.push(`<div class="ct crypto"><span>${n}</span><b>${eur(v, v < 100 ? 2 : 0)}</b><em>auto</em></div>`); });
+  const errs = Object.entries(LIVE_ERR).filter(([, m]) => m);
+  const st = metalsState === 'busy' ? 'mise à jour…' : (auto ? 'dernière mise à jour : ' + fmt(METALS.date) : 'cours de secours (Réglages)');
+  const asked = hasCrypto(P) && !CRYPTO.btc && !errs.some(([k]) => k === 'Crypto') && metalsState !== 'busy' ? '<div class="mst">Crypto : en attente du premier cours…</div>' : '';
+  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Or, argent et crypto se mettent à jour tout seuls. Les ETF se mettent à jour si ta clé FMP les couvre (Réglages) ; sinon touche un ETF pour saisir son cours.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
+    <div class="ctg">${tiles.join('')}</div><div class="mst">${st}</div>${asked}${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
 }
 function assetRow(key, i, a) {
   const perf = a.cout ? a.pv / a.cout : 0;
@@ -751,6 +758,11 @@ function vReglages() {
     <p class="hint">Sans la phrase secrète, les données du dépôt sont illisibles pour tout le monde, toi compris.</p>
     ${kv('État', esc(st))}${conflict}<div class="btnrow"><button class="btn pri" data-act="syncnow">Synchroniser maintenant</button></div>`)}
   ${sec('Sauvegarde et import', `<div class="btnrow"><button class="btn" data-act="export">Exporter (fichier lisible)</button><label class="btn">Importer un fichier<input type="file" accept="application/json,.json" data-act="import" hidden></label></div><p class="hint">Le fichier exporté contient tes chiffres en clair : garde-le hors de tout dossier public.</p>`)}
+  ${sec('Cours automatiques (FMP)', `<div class="form">${field('Clé API FMP', fld('settings.fmpKey', S.settings.fmpKey || '', { t: 'text', ph: 'clé de financialmodelingprep.com', pw: !showSecrets }))}</div>
+    <label class="chk"><input type="checkbox" data-act="showsecrets" ${showSecrets ? 'checked' : ''}><span>Afficher la clé</span></label>
+    ${kv('Requêtes utilisées aujourd\'hui', fmpCount() + ' / 250')}
+    <div class="btnrow"><button class="btn pri" data-act="fmptest">Tester la clé</button><button class="btn" data-act="metalsforce">Actualiser tous les cours</button></div>
+    ${FMPLOG.length ? `<div class="fmplog">${FMPLOG.map(x => `<div class="${x.ok === false ? 'neg' : x.ok ? 'pos' : ''}"><b>${x.ok === null ? '…' : x.ok ? 'OK' : 'ÉCHEC'}</b> ${esc(x.l)}${x.m ? ' : ' + esc(x.m) : ''}</div>`).join('')}</div>` : ''}`, '', '', 'La clé est enregistrée dans tes données chiffrées : elle se synchronise entre tes appareils, mais elle apparaît en clair dans le fichier « Exporter ». Elle ne doit jamais être écrite dans la page publique.\nLa formule gratuite est limitée à 250 requêtes par jour et, d\'après FMP, aux bourses américaines : les ETF de la Bourse de Paris peuvent être refusés. Le test te dit ce qui passe.')}
   ${sec('Cours de secours', `<div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', s.cours.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', s.cours.argentOnce)}</label><label>Date${fld('settings.cours.date', s.cours.date, { t: 'date' })}</label></div><div class="inl"><span>Coefficient de revente or</span>${fld('settings.reventeOr', s.reventeOr, { t: 'pct' })}</div>`, '', '', 'Les cours de l\'or, de l\'argent et des cryptos se mettent à jour tout seuls. Ces valeurs ne servent que si le service est injoignable.')}
   ${sec('Prénoms et fiscalité', `<div class="grid3"><label>Prénom 1${fld('settings.noms.a', s.noms.a, { t: 'text' })}</label><label>Prénom 2${fld('settings.noms.b', s.noms.b, { t: 'text' })}</label></div>
     <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>`, '', '', 'Part qui reste après impôt (82,8 % = 17,2 % prélevés). Ces taux étaient écrits en dur dans l\'Excel : à valider.')}
@@ -787,6 +799,7 @@ function sheetHtml() {
     body = spec.f.map(([k, t, l, opts]) => t === 'chk' ? fld(`${editing.path}.${k}`, k === 'apport' ? get(obj, k) !== false : !!get(obj, k), { t: 'chk', txt: l }) :
       field(l, t === 'sel' ? fld(`${editing.path}.${k}`, get(obj, k), { t: 'sel', opts }) : fld(`${editing.path}.${k}`, get(obj, k), { t }))).join('');
     if (spec.note) body += `<p class="hint">${spec.note}</p>`;
+    if (spec.lots && obj.isin && ETFQ[obj.isin]) body += `<p class="hint">Cours mis à jour automatiquement (${eur(ETFQ[obj.isin], 2)}). Le champ ci-dessus ne sert que si la mise à jour automatique échoue.</p>`;
     if (spec.lots) {
       const lots = obj.lots || [];
       body += `<h4>Achats</h4>` + lots.map((l, j) => `<div class="lrow">${fld(`${editing.path}.lots.${j}.date`, l.date, { t: 'month' })}${fld(`${editing.path}.lots.${j}.qty`, l.qty, { ph: 'Qté' })}${spec.lotCost ? fld(`${editing.path}.lots.${j}.montant`, l.montant, { ph: '€ payés' }) : ''}<button class="x" data-delin="${editing.path}.lots.${j}" aria-label="Supprimer">×</button></div>`).join('') + `<button class="add" data-addin="${editing.path}.lots">+ Achat</button>`;
@@ -847,7 +860,25 @@ document.addEventListener('mouseover', e => {
 });
 window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: true });
 
-/* ---------- Cours en direct : or, argent, crypto ---------- */
+/* ---------- Cours en direct : or, argent, crypto, ETF ---------- */
+let LIVE_ERR = {}, FMPLOG = [];
+const fmpKey = () => String(S.settings.fmpKey || '').trim();
+const fmpToday = () => new Date().toISOString().slice(0, 10);
+const fmpCount = () => { try { const b = JSON.parse(LS.get('cc.fmpn') || '{}'); return b.d === fmpToday() ? b.n : 0; } catch (e) { return 0; } };
+/* Appel FMP : compte les requêtes du jour (limite gratuite : 250) et remonte le message d'erreur exact du service */
+async function fmp(path, params) {
+  const n = fmpCount();
+  if (n >= 235) throw new Error('quota du jour presque atteint (' + n + '/250)');
+  LS.set('cc.fmpn', JSON.stringify({ d: fmpToday(), n: n + 1 }));
+  const r = await fetch('https://financialmodelingprep.com/stable/' + path + '?' + new URLSearchParams({ ...params, apikey: fmpKey() }), { cache: 'no-store' });
+  const txt = await r.text(); let j = null; try { j = JSON.parse(txt); } catch (e) {}
+  if (!r.ok) throw new Error('HTTP ' + r.status + (txt ? ' : ' + txt.replace(/\s+/g, ' ').slice(0, 130) : ''));
+  if (j && !Array.isArray(j) && (j['Error Message'] || j.error)) throw new Error(String(j['Error Message'] || j.error).slice(0, 140));
+  return j;
+}
+const fmpQuote = async sym => { const j = await fmp('quote', { symbol: sym }), q = Array.isArray(j) && j[0]; if (!q || !(q.price > 0)) throw new Error('aucun cours renvoyé pour ' + sym); return q.price; };
+const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
+
 async function fetchMetals() {
   try {
     const r = await fetch('https://xaus.com/api/v1/spot?currency=EUR&compact=1', { cache: 'no-store' });
@@ -855,24 +886,90 @@ async function fetchMetals() {
     const j = await r.json(), or = j.xau && j.xau.price;
     if (!(or > 0)) throw new Error('réponse inattendue');
     const fx = j.fx_rate > 0 ? j.fx_rate : (j.spot_usd_oz > 0 ? or / j.spot_usd_oz : 0), ag = j.silver_usd_oz > 0 && fx > 0 ? j.silver_usd_oz * fx : 0;
-    METALS = { orOnce: or, argentOnce: ag, date: j.updated_at || new Date().toISOString() };
-    LS.set('cc.metals', JSON.stringify(METALS)); return true;
-  } catch (e) { return false; }
+    METALS = { orOnce: or, argentOnce: ag, date: j.updated_at || new Date().toISOString(), src: 'xaus' };
+    LS.set('cc.metals', JSON.stringify(METALS)); return '';
+  } catch (e1) {
+    if (!fmpKey()) return errTxt(e1);
+    try {
+      const [usdOr, usdAg, fx] = await Promise.all([fmpQuote('GCUSD'), fmpQuote('SIUSD'), fmpQuote('EURUSD')]);
+      METALS = { orOnce: usdOr / fx, argentOnce: usdAg / fx, date: new Date().toISOString(), src: 'fmp' };
+      LS.set('cc.metals', JSON.stringify(METALS)); return '';
+    } catch (e2) { return 'xaus : ' + errTxt(e1) + ' · FMP : ' + errTxt(e2); }
+  }
 }
 async function fetchCrypto() {
-  if (!S.comptes.some(c => /crypto/i.test(c.label))) return true;
+  if (!S.comptes.some(c => /crypto/i.test(c.label))) return '';
+  let errs = [];
+  if (fmpKey()) {
+    try {
+      const [b, e, s, fx] = await Promise.all([fmpQuote('BTCUSD'), fmpQuote('ETHUSD'), fmpQuote('SOLUSD'), fmpQuote('EURUSD')]);
+      CRYPTO = { btc: b / fx, eth: e / fx, sol: s / fx, date: new Date().toISOString(), src: 'fmp' };
+      LS.set('cc.crypto', JSON.stringify(CRYPTO)); return '';
+    } catch (e) { errs.push('FMP : ' + errTxt(e)); }
+  }
   try {
     const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=eur', { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const j = await r.json();
-    CRYPTO = { btc: j.bitcoin && j.bitcoin.eur, eth: j.ethereum && j.ethereum.eur, sol: j.solana && j.solana.eur, date: new Date().toISOString() };
-    LS.set('cc.crypto', JSON.stringify(CRYPTO)); return !!CRYPTO.btc;
-  } catch (e) { return false; }
+    if (!(j.bitcoin && j.bitcoin.eur)) throw new Error('réponse inattendue');
+    CRYPTO = { btc: j.bitcoin.eur, eth: j.ethereum && j.ethereum.eur, sol: j.solana && j.solana.eur, date: new Date().toISOString(), src: 'coingecko' };
+    LS.set('cc.crypto', JSON.stringify(CRYPTO)); return '';
+  } catch (e) { errs.push('CoinGecko : ' + errTxt(e)); }
+  return errs.join(' · ');
 }
-async function fetchLive() {
+/* ETF : ISIN -> symbole (une seule fois, gardé sur l'appareil) puis cours. La formule gratuite FMP est limitée aux bourses US. */
+async function fetchEtfs() {
+  if (!fmpKey()) return '';
+  if (LS.get('cc.etfoff') === fmpToday()) return LS.get('cc.etfmsg') || 'ETF non couverts par la clé';
+  const isins = [...new Set(Object.values(S.placements).flatMap(p => (p.actifs || []).map(a => a.isin)).filter(Boolean))];
+  let sym = {}; try { sym = JSON.parse(LS.get('cc.sym') || '{}'); } catch (e) {}
+  let ok = 0, last = '';
+  for (const isin of isins) {
+    try {
+      if (!sym[isin]) {
+        const j = await fmp('search-isin', { isin }), l = Array.isArray(j) ? j : [];
+        const eur = l.filter(x => !x.currency || String(x.currency).toUpperCase() === 'EUR');
+        const pick = eur.find(x => /\.PA$/i.test(x.symbol || '')) || eur.find(x => /paris|euronext|pa$/i.test(`${x.exchange || ''} ${x.exchangeFullName || ''}`)) || eur[0];
+        if (!pick || !pick.symbol) throw new Error(l.length ? 'aucune cotation en euros pour cet ISIN' : 'ISIN inconnu de FMP');
+        sym[isin] = pick.symbol; LS.set('cc.sym', JSON.stringify(sym));
+      }
+      const px = await fmpQuote(sym[isin]);
+      const ref = Object.values(S.placements).flatMap(p => p.actifs || []).find(a => a.isin === isin), man = ref ? num(ref.cours) : 0;
+      if (man > 0 && Math.abs(px / man - 1) > 0.4) { delete sym[isin]; LS.set('cc.sym', JSON.stringify(sym)); throw new Error('écart suspect sur ' + isin + ' : ' + px.toFixed(2) + ' contre ' + man + ' saisi (cours ignoré)'); }
+      ETFQ[isin] = px; ok++;
+    } catch (e) {
+      last = errTxt(e);
+      if (/\b(402|403)\b|premium|subscription|upgrade|restricted|not available/i.test(last)) { LS.set('cc.etfoff', fmpToday()); LS.set('cc.etfmsg', 'ETF européens non couverts par cette formule (' + last.slice(0, 90) + ')'); break; }
+    }
+  }
+  LS.set('cc.etfq', JSON.stringify(ETFQ));
+  return ok === isins.length ? '' : (LS.get('cc.etfoff') === fmpToday() ? LS.get('cc.etfmsg') : `${ok}/${isins.length} ETF mis à jour${last ? ' · ' + last : ''}`);
+}
+async function fetchLive(force) {
   metalsState = 'busy'; if (view === 'placements') render();
-  const [a, b] = await Promise.all([fetchMetals(), fetchCrypto()]);
-  metalsState = a && b ? 'ok' : 'err'; R = recalc(); render();
+  const stale = !LS.get('cc.fmpT') || Date.now() - +LS.get('cc.fmpT') > 60 * 60 * 1000;
+  const useFmp = fmpKey() && (force === true || stale);
+  const [a, b, c] = await Promise.all([fetchMetals(), fetchCrypto(), useFmp ? fetchEtfs() : Promise.resolve('')]);
+  if (useFmp) LS.set('cc.fmpT', String(Date.now()));
+  LIVE_ERR = { 'Or / argent': a, 'Crypto': b, 'ETF': c };
+  metalsState = (a || b || c) ? 'err' : 'ok'; R = recalc(); render();
+}
+async function fmpTest() {
+  FMPLOG = [{ l: 'Test en cours…', ok: null, m: '' }]; render();
+  const out = [], step = async (l, f) => { try { out.push({ l, ok: true, m: await f() }); } catch (e) { out.push({ l, ok: false, m: errTxt(e) }); } };
+  if (!fmpKey()) out.push({ l: 'Clé', ok: false, m: 'aucune clé saisie' });
+  else {
+    await step('Change EUR/USD', async () => 'USD par euro : ' + (await fmpQuote('EURUSD')));
+    await step('Bitcoin (BTCUSD)', async () => (await fmpQuote('BTCUSD')) + ' USD');
+    await step('Or (GCUSD)', async () => (await fmpQuote('GCUSD')) + ' USD/once');
+    const isin = (Object.values(S.placements).flatMap(p => (p.actifs || []).map(a => a.isin)).filter(Boolean))[0];
+    if (isin) await step('ETF ' + isin + ' (Bourse de Paris)', async () => {
+      const j = await fmp('search-isin', { isin }), l = Array.isArray(j) ? j : [];
+      if (!l.length) throw new Error('ISIN inconnu de FMP');
+      const s = (l.find(x => /\.PA$/i.test(x.symbol || '')) || l[0]).symbol; return s + ' : ' + (await fmpQuote(s));
+    });
+  }
+  FMPLOG = out; render();
 }
 
 /* ---------- Événements ---------- */
@@ -942,7 +1039,9 @@ document.addEventListener('click', async e => {
   if (d.delete) { const ks = d.delete.split('.'), i = +ks.pop(); get(S, ks.join('.')).splice(i, 1); editing = null; commit(); return; }
   if ('addyear' in d) { const a = S.interets.annees; a.push(a[a.length - 1] + 1); commit(); return; }
   if ('addyearachat' in d) { S.achats.push({ annee: String(new Date().getFullYear() + S.achats.length), items: [] }); commit(); return; }
-  if (d.act === 'metals') { fetchLive(); return; }
+  if (d.act === 'metals') { fetchLive(true); return; }
+  if (d.act === 'metalsforce') { fetchLive(true); return; }
+  if (d.act === 'fmptest') { fmpTest(); return; }
   if (d.act === 'syncnow') { await pull(false); if (sync.state === 'dirty') await push(); if (sync.state === 'ok') toast('Synchronisé'); render(); return; }
   if (d.act === 'keeplocal') { await push(true); render(); return; }
   if (d.act === 'keepremote') { meta.dirty = false; meta.sha = ''; await pull(false); render(); return; }
