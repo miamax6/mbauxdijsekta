@@ -754,8 +754,8 @@ function vEpargne() {
 const hasCrypto = P => S.comptes.some(c => /crypto/i.test(c.label) && (c.who === P || (c.who !== 'a' && c.who !== 'b')));
 function coursPanel(P, keys) {
   const tiles = [], present = new Set();
-  const tile = (cls, nom, price, chg, tag, attrs = '') => { present.add(cls); return `<${attrs ? 'button' : 'div'} class="ct ${cls}" ${attrs}><span>${esc(nom)}</span><b>${price}</b>${tag || chgHtml(chg)}</${attrs ? 'button' : 'div'}>`; };
-  keys.forEach(k => R.pl[k].actifs.forEach((a, i) => tiles.push(tile(k === 'ctoA' ? 'etc' : 'etf', a.nom, eurPub(num(a.cours), 2), CHG[a.isin], a.auto ? '' : '<em class="man">saisi à la main</em>', `data-edit="placements.${k}.actifs.${i}" title="${esc(a.nom)}"`))));
+  const tile = (cls, nom, price, chg, tag) => { present.add(cls); return `<div class="ct ${cls}" title="${esc(nom)}"><span>${esc(nom)}</span><b>${price}</b>${tag || chgHtml(chg)}</div>`; };
+  keys.forEach(k => R.pl[k].actifs.forEach(a => tiles.push(tile(k === 'ctoA' ? 'etc' : 'etf', a.nom, eurPub(num(a.cours), 2), CHG[a.isin], a.auto ? '' : `<em class="man">${num(a.cours) > 0 ? 'dernier cours connu' : 'pas de cours (code ISIN ?)'}</em>`))));
   const auto = !!(METALS.orOnce && R.cours === METALS);
   if (keys.includes('ctoA') || (P === 'b' && S.placements.objets.length)) {
     tiles.push(tile('etc', 'Or (once)', eurPub(num(R.cours.orOnce)), CHG.or, auto ? '' : '<em class="man">cours de secours</em>'));
@@ -765,7 +765,7 @@ function coursPanel(P, keys) {
   const errs = Object.entries(LIVE_ERR).filter(([, m]) => m), ed = LS.get('cc.etfdate');
   const st = metalsState === 'busy' ? (LIVE_MSG || 'mise à jour…') : (ed ? 'dernière mise à jour des cours : ' + fmtDT(ed) : 'aucune mise à jour des cours pour l\'instant');
   const leg = [['etf', 'ETF'], ['etc', 'ETC et métaux'], ['cry', 'Crypto']].filter(([c]) => present.has(c)).map(([c, l]) => `<span><i class="lg ${c}"></i>${l}</span>`).join('');
-  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Les cours sont mis à jour automatiquement toutes les 15 minutes (un petit programme tourne dans ton dépôt GitHub privé) ; l\'appli les relit toute seule toutes les 5 minutes. Le bouton ↻ force une mise à jour immédiate (environ 15 s) si ton jeton a le droit « Actions ». Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique). Touche un ETF pour corriger son cours à la main si besoin.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
+  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Les cours sont mis à jour automatiquement toutes les 15 minutes (un petit programme tourne dans ton dépôt GitHub privé) ; l\'appli les relit toute seule toutes les 5 minutes. Le bouton ↻ force une mise à jour immédiate (environ 15 s) si ton jeton a le droit « Actions ». Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique).')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
     <div class="ctg">${tiles.join('')}</div><div class="legend2">${leg}</div><div class="mst" data-live>${st}</div>${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
 }
 function assetRow(key, i, a, base) {
@@ -954,7 +954,7 @@ function specFor(path) {
   if ((m = path.match(/^achats\.(\d+)\.items\.\d+$/))) return { title: 'Achat ou vente', f: [['label', 'text', 'Libellé'], ['achat', 'num', 'Achat (€)'], ['vente', 'num', 'Vente (€)'], who(true)] };
   if ((m = path.match(/^placements\.(\w+)\.actifs\.\d+$/))) {
     const key = m[1], p = S.placements[key], lotCost = key === 'ctoA' || !Array.isArray(p.virements), pru = (Array.isArray(p.virements) && key !== 'ctoA') || p.fondsEuros;
-    return { title: 'Actif', f: [['nom', 'text', 'Nom'], ['isin', 'text', 'Code ISIN'], ['cours', 'num', 'Cours actuel (€)'], ...(pru ? [['pru', 'num', 'Prix de revient moyen (€)']] : [])], lots: true, lotCost };
+    return { title: 'Actif', f: [['nom', 'text', 'Nom'], ['isin', 'text', 'Code ISIN'], ...(pru ? [['pru', 'num', 'Prix de revient moyen (€)']] : [])], lots: true, lotCost, note: 'Le cours actuel est récupéré automatiquement à partir du code ISIN : rien à saisir.' };
   }
   if (/^achats\.\d+$/.test(path)) return { title: 'Année', f: [['annee', 'text', 'Année (ex : 2026)']], note: 'Supprimer l\'année supprime aussi toutes ses lignes.' };
   if (/^placements\.\w+\.virements$/.test(path)) return { title: 'Versements sur le compte', list: [['date', 'month', ''], ['montant', 'num', '€']] };
@@ -972,7 +972,6 @@ function sheetHtml() {
     body = spec.f.map(([k, t, l, opts]) => t === 'chk' ? fld(`${editing.path}.${k}`, k === 'apport' ? get(obj, k) !== false : !!get(obj, k), { t: 'chk', txt: l }) :
       field(l, t === 'sel' ? fld(`${editing.path}.${k}`, get(obj, k), { t: 'sel', opts }) : fld(`${editing.path}.${k}`, get(obj, k), { t }))).join('');
     if (spec.note) body += `<p class="hint">${spec.note}</p>`;
-    if (spec.lots && obj.isin && ETFQ[obj.isin]) body += `<p class="hint">Cours mis à jour automatiquement (${eur(ETFQ[obj.isin], 2)}). Le champ ci-dessus ne sert que si la mise à jour automatique échoue.</p>`;
     if (spec.lots) {
       const lots = obj.lots || [];
       body += `<h4>Achats</h4>` + lots.map((l, j) => `<div class="lrow">${fld(`${editing.path}.lots.${j}.date`, l.date, { t: 'month' })}${fld(`${editing.path}.lots.${j}.qty`, l.qty, { ph: 'Qté' })}${spec.lotCost ? fld(`${editing.path}.lots.${j}.montant`, l.montant, { ph: '€ payés' }) : ''}<button class="x" data-delin="${editing.path}.lots.${j}" aria-label="Supprimer">×</button></div>`).join('') + `<div class="addw">${addPill(`data-addin="${editing.path}.lots"`, 'Achat')}</div>`;
@@ -1047,7 +1046,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 /* ---------- Cours : une seule source, le fichier de ton dépôt privé (budget/cours.json) ---------- */
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '29092026-p';
+const APP_BUILD = '29092026-q';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1087,7 +1086,7 @@ async function triggerRelay() {
     return { ok: false, msg: r.status === 403 || r.status === 404 ? 'lancement refusé (le jeton n\'a pas le droit « Actions »)' : 'GitHub ' + r.status };
   } catch (e) { return { ok: false, msg: errTxt(e) }; }
 }
-/* Range dans l'appli les cours reçus (garde-fous : cours récent, écart < 40 % du cours saisi) */
+/* Range dans l'appli les cours reçus ; si un actif n'a pas de cours frais, son dernier cours connu est conservé */
 function applyFeed(feed, isins) {
   const errs = {}, fresh = t => !t || Date.now() - new Date(t) < 8 * 864e5, fe = feed.errors || {};
   const m = feed.metals;
@@ -1096,14 +1095,13 @@ function applyFeed(feed, isins) {
   const c = feed.crypto;
   if (c && c.btc) { CRYPTO = { btc: c.btc.price, eth: c.eth && c.eth.price, sol: c.sol && c.sol.price, date: c.time || feed.date }; CHG.btc = c.btc.chg; CHG.eth = c.eth && c.eth.chg; CHG.sol = c.sol && c.sol.chg; LS.set('cc.crypto', JSON.stringify(CRYPTO)); if (c.stale) errs['Crypto'] = 'source injoignable : dernier cours conservé'; }
   if (fe.crypto) errs['Crypto'] = fe.crypto;
-  const acts = allActifs(), q = {}, notes = []; let ok = 0;
+  const prevQ = ETFQ || {}, q = {}, notes = []; let ok = 0;
   for (const isin of isins) {
     const fp = feed.prices && feed.prices[isin];
-    if (fp && fp.price > 0 && fresh(fp.time) && !fp.stale) {
-      const ref = acts.find(a => a.isin === isin), man = ref ? num(ref.cours) : 0;
-      if (man > 0 && Math.abs(fp.price / man - 1) > 0.4) { notes.push(`${isin} : écart suspect (${fp.price.toFixed(2)} contre ${man} saisi), cours ignoré`); continue; }
-      q[isin] = fp.price; CHG[isin] = fp.chg; ok++;
-    } else notes.push(`${isin} : ${fe[isin] || 'pas de cours récent'}`);
+    if (fp && fp.price > 0 && fresh(fp.time) && !fp.stale) { q[isin] = fp.price; CHG[isin] = fp.chg; ok++; }
+    else if (fp && fp.price > 0 && fresh(fp.time)) { q[isin] = fp.price; CHG[isin] = null; notes.push(`${isin} : ${fe[isin] || 'source injoignable'} (dernier cours connu conservé)`); }
+    else if (prevQ[isin] > 0) { q[isin] = prevQ[isin]; CHG[isin] = null; notes.push(`${isin} : ${fe[isin] || 'pas de cours récent'} (dernier cours connu conservé)`); }
+    else notes.push(`${isin} : ${fe[isin] || 'pas de cours'}`);
   }
   ETFQ = q; LS.set('cc.etfq', JSON.stringify(ETFQ)); LS.set('cc.chg', JSON.stringify(CHG)); LS.set('cc.etfdate', feed.date || '');
   if (notes.length) errs['ETF'] = `${ok}/${isins.length} à jour · ` + notes.slice(0, 2).join(' · ');
