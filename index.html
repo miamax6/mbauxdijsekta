@@ -236,6 +236,14 @@ small.mu{color:var(--mu)!important;font-weight:600}
 .hero .big .tr .ic{width:100%;height:100%;stroke-width:2.7}
 .hero .big .tr::after{content:"";position:absolute;inset:-10px}
 .hero .tr.up{color:#7ee2b8}.hero .tr.dn{color:#ff9a8f}.hero .tr.flat{color:rgba(255,255,255,.7)}
+
+/* ---- v10 : tuiles de cours sur 2 lignes maximum, bouton déplier / replier ---- */
+.ctg{position:relative}
+.ctg.collapsed{overflow:hidden;max-height:150px}
+.ctgbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.ctgbar .legend2{margin-top:0}
+.ctgmore{display:inline-flex;align-items:center;gap:4px;flex:none;height:30px;padding:0 10px 0 13px;border:0;border-radius:99px;background:var(--in);color:var(--ac);font:inherit;font-size:.78rem;font-weight:700;cursor:pointer;line-height:1}
+.ctgmore[hidden]{display:none}.ctgmore .ic{width:15px;height:15px;stroke-width:2.6}.ctgmore:active{transform:scale(.96)}
+.ctgbar .legend2{gap:4px 11px;font-size:.72rem;flex:1 1 auto;min-width:0}
 </style></head>
 <body><div id="app"></div>
 <script>/* qrcode-generator 2.0.4, Kazuhiko Arase, licence MIT */
@@ -758,15 +766,15 @@ function coursPanel(P, keys) {
   keys.forEach(k => R.pl[k].actifs.forEach(a => tiles.push(tile(k === 'ctoA' ? 'etc' : 'etf', a.nom, eurPub(num(a.cours), 2), CHG[a.isin], a.auto ? '' : `<em class="man">${num(a.cours) > 0 ? 'dernier cours connu' : 'pas de cours (code ISIN ?)'}</em>`))));
   const auto = !!(METALS.orOnce && R.cours === METALS);
   if (keys.includes('ctoA') || (P === 'b' && S.placements.objets.length)) {
-    tiles.push(tile('etc', 'Or (once)', eurPub(num(R.cours.orOnce)), CHG.or, auto ? '' : '<em class="man">cours de secours</em>'));
     if (num(R.cours.argentOnce)) tiles.push(tile('etc', 'Argent (once)', eurPub(num(R.cours.argentOnce), 2), CHG.argent, auto ? '' : '<em class="man">cours de secours</em>'));
+    tiles.push(tile('etc', 'Or (once)', eurPub(num(R.cours.orOnce)), CHG.or, auto ? '' : '<em class="man">cours de secours</em>'));
   }
   if (hasCrypto(P) && (CRYPTO.btc || CRYPTO.eth || CRYPTO.sol)) [['Bitcoin', CRYPTO.btc, CHG.btc], ['Ethereum', CRYPTO.eth, CHG.eth], ['Solana', CRYPTO.sol, CHG.sol]].forEach(([n, x, c]) => { if (x) tiles.push(tile('cry', n, eurPub(x, x < 100 ? 2 : 0), c)); });
   const errs = Object.entries(LIVE_ERR).filter(([, m]) => m), ed = LS.get('cc.etfdate');
   const st = metalsState === 'busy' ? (LIVE_MSG || 'mise à jour…') : (ed ? 'dernière mise à jour des cours : ' + fmtDT(ed) : 'aucune mise à jour des cours pour l\'instant');
-  const leg = [['etf', 'ETF'], ['etc', 'ETC et métaux'], ['cry', 'Crypto']].filter(([c]) => present.has(c)).map(([c, l]) => `<span><i class="lg ${c}"></i>${l}</span>`).join('');
-  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Quand l\'appli est ouverte, elle vérifie toutes les 5 minutes l\'âge des cours et lance une mise à jour dès qu\'ils ont plus de 15 minutes (1 heure la nuit et le week-end). Un petit programme de ton dépôt GitHub privé les récupère en environ 15 secondes. Le planning automatique de GitHub sert de renfort, mais il n\'est pas garanti. Le bouton ↻ force une mise à jour immédiate (droit « Actions » du jeton nécessaire). Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique).')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
-    <div class="ctg">${tiles.join('')}</div><div class="legend2">${leg}</div><div class="mst" data-live>${st}</div>${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
+  const leg = [['etf', 'ETF'], ['etc', 'ETC / métaux'], ['cry', 'Crypto']].filter(([c]) => present.has(c)).map(([c, l]) => `<span><i class="lg ${c}"></i>${l}</span>`).join('');
+  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Quand l\'appli est ouverte, elle vérifie toutes les 5 minutes l\'âge des cours et lance une mise à jour dès qu\'ils ont plus de 15 minutes : en séance, et 24 h/24 si tu as un compte crypto (sinon 1 heure la nuit et le week-end). Un petit programme de ton dépôt GitHub privé les récupère en environ 15 secondes. Le planning automatique de GitHub sert de renfort, mais il n\'est pas garanti. Le bouton ↻ force une mise à jour immédiate (droit « Actions » du jeton nécessaire). Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique).')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
+    <div class="ctg ${CTG_OPEN ? '' : 'collapsed'}">${tiles.join('')}</div><div class="ctgbar"><div class="legend2">${leg}</div><button class="ctgmore" data-ctg hidden aria-expanded="${CTG_OPEN}"></button></div><div class="mst" data-live>${st}</div>${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
 }
 function assetRow(key, i, a, base) {
   const perf = a.cout ? a.pv / a.cout : 0;
@@ -878,7 +886,7 @@ function vReglages() {
   ${sec('Sauvegarde et import', `<div class="btnrow"><button class="btn" data-act="export">Exporter (fichier lisible)</button><label class="btn">Importer un fichier<input type="file" accept="application/json,.json" data-act="import" hidden></label></div><p class="hint">Le fichier exporté contient tes chiffres en clair : garde-le hors de tout dossier public.</p>`)}
   ${sec('Cours automatiques', `${kv('Dernière mise à jour des cours', LS.get('cc.etfdate') ? fmtDT(LS.get('cc.etfdate')) : 'aucun')}${kv('ETF et ETC à jour', Object.keys(ETFQ).length + ' / ' + allIsins().length)}${kv('Or et argent', METALS.date ? fmtDT(METALS.date) : '–')}${kv('Crypto', CRYPTO.date ? fmtDT(CRYPTO.date) : '–')}
     ${Object.entries(LIVE_ERR).filter(([, m]) => m).map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}
-    <div class="btnrow"><button class="btn pri" data-act="metals">Actualiser maintenant</button></div>`, '', '', 'Quand l\'appli est ouverte, elle lance une mise à jour dès que les cours ont plus de 15 minutes (1 heure la nuit et le week-end). Un petit programme de ton dépôt GitHub privé (workflow « Actualisation des cours ») les récupère : ETF et ETC via Boursorama puis Börse Frankfurt, or et argent via xaus, crypto via Kraken. Le planning automatique de GitHub sert de renfort, sans garantie. Le bouton lance une mise à jour immédiate si ton jeton a le droit « Actions ».')}
+    <div class="btnrow"><button class="btn pri" data-act="metals">Actualiser maintenant</button></div>`, '', '', 'Quand l\'appli est ouverte, elle lance une mise à jour dès que les cours ont plus de 15 minutes : en séance, et 24 h/24 si tu as un compte crypto (sinon 1 heure la nuit et le week-end). Un petit programme de ton dépôt GitHub privé (workflow « Actualisation des cours ») les récupère : ETF et ETC via Boursorama puis Börse Frankfurt, or et argent via xaus, crypto via Kraken. Le planning automatique de GitHub sert de renfort, sans garantie. Le bouton lance une mise à jour immédiate si ton jeton a le droit « Actions ».')}
   ${sec('Cours de secours', `<div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', s.cours.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', s.cours.argentOnce)}</label><label>Date${fld('settings.cours.date', s.cours.date, { t: 'date' })}</label></div><div class="inl"><span>Coefficient de revente or</span>${fld('settings.reventeOr', s.reventeOr, { t: 'pct' })}</div>`, '', '', 'Ces valeurs ne servent que si la mise à jour automatique des cours est injoignable.')}
   ${sec('Prénoms et fiscalité', `<div class="grid3"><label>Prénom 1${fld('settings.noms.a', s.noms.a, { t: 'text' })}</label><label>Prénom 2${fld('settings.noms.b', s.noms.b, { t: 'text' })}</label></div>
     <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>`, '', '', 'Part qui reste après impôt (82,8 % = 17,2 % prélevés). Ces taux étaient écrits en dur dans l\'Excel : à valider.')}
@@ -1011,7 +1019,24 @@ function render() {
   ${moreOpen ? `<div class="sheet" data-close><div class="sheetin more"><button data-go="achats">${ico('bag')}Achats et ventes</button><button data-go="simu">${ico('home')}Emprunt</button><button data-go="reglages">${ico('sliders')}Réglages</button></div></div>` : ''}
   ${sheetHtml()}<div id="toast" role="status"></div>`;
   paintPill(document.getElementById('syncpill'));
+  fitCours();
 }
+/* Les tuiles de cours tiennent sur 2 lignes au maximum ; au-delà, un bouton à droite déplie ou replie (choix mémorisé) */
+function fitCours() {
+  document.querySelectorAll('.cours').forEach(sec => {
+    const g = sec.querySelector('.ctg'), btn = sec.querySelector('[data-ctg]'), tiles = g ? [...g.children] : [];
+    if (!g || !btn || !tiles.length) return;
+    g.classList.remove('collapsed'); g.style.maxHeight = '';
+    const gap = parseFloat(getComputedStyle(g).rowGap) || 8, maxH = Math.ceil(2 * tiles[0].getBoundingClientRect().height + gap);
+    if (g.scrollHeight <= maxH + 4) { btn.hidden = true; return; }
+    const hidden = tiles.filter(t => t.offsetTop >= maxH - 1).length;
+    btn.hidden = false; btn.setAttribute('aria-expanded', CTG_OPEN); btn.setAttribute('aria-label', CTG_OPEN ? 'Réduire les cours' : `Afficher les ${hidden} autres cours`);
+    btn.innerHTML = CTG_OPEN ? `Réduire<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>` : `Voir tout (+${hidden})<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`;
+    if (!CTG_OPEN) { g.classList.add('collapsed'); g.style.maxHeight = maxH + 'px'; }
+  });
+}
+let fitTimer = null;
+window.addEventListener('resize', () => { clearTimeout(fitTimer); fitTimer = setTimeout(fitCours, 150); });
 /* Un rendu déclenché pendant un appui est repoussé après le clic : sinon le bouton visé disparaît sous le doigt */
 let ptrDown = false, pendingRender = false;
 ['pointerdown'].forEach(t => document.addEventListener(t, () => { ptrDown = true; }, true));
@@ -1044,9 +1069,10 @@ document.addEventListener('mouseover', e => {
 window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: true });
 
 /* ---------- Cours : une seule source, le fichier de ton dépôt privé (budget/cours.json) ---------- */
+let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '30092026-r';
+const APP_BUILD = '30092026-s';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1119,11 +1145,14 @@ async function fetchLive(force) {
   // GitHub ne garantit pas son planning automatique (aucun passage programmé n'a jamais eu lieu ici) : c'est l'appli qui lance la mise à jour
   // quand les cours sont trop vieux (plus de 14 min en séance, 1 h sinon), ou tout de suite si tu appuies sur ↻.
   const ageMin = feed.err ? 0 : (Date.now() - new Date(feed.date)) / 60000, wd = new Date().getUTCDay(), hr = new Date().getUTCHours();
-  const seance = wd >= 1 && wd <= 5 && hr >= 7 && hr < 18;
-  const stale = !feed.err && ageMin > (seance ? 14 : 60);
+  const seance = wd >= 1 && wd <= 5 && hr >= 7 && hr < 18, crypto = S.comptes.some(c => /crypto/i.test(c.label));     // la crypto bouge 24 h/24 : seuil de 14 min en permanence
+  const dayKey = new Date().toISOString().slice(0, 10); let cap = {}; try { cap = JSON.parse(LS.get('cc.autoN') || '{}'); } catch (e) {}
+  const capOk = force === true || !(cap.d === dayKey && cap.n >= 70);                                               // garde-fou : 70 lancements automatiques par jour et par appareil
+  const stale = !feed.err && capOk && ageMin > ((seance || crypto) ? 14 : 60);
   if ((force === true || stale) && !feed.err && cfgOK()) {
     const t = await triggerRelay(), before = feed.date;
     if (t.ok) {
+      if (force !== true) LS.set('cc.autoN', JSON.stringify({ d: dayKey, n: (cap.d === dayKey ? cap.n : 0) + 1 }));
       const t0 = Date.now(); setLiveMsg('mise à jour lancée…');
       for (let i = 0; i < 30; i++) {
         await new Promise(r => setTimeout(r, i === 0 ? RELAY_POLL_MS * 3 : RELAY_POLL_MS));
@@ -1213,6 +1242,7 @@ document.addEventListener('click', async e => {
   if ('close' in d) { if (e.target === t) { dlg = null; editing = null; moreOpen = false; render(); } return; }
   if ('done' in d) { dlg = null; if (editing && /^achats\.\d+$/.test(editing.path)) sortAchats(); editing = null; render(); return; }
   if (d.edit) { editing = { path: d.edit }; render(); return; }
+  if ('ctg' in d) { CTG_OPEN = !CTG_OPEN; LS.set('cc.ctg', CTG_OPEN ? '1' : '0'); fitCours(); const g = document.querySelector('.ctg'); if (g) g.closest('.cours').scrollIntoView({ block: 'nearest' }); return; }
   if (d.ef) { ef = d.ef; LS.set('cc.ef', ef); render(); window.scrollTo(0, 0); return; }
   if (d.pf) { pf = d.pf; LS.set('cc.pf', pf); render(); window.scrollTo(0, 0); return; }
   if (d.bmode) { bmode = d.bmode; LS.set('cc.bmode', bmode); render(); window.scrollTo(0, 0); return; }
