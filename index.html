@@ -644,6 +644,8 @@ const row = (path, icon, title, sub, amount, cls = '') => `<button class="row" d
 const addBtn = (path, txt) => `<div class="addw"><button class="add mini" data-add="${path}" aria-label="Ajouter : ${txt}" title="${txt}">${ico('plus')}</button></div>`;
 const addPill = (attrs, txt) => `<button class="add pill" ${attrs}>${ico('plus')}<span>${txt}</span></button>`;
 const addPair = (...b) => `<div class="addw">${b.join('')}</div>`;
+const hideAttrs = () => `data-hide role="button" tabindex="0" aria-pressed="${HIDE}" title="Clique sur la carte pour masquer / afficher les montants"`;
+const eyeIcon = () => `<span class="eye" aria-hidden="true">${ico(HIDE ? 'eyeOff' : 'eye')}</span>`;
 const fmtDT = d => d ? new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
 const chgHtml = x => { if (x === null || x === undefined || !isFinite(x)) return ''; const up = x > 0.00005, dn = x < -0.00005; return `<em class="chg ${up ? 'up' : dn ? 'dn' : 'flat'}">${up ? '▲' : dn ? '▼' : '■'} ${signed(x, 2)}</em>`; };
 const chgInline = x => (x === null || x === undefined || !isFinite(x)) ? '' : ` · ${chgHtml(x).replace('<em', '<span').replace('</em>', '</span>')}`;
@@ -666,7 +668,7 @@ function vAccueil() {
     <div class="pk"><small>Patrimoine</small><div class="pbig">${eur(R.parPersonne[k])}</div></div>
     <div class="faint">Reste pour épargne ce mois : ${eur(R.dispo[k])}${info(tipReste(R.dispo[k], R.part[k], R.part[k] * 0.2))}</div></div>`;
   return `
-  <section class="hero" data-hide role="button" tabindex="0" aria-pressed="${HIDE}" title="Clique sur la carte pour masquer / afficher les montants"><span class="eye" aria-hidden="true">${ico(HIDE ? 'eyeOff' : 'eye')}</span><small>Patrimoine du foyer</small><div class="big">${eur(R.patrimoine)}</div>
+  <section class="hero" ${hideAttrs()}>${eyeIcon()}<small>Patrimoine du foyer</small><div class="big">${eur(R.patrimoine)}</div>
     <div class="hchips"><span>${signed(rend)} sur les placements</span><span>${eur(R.pvTotale)} de plus-value nette</span><span>Apport ${eur(R.apport)}</span></div></section>
   ${sec('Où est l\'argent', donut(Object.entries(R.repart).map(([l, v]) => ({ l, v })), { center: eur(R.patrimoine), top: 'positif', label: 'Répartition du patrimoine' }), '', 'enter')}
   ${sec('Budget du mois', donut([{ l: 'Quotidien', v: q, c: '#4a6fa5' }, { l: 'Loisirs', v: l, c: '#4f9a94' }, { l: 'Reste pour épargne', v: r, c: '#86a862' }], { center: eur(R.net), top: 'net / mois', label: 'Répartition du budget' }), '', 'enter')}
@@ -807,7 +809,7 @@ function vPlacements() {
   const tNet = 'Valeur nette : ce que tu récupérerais en vendant tout aujourd\'hui, après impôt sur les plus-values.\n' + keys.map(k => `${lbl(k)} : ${eur(R.pl[k].totalApresImpot)} (brut ${eur(R.pl[k].totalBrut)} ; on conserve ${pc(R.cfg.taxes[S.placements[k].taxe], 1)} de la plus-value)`).join('\n') + (P === 'b' ? `\nOr physique : ${eur(R.objetsNet)} (brut ${eur(R.objetsBrut)}, après marge de revente ${pc(S.settings.reventeOr, 0)})` : '') + `\n\nTotal net : ${eur(net)}\nValeur brute (avant impôt) : ${eur(brut)}\nActifs : ${keys.map(k => lbl(k) + ' ' + eur(R.pl[k].valeurActifs)).join(', ')}${keys.some(k => Array.isArray(S.placements[k].virements)) ? '\nEspèces en attente comprises.' : ''}`;
   const rep = repartActifs(P, keys);
   return `${seg}${coursPanel(P, keys)}
-  <section class="hero small"><small>Plus-value nette · ${nm(P)}</small><div class="big">${eur(pp.pvNet)}</div>
+  <section class="hero small" ${hideAttrs()}>${eyeIcon()}<small>Plus-value nette · ${nm(P)}</small><div class="big">${eur(pp.pvNet)}</div>
     <div class="hchips">${chipT(signed(pp.rendement) + ' net', 'Plus-value nette ÷ argent investi.')}${chipT(signed(pp.xirrNet) + ' par an (pondéré)', 'Taux annuel après impôt, en tenant compte de la date de chaque versement (méthode XIRR). Sur peu de recul, il varie beaucoup.')}${chipT('Investi ' + eur(pp.investi), tInv)}${chipT('Valeur nette ' + eur(net), tNet)}</div></section>
   ${rep.length ? sec('Répartition de mes actifs', donut(rep, { center: eur(sum(rep, x => x.v)), top: 'valeur brute', label: 'Répartition des actifs' }), '', 'enter', 'Part de chaque actif dans la valeur de tes placements (espèces en attente et fonds euros compris) : sert à rééquilibrer. Touche une part pour voir son pourcentage.') : ''}
   ${R.seriePers[P].length > 1 ? sec('Argent investi et valeur actuelle', lineChart(R.seriePers[P], { value: sum(keys, k => R.pl[k].totalApresImpot), net: true }), '', 'enter', 'La courbe montre les versements cumulés (réels). L\'historique des valeurs passées n\'est pas enregistré : seule la valeur nette d\'aujourd\'hui (après impôt à la sortie) est marquée ; l\'écart avec la courbe est la plus-value nette.') : ''}
@@ -1027,7 +1029,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 /* ---------- Cours : une seule source, le relais du dépôt privé (budget/cours.json) ---------- */
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '29092026-n';
+const APP_BUILD = '29092026-o';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1172,7 +1174,7 @@ function toggleHide() {
   bump(document.querySelector('[data-hide]'));                       // même rebond que les autres cartes, sur la carte réaffichée
   toast(HIDE ? 'Montants masqués (clique sur la carte pour les réafficher)' : 'Montants affichés');
 }
-document.addEventListener('keydown', e => { const h = e.target.closest && e.target.closest('[data-hide]'); if (h && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleHide(); } });
+document.addEventListener('keydown', e => { if (e.target.matches && e.target.matches('[data-hide]') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleHide(); } });
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-hide]') && !e.target.closest('[data-tip],button,input,select,label,a')) { toggleHide(); return; }
   const tp = e.target.closest('[data-tip]');
