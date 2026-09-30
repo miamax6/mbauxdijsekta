@@ -765,7 +765,7 @@ function coursPanel(P, keys) {
   const errs = Object.entries(LIVE_ERR).filter(([, m]) => m), ed = LS.get('cc.etfdate');
   const st = metalsState === 'busy' ? (LIVE_MSG || 'mise à jour…') : (ed ? 'dernière mise à jour des cours : ' + fmtDT(ed) : 'aucune mise à jour des cours pour l\'instant');
   const leg = [['etf', 'ETF'], ['etc', 'ETC et métaux'], ['cry', 'Crypto']].filter(([c]) => present.has(c)).map(([c, l]) => `<span><i class="lg ${c}"></i>${l}</span>`).join('');
-  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Les cours sont mis à jour automatiquement toutes les 15 minutes (un petit programme tourne dans ton dépôt GitHub privé) ; l\'appli les relit toute seule toutes les 5 minutes. Le bouton ↻ force une mise à jour immédiate (environ 15 s) si ton jeton a le droit « Actions ». Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique).')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
+  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Quand l\'appli est ouverte, elle vérifie toutes les 5 minutes l\'âge des cours et lance une mise à jour dès qu\'ils ont plus de 15 minutes (1 heure la nuit et le week-end). Un petit programme de ton dépôt GitHub privé les récupère en environ 15 secondes. Le planning automatique de GitHub sert de renfort, mais il n\'est pas garanti. Le bouton ↻ force une mise à jour immédiate (droit « Actions » du jeton nécessaire). Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique).')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
     <div class="ctg">${tiles.join('')}</div><div class="legend2">${leg}</div><div class="mst" data-live>${st}</div>${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
 }
 function assetRow(key, i, a, base) {
@@ -878,7 +878,7 @@ function vReglages() {
   ${sec('Sauvegarde et import', `<div class="btnrow"><button class="btn" data-act="export">Exporter (fichier lisible)</button><label class="btn">Importer un fichier<input type="file" accept="application/json,.json" data-act="import" hidden></label></div><p class="hint">Le fichier exporté contient tes chiffres en clair : garde-le hors de tout dossier public.</p>`)}
   ${sec('Cours automatiques', `${kv('Dernière mise à jour des cours', LS.get('cc.etfdate') ? fmtDT(LS.get('cc.etfdate')) : 'aucun')}${kv('ETF et ETC à jour', Object.keys(ETFQ).length + ' / ' + allIsins().length)}${kv('Or et argent', METALS.date ? fmtDT(METALS.date) : '–')}${kv('Crypto', CRYPTO.date ? fmtDT(CRYPTO.date) : '–')}
     ${Object.entries(LIVE_ERR).filter(([, m]) => m).map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}
-    <div class="btnrow"><button class="btn pri" data-act="metals">Actualiser maintenant</button></div>`, '', '', 'Les cours sont récupérés automatiquement toutes les 15 minutes par un petit programme de ton dépôt GitHub privé (workflow « Actualisation des cours »). ETF et ETC : Boursorama puis Börse Frankfurt. Or et argent : xaus. Crypto : Kraken. Le bouton lance une mise à jour immédiate si ton jeton a le droit « Actions ».')}
+    <div class="btnrow"><button class="btn pri" data-act="metals">Actualiser maintenant</button></div>`, '', '', 'Quand l\'appli est ouverte, elle lance une mise à jour dès que les cours ont plus de 15 minutes (1 heure la nuit et le week-end). Un petit programme de ton dépôt GitHub privé (workflow « Actualisation des cours ») les récupère : ETF et ETC via Boursorama puis Börse Frankfurt, or et argent via xaus, crypto via Kraken. Le planning automatique de GitHub sert de renfort, sans garantie. Le bouton lance une mise à jour immédiate si ton jeton a le droit « Actions ».')}
   ${sec('Cours de secours', `<div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', s.cours.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', s.cours.argentOnce)}</label><label>Date${fld('settings.cours.date', s.cours.date, { t: 'date' })}</label></div><div class="inl"><span>Coefficient de revente or</span>${fld('settings.reventeOr', s.reventeOr, { t: 'pct' })}</div>`, '', '', 'Ces valeurs ne servent que si la mise à jour automatique des cours est injoignable.')}
   ${sec('Prénoms et fiscalité', `<div class="grid3"><label>Prénom 1${fld('settings.noms.a', s.noms.a, { t: 'text' })}</label><label>Prénom 2${fld('settings.noms.b', s.noms.b, { t: 'text' })}</label></div>
     <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>`, '', '', 'Part qui reste après impôt (82,8 % = 17,2 % prélevés). Ces taux étaient écrits en dur dans l\'Excel : à valider.')}
@@ -1046,7 +1046,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 /* ---------- Cours : une seule source, le fichier de ton dépôt privé (budget/cours.json) ---------- */
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '29092026-q';
+const APP_BUILD = '30092026-r';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1116,7 +1116,12 @@ async function fetchLive(force) {
   const isins = allIsins();
   let feed = await readFeed(isins), errs = {};
   if (!feed.err) { errs = applyFeed(feed, isins); R = recalc(); draw(); }          // les derniers cours s'affichent tout de suite
-  if (force === true && !feed.err && cfgOK()) {
+  // GitHub ne garantit pas son planning automatique (aucun passage programmé n'a jamais eu lieu ici) : c'est l'appli qui lance la mise à jour
+  // quand les cours sont trop vieux (plus de 14 min en séance, 1 h sinon), ou tout de suite si tu appuies sur ↻.
+  const ageMin = feed.err ? 0 : (Date.now() - new Date(feed.date)) / 60000, wd = new Date().getUTCDay(), hr = new Date().getUTCHours();
+  const seance = wd >= 1 && wd <= 5 && hr >= 7 && hr < 18;
+  const stale = !feed.err && ageMin > (seance ? 14 : 60);
+  if ((force === true || stale) && !feed.err && cfgOK()) {
     const t = await triggerRelay(), before = feed.date;
     if (t.ok) {
       const t0 = Date.now(); setLiveMsg('mise à jour lancée…');
@@ -1127,7 +1132,7 @@ async function fetchLive(force) {
         if (!f.err && f.date !== before) { feed = f; errs = applyFeed(f, isins); break; }
       }
     }
-    else errs['Actualisation'] = t.msg + ' : les derniers cours reçus sont utilisés (mise à jour automatique toutes les 15 minutes)';
+    else if (force === true || !/déjà été demandé/.test(t.msg)) errs['Actualisation'] = t.msg + ' : les derniers cours reçus sont utilisés';
   }
   if (feed.err) errs['Actualisation'] = feed.err;
   LIVE_ERR = errs; metalsState = Object.keys(errs).length ? 'err' : 'ok'; R = recalc(); draw();
@@ -1250,7 +1255,7 @@ window.addEventListener('online', () => { if (cfgOK()) pull(true); fetchLive(); 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   if (cfgOK() && !meta.dirty) pull(true);
-  if (!METALS.date || Date.now() - new Date(METALS.date) > 30 * 60 * 1000) fetchLive();
+  fetchLive();                                   // relit les cours (et lance une mise à jour s'ils sont trop vieux) dès qu'on revient sur l'appli
 });
 /* Si une version plus récente est en ligne, la page se recharge toute seule (pas au milieu d'une saisie, une fois par version et par 5 min) */
 let lastVerCheck = 0;
