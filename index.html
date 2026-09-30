@@ -230,6 +230,12 @@ small.mu{color:var(--mu)!important;font-weight:600}
 .hero[data-hide]{cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .hero[data-hide]:focus-visible{outline:3px solid rgba(255,255,255,.7);outline-offset:2px}
 .hero .eye{position:absolute;top:16px;right:18px;z-index:2;opacity:.85;line-height:0}.hero .eye .ic{width:22px;height:22px;stroke:#fff;stroke-width:1.9}
+
+/* ---- v9 : courbe de variation 24 h à côté de la plus-value nette ---- */
+.hero .big .tr{display:inline-grid;place-items:center;width:.62em;height:.62em;margin-left:.3em;vertical-align:.08em;position:relative;cursor:help}
+.hero .big .tr .ic{width:100%;height:100%;stroke-width:2.7}
+.hero .big .tr::after{content:"";position:absolute;inset:-10px}
+.hero .tr.up{color:#7ee2b8}.hero .tr.dn{color:#ff9a8f}.hero .tr.flat{color:rgba(255,255,255,.7)}
 </style></head>
 <body><div id="app"></div>
 <script>/* qrcode-generator 2.0.4, Kazuhiko Arase, licence MIT */
@@ -565,6 +571,7 @@ const ICONS = {
   layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
   coins: '<circle cx="9" cy="9" r="6"/><path d="M15.5 10.5A6 6 0 1 1 10 18"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  trendDown: '<path d="M3 7l6 6 4-4 8 8"/><path d="M15 17h6v-6"/>',
   pencil: '<path d="M4 20h4L20 8l-4-4L4 16z"/>',
   eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   eyeOff: '<path d="M3 3l18 18"/><path d="M10.6 6.1A10.4 10.4 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.6 7.6C3.9 9.4 2 12 2 12s3.6 7 10 7c1.7 0 3.2-.4 4.6-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
@@ -756,9 +763,9 @@ function coursPanel(P, keys) {
   }
   if (hasCrypto(P) && (CRYPTO.btc || CRYPTO.eth || CRYPTO.sol)) [['Bitcoin', CRYPTO.btc, CHG.btc], ['Ethereum', CRYPTO.eth, CHG.eth], ['Solana', CRYPTO.sol, CHG.sol]].forEach(([n, x, c]) => { if (x) tiles.push(tile('cry', n, eurPub(x, x < 100 ? 2 : 0), c)); });
   const errs = Object.entries(LIVE_ERR).filter(([, m]) => m), ed = LS.get('cc.etfdate');
-  const st = metalsState === 'busy' ? (LIVE_MSG || 'mise à jour…') : (ed ? 'dernier passage du relais : ' + fmtDT(ed) : 'aucun relevé du relais pour l\'instant');
+  const st = metalsState === 'busy' ? (LIVE_MSG || 'mise à jour…') : (ed ? 'dernière mise à jour des cours : ' + fmtDT(ed) : 'aucune mise à jour des cours pour l\'instant');
   const leg = [['etf', 'ETF'], ['etc', 'ETC et métaux'], ['cry', 'Crypto']].filter(([c]) => present.has(c)).map(([c, l]) => `<span><i class="lg ${c}"></i>${l}</span>`).join('');
-  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Une seule source : le relais de ton dépôt privé (toutes les heures en séance). Le bouton ↻ le relance tout de suite si ton jeton a le droit « Actions ». Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique). Touche un ETF pour corriger son cours à la main si besoin.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
+  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Les cours sont mis à jour automatiquement toutes les 15 minutes (un petit programme tourne dans ton dépôt GitHub privé) ; l\'appli les relit toute seule toutes les 5 minutes. Le bouton ↻ force une mise à jour immédiate (environ 15 s) si ton jeton a le droit « Actions ». Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique). Touche un ETF pour corriger son cours à la main si besoin.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
     <div class="ctg">${tiles.join('')}</div><div class="legend2">${leg}</div><div class="mst" data-live>${st}</div>${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
 }
 function assetRow(key, i, a, base) {
@@ -771,7 +778,7 @@ function placeBlock(key) {
   const netRend = c.investi ? c.pvNet / c.investi : 0;
   const tiles = `<div class="pmain">
     <div class="pm1" data-tip="Plus-value brute ÷ argent investi, avant impôt.\n${eur(c.pv)} ÷ ${eur(c.investi)}."><small>Rendement total</small><b class="${sign(c.rendement)}">${signed(c.rendement)} ${moji(c.rendement)}</b></div>
-    <div class="pm1" data-tip="Taux annuel qui tient compte de la date de chaque versement (méthode XIRR d'Excel).\nAvec des versements progressifs, il est plus haut que « total ÷ durée ».\nSur peu de recul, il varie beaucoup."><small>Par an (pondéré)</small><b class="${sign(c.xirr)}">${signed(c.xirr)} ${moji(c.xirr)}</b></div>
+    <div class="pm1" data-tip="Taux annuel qui tient compte de la date de chaque versement (méthode XIRR d'Excel).\nAvec des versements progressifs, il est plus haut que « total ÷ durée ».\nSur peu de recul, il varie beaucoup.\n\nPour info, annualisé simple : ${signed(c.annualise)} par an (rendement total ÷ durée depuis le 1er versement, avant impôt)."><small>Par an (pondéré)</small><b class="${sign(c.xirr)}">${signed(c.xirr)} ${moji(c.xirr)}</b></div>
     <div class="pm1" data-tip="Plus-value après impôt à la sortie (tu en conserves ${pc(taxe, 1)}).\n${eur(c.pvNet)} ÷ ${eur(c.investi)} = ${signed(netRend)}."><small>Plus-value nette</small><b class="${sign(c.pvNet)}">${eur(c.pvNet)} ${moji(netRend)}</b></div></div>`;
   const hg = p.retrait && c.retraitMois != null ? `<span class="hg" data-tip="${esc(c.retraitMois > 0 ? 'Retrait possible dans ' + dureeTxt(c.retraitMois) + ' (' + moisAnnee(p.retrait) + ').' : 'Retrait possible dès maintenant.')}\nDate à partir de laquelle le retrait est possible sans perdre l'avantage fiscal." aria-label="Retrait possible">⏳</span>` : '';
   const assets = c.actifs.map((a, i) => assetRow(key, i, a, c.valeurActifs)).join('');
@@ -797,6 +804,16 @@ function repartActifs(P, keys) {
   if (P === 'b' && R.objetsBrut > 0) items.push({ l: 'Or physique', v: R.objetsBrut, c: '#d3b46a' });
   return items.sort((a, b) => b.v - a.v);
 }
+/* Variation estimée de la plus-value nette sur 24 h, à partir de la variation du jour de chaque actif */
+function trend24(keys, pp) {
+  let d = 0, n = 0, m = 0;
+  keys.forEach(k => { const c = R.pl[k], p = S.placements[k]; let dk = 0;
+    c.actifs.forEach(a => { m++; const ch = CHG[a.isin]; if (ch !== null && ch !== undefined && isFinite(ch)) { dk += a.valeur * ch / (1 + ch); n++; } });
+    d += c.pv > 0 ? dk * R.cfg.taxes[p.taxe] : dk; });
+  if (!n) return null;
+  const before = pp.pvNet - d, pct = before ? d / Math.abs(before) : 0, cls = d > 0.005 ? 'up' : d < -0.005 ? 'dn' : 'flat';
+  return { cls, icon: d < -0.005 ? 'trendDown' : 'trend', tip: `Variation estimée depuis hier (24 h) : ${d > 0 ? '+' : ''}${eur(d)} (${signed(pct)}).\nCalculée avec la variation du jour de chaque actif (${n} actifs sur ${m}) : ${cls === 'up' ? 'la plus-value nette monte' : cls === 'dn' ? 'la plus-value nette baisse' : 'stable'}.` };
+}
 function vPlacements() {
   const P = pf, pp = R.plParPers[P], keys = ['peaA', 'peaB', 'ctoA', 'avA'].filter(k => S.placements[k].who === P);
   const lbl = k => k === 'ctoA' ? 'Compte-titres' : S.placements[k].titre;
@@ -807,10 +824,11 @@ function vPlacements() {
   const brut = sum(keys, k => R.pl[k].totalBrut) + (P === 'b' ? R.objetsBrut : 0), net = pp.total + (P === 'b' ? R.objetsNet : 0);
   const tInv = 'Argent réellement versé, pas la valeur actuelle :\n' + keys.map(k => { const p = S.placements[k], c = R.pl[k]; return `${lbl(k)} : ${eur(c.investi)} (${Array.isArray(p.virements) ? p.virements.length + ' versements' : 'achats'}${p.fondsEuros ? ', dont fonds euros ' + eur(num(p.fondsEuros.investi)) : ''})`; }).join('\n') + `\nTotal : ${eur(pp.investi)}`;
   const tNet = 'Valeur nette : ce que tu récupérerais en vendant tout aujourd\'hui, après impôt sur les plus-values.\n' + keys.map(k => `${lbl(k)} : ${eur(R.pl[k].totalApresImpot)} (brut ${eur(R.pl[k].totalBrut)} ; on conserve ${pc(R.cfg.taxes[S.placements[k].taxe], 1)} de la plus-value)`).join('\n') + (P === 'b' ? `\nOr physique : ${eur(R.objetsNet)} (brut ${eur(R.objetsBrut)}, après marge de revente ${pc(S.settings.reventeOr, 0)})` : '') + `\n\nTotal net : ${eur(net)}\nValeur brute (avant impôt) : ${eur(brut)}\nActifs : ${keys.map(k => lbl(k) + ' ' + eur(R.pl[k].valeurActifs)).join(', ')}${keys.some(k => Array.isArray(S.placements[k].virements)) ? '\nEspèces en attente comprises.' : ''}`;
-  const rep = repartActifs(P, keys);
+  const firstIso = keys.map(k => R.pl[k].premier).filter(Boolean).sort()[0], days = firstIso ? Math.max(1, (Date.now() - new Date(firstIso + '-01')) / 864e5) : 0, simpleNet = days ? pp.rendement / days * 365 : 0;
+  const rep = repartActifs(P, keys), tr24 = trend24(keys, pp);
   return `${seg}${coursPanel(P, keys)}
-  <section class="hero small" ${hideAttrs()}>${eyeIcon()}<small>Plus-value nette · ${nm(P)}</small><div class="big">${eur(pp.pvNet)}</div>
-    <div class="hchips">${chipT(signed(pp.rendement) + ' net', 'Plus-value nette ÷ argent investi.')}${chipT(signed(pp.xirrNet) + ' par an (pondéré)', 'Taux annuel après impôt, en tenant compte de la date de chaque versement (méthode XIRR). Sur peu de recul, il varie beaucoup.')}${chipT('Investi ' + eur(pp.investi), tInv)}${chipT('Valeur nette ' + eur(net), tNet)}</div></section>
+  <section class="hero small" ${hideAttrs()}>${eyeIcon()}<small>Plus-value nette · ${nm(P)}</small><div class="big">${eur(pp.pvNet)}${tr24 ? `<span class="tr ${tr24.cls}" data-tip="${esc(tr24.tip)}">${ico(tr24.icon)}</span>` : ''}</div>
+    <div class="hchips">${chipT(signed(pp.rendement) + ' net', 'Plus-value nette ÷ argent investi.')}${chipT(signed(pp.xirrNet) + ' par an (pondéré)', 'Taux annuel après impôt, en tenant compte de la date de chaque versement (méthode XIRR). Sur peu de recul, il varie beaucoup.\n\nPour info, annualisé simple : ' + signed(simpleNet) + ' par an (rendement net ÷ ' + dureeTxt(Math.round(days / 30.44)) + ' depuis le 1er versement × 12 mois). Moins réaliste quand les versements sont étalés.')}${chipT('Investi ' + eur(pp.investi), tInv)}${chipT('Valeur nette ' + eur(net), tNet)}</div></section>
   ${rep.length ? sec('Répartition de mes actifs', donut(rep, { center: eur(sum(rep, x => x.v)), top: 'valeur brute', label: 'Répartition des actifs' }), '', 'enter', 'Part de chaque actif dans la valeur de tes placements (espèces en attente et fonds euros compris) : sert à rééquilibrer. Touche une part pour voir son pourcentage.') : ''}
   ${R.seriePers[P].length > 1 ? sec('Argent investi et valeur actuelle', lineChart(R.seriePers[P], { value: sum(keys, k => R.pl[k].totalApresImpot), net: true }), '', 'enter', 'La courbe montre les versements cumulés (réels). L\'historique des valeurs passées n\'est pas enregistré : seule la valeur nette d\'aujourd\'hui (après impôt à la sortie) est marquée ; l\'écart avec la courbe est la plus-value nette.') : ''}
   ${parProd.length > 1 ? sec('Rendement par placement', hbars(parProd), '', '', 'Rendement total avant impôt de chaque placement.') : ''}
@@ -858,10 +876,10 @@ function vReglages() {
     ${shareEnc ? `<label class="fl"><span>Code de protection (modifiable)</span><input class="f" data-sharecode autocomplete="off" spellcheck="false" value="${esc(showCode(normCode(shareCode)))}"></label>` : ''}
     <div class="btnrow"><button class="btn pri" data-act="sharegen">Afficher le QR code</button></div>`, '', '', 'Le QR contient un lien qui ouvre l\'appli : le jeton GitHub, la phrase secrète et le dépôt y sont dans la partie après le « # », qui n\'est jamais envoyée à un serveur. Avec un code, tout est chiffré (AES-256) : sans le code, une photo du QR est inutilisable. Le code est tiré au hasard ; s\'il fait 8 caractères, il est très difficile à deviner. Le jeton donne accès en lecture et écriture au dépôt de données : ne partage le QR qu\'avec la personne concernée.')}
   ${sec('Sauvegarde et import', `<div class="btnrow"><button class="btn" data-act="export">Exporter (fichier lisible)</button><label class="btn">Importer un fichier<input type="file" accept="application/json,.json" data-act="import" hidden></label></div><p class="hint">Le fichier exporté contient tes chiffres en clair : garde-le hors de tout dossier public.</p>`)}
-  ${sec('Cours automatiques', `${kv('Dernier passage du relais', LS.get('cc.etfdate') ? fmtDT(LS.get('cc.etfdate')) : 'aucun')}${kv('ETF et ETC à jour', Object.keys(ETFQ).length + ' / ' + allIsins().length)}${kv('Or et argent', METALS.date ? fmtDT(METALS.date) : '–')}${kv('Crypto', CRYPTO.date ? fmtDT(CRYPTO.date) : '–')}
+  ${sec('Cours automatiques', `${kv('Dernière mise à jour des cours', LS.get('cc.etfdate') ? fmtDT(LS.get('cc.etfdate')) : 'aucun')}${kv('ETF et ETC à jour', Object.keys(ETFQ).length + ' / ' + allIsins().length)}${kv('Or et argent', METALS.date ? fmtDT(METALS.date) : '–')}${kv('Crypto', CRYPTO.date ? fmtDT(CRYPTO.date) : '–')}
     ${Object.entries(LIVE_ERR).filter(([, m]) => m).map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}
-    <div class="btnrow"><button class="btn pri" data-act="metals">Actualiser maintenant</button></div>`, '', '', 'Une seule source : le relais de ton dépôt privé (workflow « Cours des ETF », toutes les heures en séance). ETF et ETC : Boursorama puis Börse Frankfurt. Or et argent : xaus. Crypto : Kraken. Le bouton lance le relais tout de suite si ton jeton a le droit « Actions ».')}
-  ${sec('Cours de secours', `<div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', s.cours.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', s.cours.argentOnce)}</label><label>Date${fld('settings.cours.date', s.cours.date, { t: 'date' })}</label></div><div class="inl"><span>Coefficient de revente or</span>${fld('settings.reventeOr', s.reventeOr, { t: 'pct' })}</div>`, '', '', 'Ces valeurs ne servent que si le relais est injoignable.')}
+    <div class="btnrow"><button class="btn pri" data-act="metals">Actualiser maintenant</button></div>`, '', '', 'Les cours sont récupérés automatiquement toutes les 15 minutes par un petit programme de ton dépôt GitHub privé (workflow « Actualisation des cours »). ETF et ETC : Boursorama puis Börse Frankfurt. Or et argent : xaus. Crypto : Kraken. Le bouton lance une mise à jour immédiate si ton jeton a le droit « Actions ».')}
+  ${sec('Cours de secours', `<div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', s.cours.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', s.cours.argentOnce)}</label><label>Date${fld('settings.cours.date', s.cours.date, { t: 'date' })}</label></div><div class="inl"><span>Coefficient de revente or</span>${fld('settings.reventeOr', s.reventeOr, { t: 'pct' })}</div>`, '', '', 'Ces valeurs ne servent que si la mise à jour automatique des cours est injoignable.')}
   ${sec('Prénoms et fiscalité', `<div class="grid3"><label>Prénom 1${fld('settings.noms.a', s.noms.a, { t: 'text' })}</label><label>Prénom 2${fld('settings.noms.b', s.noms.b, { t: 'text' })}</label></div>
     <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>`, '', '', 'Part qui reste après impôt (82,8 % = 17,2 % prélevés). Ces taux étaient écrits en dur dans l\'Excel : à valider.')}
   ${sec('À propos', kv('Version de l\'appli', APP_BUILD), '', '', 'Si tu ne vois pas une nouveauté, ce numéro te dit quelle version ton appareil affiche.')}
@@ -1026,20 +1044,21 @@ document.addEventListener('mouseover', e => {
 });
 window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: true });
 
-/* ---------- Cours : une seule source, le relais du dépôt privé (budget/cours.json) ---------- */
+/* ---------- Cours : une seule source, le fichier de ton dépôt privé (budget/cours.json) ---------- */
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '29092026-o';
+const APP_BUILD = '29092026-p';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
 const b64utf = s => btoa(unescape(encodeURIComponent(s))), utf64 = s => decodeURIComponent(escape(atob(s.replace(/\n/g, ''))));
 
-/* Lit cours.json avec ton jeton ; tient à jour la liste des ISIN que le relais doit suivre. */
+/* Lit cours.json avec ton jeton ; tient à jour la liste des ISIN que la mise à jour automatique doit suivre. */
+let ISIN_SYNCED = '';
 async function readFeed(isins, skipSync) {
   if (!cfgOK()) return { err: 'synchronisation GitHub non configurée (Réglages)' };
-  const dir = CFG.path.replace(/[^/]*$/, ''), q = '?ref=' + encodeURIComponent(CFG.branch) + '&t=' + Date.now();
-  if (!skipSync) try {
+  const dir = CFG.path.replace(/[^/]*$/, ''), q = '?ref=' + encodeURIComponent(CFG.branch) + '&t=' + Date.now(), isinKey = CFG.owner + CFG.repo + [...isins].sort().join();
+  if (!skipSync && isinKey !== ISIN_SYNCED) try {
     const r = await fetch(ghUrlFor(dir + 'isins.json') + q, { headers: ghHead(), cache: 'no-store' });
     let cur = null, sha;
     if (r.ok) { const j = await r.json(); sha = j.sha; cur = JSON.parse(utf64(j.content)); }
@@ -1049,15 +1068,16 @@ async function readFeed(isins, skipSync) {
       if (sha) body.sha = sha;
       await fetch(ghUrlFor(dir + 'isins.json'), { method: 'PUT', headers: { ...ghHead(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     }
+    ISIN_SYNCED = isinKey;
   } catch (e) {}
   try {
     const r = await fetch(ghUrlFor(dir + 'cours.json') + q, { headers: ghHead(), cache: 'no-store' });
-    if (r.status === 404) return { err: 'cours.json absent : lance le workflow « Cours des ETF » (dépôt privé, onglet Actions)' };
+    if (r.status === 404) return { err: 'fichier de cours absent : lance le workflow « Actualisation des cours » (dépôt privé, onglet Actions)' };
     if (!r.ok) return { err: 'GitHub ' + r.status };
     return JSON.parse(utf64((await r.json()).content));
   } catch (e) { return { err: errTxt(e) }; }
 }
-/* Demande à GitHub de lancer le relais tout de suite (droit « Actions » du jeton nécessaire) */
+/* Demande à GitHub de lancer la mise à jour tout de suite (droit « Actions » du jeton nécessaire) */
 async function triggerRelay() {
   if (Date.now() - (+LS.get('cc.disp') || 0) < 90000) return { ok: false, msg: 'un lancement a déjà été demandé il y a moins de 90 secondes' };
   LS.set('cc.disp', String(Date.now()));
@@ -1067,7 +1087,7 @@ async function triggerRelay() {
     return { ok: false, msg: r.status === 403 || r.status === 404 ? 'lancement refusé (le jeton n\'a pas le droit « Actions »)' : 'GitHub ' + r.status };
   } catch (e) { return { ok: false, msg: errTxt(e) }; }
 }
-/* Range dans l'appli les cours du relais (garde-fous : cours récent, écart < 40 % du cours saisi) */
+/* Range dans l'appli les cours reçus (garde-fous : cours récent, écart < 40 % du cours saisi) */
 function applyFeed(feed, isins) {
   const errs = {}, fresh = t => !t || Date.now() - new Date(t) < 8 * 864e5, fe = feed.errors || {};
   const m = feed.metals;
@@ -1089,28 +1109,30 @@ function applyFeed(feed, isins) {
   if (notes.length) errs['ETF'] = `${ok}/${isins.length} à jour · ` + notes.slice(0, 2).join(' · ');
   return errs;
 }
+const idleRender = () => { const a = document.activeElement; if (editing || dlg || moreOpen || (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))) return; render(); };   // rafraîchissement automatique : jamais au milieu d'une saisie
 async function fetchLive(force) {
   if (force !== true && Date.now() - LAST_LIVE < 120000) return;
   LAST_LIVE = Date.now();
-  metalsState = 'busy'; LIVE_MSG = ''; if (view === 'placements' || view === 'reglages') render();
+  const draw = force === true ? render : idleRender;
+  metalsState = 'busy'; LIVE_MSG = ''; if (force === true && (view === 'placements' || view === 'reglages')) render();
   const isins = allIsins();
   let feed = await readFeed(isins), errs = {};
-  if (!feed.err) { errs = applyFeed(feed, isins); R = recalc(); render(); }          // les derniers cours s'affichent tout de suite
+  if (!feed.err) { errs = applyFeed(feed, isins); R = recalc(); draw(); }          // les derniers cours s'affichent tout de suite
   if (force === true && !feed.err && cfgOK()) {
     const t = await triggerRelay(), before = feed.date;
     if (t.ok) {
-      const t0 = Date.now(); setLiveMsg('relais lancé…');
+      const t0 = Date.now(); setLiveMsg('mise à jour lancée…');
       for (let i = 0; i < 30; i++) {
         await new Promise(r => setTimeout(r, i === 0 ? RELAY_POLL_MS * 3 : RELAY_POLL_MS));
-        setLiveMsg('relais en cours… ' + Math.round((Date.now() - t0) / 1000) + ' s');
+        setLiveMsg('mise à jour en cours… ' + Math.round((Date.now() - t0) / 1000) + ' s');
         const f = await readFeed(isins, true);
         if (!f.err && f.date !== before) { feed = f; errs = applyFeed(f, isins); break; }
       }
     }
-    else errs['Relais'] = t.msg + ' : cours du dernier passage utilisés (passage automatique toutes les heures en séance)';
+    else errs['Actualisation'] = t.msg + ' : les derniers cours reçus sont utilisés (mise à jour automatique toutes les 15 minutes)';
   }
-  if (feed.err) errs['Relais'] = feed.err;
-  LIVE_ERR = errs; metalsState = Object.keys(errs).length ? 'err' : 'ok'; R = recalc(); render();
+  if (feed.err) errs['Actualisation'] = feed.err;
+  LIVE_ERR = errs; metalsState = Object.keys(errs).length ? 'err' : 'ok'; R = recalc(); draw();
 }
 
 /* ---------- Événements ---------- */
@@ -1249,6 +1271,7 @@ async function checkVersion() {
   } catch (e) {}
 }
 setTimeout(checkVersion, 1500);
+setInterval(() => { if (!document.hidden && cfgOK()) fetchLive(); }, 5 * 60 * 1000);      // relit les cours toutes les 5 minutes tant que l'appli est ouverte
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checkVersion(); });
 try { if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }); } catch (e) {}
 
