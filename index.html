@@ -426,7 +426,8 @@ if (typeof module !== 'undefined') module.exports = { EMPTY_STATE, calc, num, mo
 const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let HIDE = LS.get('cc.hide') === '1';                      // mode discret : montants masqués (double-clic sur le patrimoine, Accueil)
-const eur = (v, d = 0) => HIDE ? '•••• €' : new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: d, minimumFractionDigits: d }).format(v || 0);
+const eurPub = (v, d = 0) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: d, minimumFractionDigits: d }).format(v || 0);   // cours publics : jamais masqués
+const eur = (v, d = 0) => HIDE ? '•••• €' : eurPub(v, d);
 const pc = (v, d = 1) => new Intl.NumberFormat('fr-FR', { style: 'percent', maximumFractionDigits: d }).format(v || 0);
 const dec = v => (v === undefined || v === null || v === '') ? '' : String(Math.round(v * 10000) / 10000).replace('.', ',');
 
@@ -738,13 +739,13 @@ const hasCrypto = P => S.comptes.some(c => /crypto/i.test(c.label) && (c.who ===
 function coursPanel(P, keys) {
   const tiles = [], present = new Set();
   const tile = (cls, nom, price, chg, tag, attrs = '') => { present.add(cls); return `<${attrs ? 'button' : 'div'} class="ct ${cls}" ${attrs}><span>${esc(nom)}</span><b>${price}</b>${tag || chgHtml(chg)}</${attrs ? 'button' : 'div'}>`; };
-  keys.forEach(k => R.pl[k].actifs.forEach((a, i) => tiles.push(tile(k === 'ctoA' ? 'etc' : 'etf', a.nom, eur(num(a.cours), 2), CHG[a.isin], a.auto ? '' : '<em class="man">saisi à la main</em>', `data-edit="placements.${k}.actifs.${i}" title="${esc(a.nom)}"`))));
+  keys.forEach(k => R.pl[k].actifs.forEach((a, i) => tiles.push(tile(k === 'ctoA' ? 'etc' : 'etf', a.nom, eurPub(num(a.cours), 2), CHG[a.isin], a.auto ? '' : '<em class="man">saisi à la main</em>', `data-edit="placements.${k}.actifs.${i}" title="${esc(a.nom)}"`))));
   const auto = !!(METALS.orOnce && R.cours === METALS);
   if (keys.includes('ctoA') || (P === 'b' && S.placements.objets.length)) {
-    tiles.push(tile('etc', 'Or (once)', eur(num(R.cours.orOnce)), CHG.or, auto ? '' : '<em class="man">cours de secours</em>'));
-    if (num(R.cours.argentOnce)) tiles.push(tile('etc', 'Argent (once)', eur(num(R.cours.argentOnce), 2), CHG.argent, auto ? '' : '<em class="man">cours de secours</em>'));
+    tiles.push(tile('etc', 'Or (once)', eurPub(num(R.cours.orOnce)), CHG.or, auto ? '' : '<em class="man">cours de secours</em>'));
+    if (num(R.cours.argentOnce)) tiles.push(tile('etc', 'Argent (once)', eurPub(num(R.cours.argentOnce), 2), CHG.argent, auto ? '' : '<em class="man">cours de secours</em>'));
   }
-  if (hasCrypto(P) && (CRYPTO.btc || CRYPTO.eth || CRYPTO.sol)) [['Bitcoin', CRYPTO.btc, CHG.btc], ['Ethereum', CRYPTO.eth, CHG.eth], ['Solana', CRYPTO.sol, CHG.sol]].forEach(([n, x, c]) => { if (x) tiles.push(tile('cry', n, eur(x, x < 100 ? 2 : 0), c)); });
+  if (hasCrypto(P) && (CRYPTO.btc || CRYPTO.eth || CRYPTO.sol)) [['Bitcoin', CRYPTO.btc, CHG.btc], ['Ethereum', CRYPTO.eth, CHG.eth], ['Solana', CRYPTO.sol, CHG.sol]].forEach(([n, x, c]) => { if (x) tiles.push(tile('cry', n, eurPub(x, x < 100 ? 2 : 0), c)); });
   const errs = Object.entries(LIVE_ERR).filter(([, m]) => m), ed = LS.get('cc.etfdate');
   const st = metalsState === 'busy' ? (LIVE_MSG || 'mise à jour…') : (ed ? 'dernier passage du relais : ' + fmtDT(ed) : 'aucun relevé du relais pour l\'instant');
   const leg = [['etf', 'ETF'], ['etc', 'ETC et métaux'], ['cry', 'Crypto']].filter(([c]) => present.has(c)).map(([c, l]) => `<span><i class="lg ${c}"></i>${l}</span>`).join('');
@@ -753,7 +754,7 @@ function coursPanel(P, keys) {
 }
 function assetRow(key, i, a, base) {
   const perf = a.cout ? a.pv / a.cout : 0;
-  return row(`placements.${key}.actifs.${i}`, 'layers', a.nom, `${dec(a.qty)} × ${eur(num(a.cours), 2)}${a.auto ? chgInline(CHG[a.isin]) : ''}`,
+  return row(`placements.${key}.actifs.${i}`, 'layers', a.nom, `${HIDE ? '••' : dec(a.qty)} × ${eurPub(num(a.cours), 2)}${a.auto ? chgInline(CHG[a.isin]) : ''}`,
     `${eur(a.valeur)}<small class="mu">${pc(base ? a.valeur / base : 0, 0)} du compte</small><small class="${sign(a.pv)}">${signed(perf)} depuis l'achat</small>`);
 }
 function placeBlock(key) {
@@ -791,7 +792,7 @@ function vPlacements() {
   const P = pf, pp = R.plParPers[P], keys = ['peaA', 'peaB', 'ctoA', 'avA'].filter(k => S.placements[k].who === P);
   const lbl = k => k === 'ctoA' ? 'Compte-titres' : S.placements[k].titre;
   const parProd = keys.map(k => ({ l: k === 'ctoA' ? 'Métaux' : S.placements[k].titre, v: R.pl[k].rendement * 100, t: signed(R.pl[k].rendement) }));
-  const objets = R.objets.map((o, i) => row(`placements.objets.${i}`, 'gold', o.label, `${dec(o.grammes)} g · titre ${dec(o.titre)}`, eur(o.valeur))).join('');
+  const objets = R.objets.map((o, i) => row(`placements.objets.${i}`, 'gold', o.label, `${HIDE ? '••' : dec(o.grammes)} g · titre ${dec(o.titre)}`, eur(o.valeur))).join('');
   const seg = `<div class="seg pers" role="tablist"><button class="a ${P === 'a' ? 'on' : ''}" data-pf="a">${esc(N('a'))}</button><button class="b ${P === 'b' ? 'on' : ''}" data-pf="b">${esc(N('b'))}</button></div>`;
   const objBlock = P === 'b' ? sec('Objets en or', objets + addBtn('placements.objets', 'Objet') + kv('Valeur brute', eur(R.objetsBrut)) + kv('Après marge de revente (' + pc(S.settings.reventeOr, 0) + ')', eur(R.objetsNet), 'pos'), eur(R.objetsNet)) : '';
   const brut = sum(keys, k => R.pl[k].totalBrut) + (P === 'b' ? R.objetsBrut : 0), net = pp.total + (P === 'b' ? R.objetsNet : 0);
@@ -1019,7 +1020,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 /* ---------- Cours : une seule source, le relais du dépôt privé (budget/cours.json) ---------- */
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '29092026-l';
+const APP_BUILD = '29092026-m';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
