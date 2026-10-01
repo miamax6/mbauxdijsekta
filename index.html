@@ -1135,7 +1135,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '30092026-z';
+const APP_BUILD = '30092026-aa';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1399,13 +1399,14 @@ function sdEnd() {
   NOCLICK_UNTIL = Date.now() + 350;
   const h = s.si.offsetHeight, close = s.dy > h * 0.3 || s.vy > 0.6, back = s.si.parentElement, g = s.si.querySelector('.grab');
   if (g) g.classList.remove('active'); s.si.classList.remove('dragging');
-  const cleanup = () => { s.si.style.transform = ''; s.si.style.transition = ''; s.si.style.animation = ''; if (back) back.style.background = ''; };
+  // on ne remet PAS « animation » à sa valeur d'origine : l'animation d'ouverture se rejouerait (fondu + glissement) et la fenêtre clignoterait
+  const cleanup = () => { s.si.style.transform = ''; s.si.style.transition = ''; if (back) back.style.background = ''; };
   const settle = () => { if (close) closeOverlay(); else cleanup(); };
   if (reduceMotion() || !s.si.animate) { settle(); return; }
   const remain = h - s.dy, dur = close ? Math.max(140, Math.min(260, remain / Math.max(s.vy, 0.9))) : 260;
   const a = s.si.animate([{ transform: `translate3d(0,${s.dy}px,0)` }, { transform: close ? `translate3d(0,${h}px,0)` : 'translate3d(0,0,0)' }], { duration: dur, easing: close ? 'cubic-bezier(.3,.7,.4,1)' : EASE, fill: 'forwards' });
-  if (back) back.animate([{ background: back.style.background || 'rgba(15,22,30,.5)' }, { background: close ? 'rgba(15,22,30,0)' : 'rgba(15,22,30,.5)' }], { duration: dur, easing: EASE, fill: 'forwards' });
-  a.onfinish = () => { if (close) closeOverlay(); else { a.cancel(); cleanup(); } };
+  const ba = back ? back.animate([{ background: back.style.background || 'rgba(15,22,30,.5)' }, { background: close ? 'rgba(15,22,30,0)' : 'rgba(15,22,30,.5)' }], { duration: dur, easing: EASE, fill: 'forwards' }) : null;
+  a.onfinish = () => { if (close) closeOverlay(); else { a.cancel(); if (ba) ba.cancel(); cleanup(); } };
 }
 function bindSheet() {
   const sb = document.querySelector('.sheet .sbody');
