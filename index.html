@@ -278,6 +278,9 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
 /* ---- v14 : bouton « + Achat » en haut de la liste ---- */
 .lsec{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:14px 0 6px}.lsec h4{margin:0}
 .addw.top{margin:0 0 8px}
+
+/* ---- v15 : une fenêtre déjà ouverte n'est pas ré-animée quand elle se met à jour ---- */
+.sheet.still,.sheet.still .sheetin{animation:none}
 </style></head>
 <body><div id="app"></div>
 <script>/* qrcode-generator 2.0.4, Kazuhiko Arase, licence MIT */
@@ -1057,6 +1060,7 @@ function render() {
   const [title, fn] = VIEWS[view];
   const fresh = lastView !== view; lastView = view;
   hideTip();
+  const hadSheet = !!document.querySelector('.sheet');                // une fenêtre est déjà ouverte : on la redessine sans la ré-animer (sinon elle clignote)
   document.getElementById('app').innerHTML = `
   <header class="top"><h1>${title}</h1><span id="syncpill" class="pill off"></span></header>
   <main class="${fresh ? 'anim' : ''}">${layoutMain(fn())}</main>
@@ -1065,6 +1069,7 @@ function render() {
     ${EXTRA.map(([k, e, l]) => `<button class="tab extra ${view === k ? 'on' : ''}" data-go="${k}"><span class="te">${ico(e)}</span><span>${l}</span></button>`).join('')}</nav>
   ${moreOpen ? `<div class="sheet" data-close><div class="sheetin more"><button data-go="achats">${ico('bag')}Achats et ventes</button><button data-go="simu">${ico('home')}Emprunt</button><button data-go="reglages">${ico('sliders')}Réglages</button></div></div>` : ''}
   ${sheetHtml()}<div id="toast" role="status"></div>`;
+  if (hadSheet) document.querySelectorAll('.sheet').forEach(s => s.classList.add('still'));
   paintPill(document.getElementById('syncpill'));
   fitCours(); bindTiles();
 }
@@ -1119,7 +1124,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '30092026-w';
+const APP_BUILD = '30092026-x';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
