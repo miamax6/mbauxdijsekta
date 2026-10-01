@@ -274,6 +274,10 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
   .lrow .x{width:1.8rem}
   .lhead .h1{width:calc(3rem + 3.6rem + 3px)}.lhead .h2{width:4rem;padding-right:4px}.lhead .h3{padding-right:34px}
 }
+
+/* ---- v14 : bouton « + Achat » en haut de la liste ---- */
+.lsec{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:14px 0 6px}.lsec h4{margin:0}
+.addw.top{margin:0 0 8px}
 </style></head>
 <body><div id="app"></div>
 <script>/* qrcode-generator 2.0.4, Kazuhiko Arase, licence MIT */
@@ -1017,14 +1021,14 @@ function sheetHtml() {
   if (!obj) return '';
   let body = '';
   if (spec.list) {
-    body = (obj.length ? '<div class="lhead"><span class="h1">Mois</span><span class="h3">Montant versé (€)</span></div>' : '') + obj.map((x, j) => `<div class="lrow">${spec.list.map(([k, t, ph]) => fld(`${editing.path}.${j}.${k}`, x[k], { t, ph, cls: t === 'num' ? 'eur' : '' })).join('')}<button class="x" data-delin="${editing.path}.${j}" aria-label="Supprimer">×</button></div>`).reverse().join('') + `<div class="addw">${addPill(`data-addin="${editing.path}"`, 'Ajouter')}</div>`;
+    body = `<div class="addw top">${addPill(`data-addin="${editing.path}"`, 'Ajouter')}</div>` + (obj.length ? '<div class="lhead"><span class="h1">Mois</span><span class="h3">Montant versé (€)</span></div>' : '') + obj.map((x, j) => `<div class="lrow">${spec.list.map(([k, t, ph]) => fld(`${editing.path}.${j}.${k}`, x[k], { t, ph, cls: t === 'num' ? 'eur' : '' })).join('')}<button class="x" data-delin="${editing.path}.${j}" aria-label="Supprimer">×</button></div>`).reverse().join('');
   } else {
     body = spec.f.map(([k, t, l, opts]) => t === 'chk' ? fld(`${editing.path}.${k}`, k === 'apport' ? get(obj, k) !== false : !!get(obj, k), { t: 'chk', txt: l }) :
       field(l, t === 'sel' ? fld(`${editing.path}.${k}`, get(obj, k), { t: 'sel', opts }) : fld(`${editing.path}.${k}`, get(obj, k), { t }))).join('');
     if (spec.note) body += `<p class="hint">${spec.note}</p>`;
     if (spec.lots) {
       const lots = obj.lots || [];
-      body += `<h4>Achats</h4>${lots.length ? `<div class="lhead"><span class="h1">Mois</span><span class="h2">Qté</span>${spec.lotCost ? '<span class="h3">€ payés</span>' : ''}</div>` : ''}` + lots.map((l, j) => `<div class="lrow">${fld(`${editing.path}.lots.${j}.date`, l.date, { t: 'month' })}${fld(`${editing.path}.lots.${j}.qty`, l.qty, { ph: 'Qté', cls: 'qty' })}${spec.lotCost ? fld(`${editing.path}.lots.${j}.montant`, l.montant, { ph: '€ payés', cls: 'eur' }) : ''}<button class="x" data-delin="${editing.path}.lots.${j}" aria-label="Supprimer">×</button></div>`).join('') + `<div class="addw">${addPill(`data-addin="${editing.path}.lots"`, 'Achat')}</div>`;
+      body += `<div class="lsec"><h4>Achats</h4>${addPill(`data-addin="${editing.path}.lots"`, 'Achat')}</div>${lots.length ? `<div class="lhead"><span class="h1">Mois</span><span class="h2">Qté</span>${spec.lotCost ? '<span class="h3">€ payés</span>' : ''}</div>` : ''}` + lots.map((l, j) => `<div class="lrow">${fld(`${editing.path}.lots.${j}.date`, l.date, { t: 'month' })}${fld(`${editing.path}.lots.${j}.qty`, l.qty, { ph: 'Qté', cls: 'qty' })}${spec.lotCost ? fld(`${editing.path}.lots.${j}.montant`, l.montant, { ph: '€ payés', cls: 'eur' }) : ''}<button class="x" data-delin="${editing.path}.lots.${j}" aria-label="Supprimer">×</button></div>`).reverse().join('');
     }
   }
   const canDel = !spec.list;
@@ -1115,7 +1119,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '30092026-v';
+const APP_BUILD = '30092026-w';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
