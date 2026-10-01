@@ -244,6 +244,13 @@ small.mu{color:var(--mu)!important;font-weight:600}
 .ctgmore{display:inline-flex;align-items:center;gap:4px;flex:none;height:30px;padding:0 10px 0 13px;border:0;border-radius:99px;background:var(--in);color:var(--ac);font:inherit;font-size:.78rem;font-weight:700;cursor:pointer;line-height:1}
 .ctgmore[hidden]{display:none}.ctgmore .ic{width:15px;height:15px;stroke-width:2.6}.ctgmore:active{transform:scale(.96)}
 .ctgbar .legend2{gap:4px 11px;font-size:.72rem;flex:1 1 auto;min-width:0}
+
+/* ---- v11 : tuiles de cours déplaçables ---- */
+.cours .ct{cursor:grab;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.cours .ct:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.ct.ph{opacity:.32;outline:2px dashed var(--mu);outline-offset:-3px}
+.ct.ghost{box-shadow:0 18px 34px rgba(20,40,60,.30);cursor:grabbing;opacity:.98;will-change:transform,left,top}
+body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!important;-webkit-user-select:none!important}
 </style></head>
 <body><div id="app"></div>
 <script>/* qrcode-generator 2.0.4, Kazuhiko Arase, licence MIT */
@@ -263,7 +270,8 @@ const EMPTY_STATE = () => ({
     reventeOr: 0.8,
     simu: { plafond: 0.35, duree: 25, taux: [0.03, 0.035, 0.04] },
     cours: { orOnce: 0, argentOnce: 0, date: '' },
-    fmpKey: ''
+    fmpKey: '',
+    ordreCours: { a: [], b: [] }
   },
   salaires: [], quotidien: [], loisirs: [], vacances: [], virements: [], comptes: [],
   interets: { annees: [new Date().getFullYear()], lignes: [] },
@@ -762,19 +770,21 @@ function vEpargne() {
 const hasCrypto = P => S.comptes.some(c => /crypto/i.test(c.label) && (c.who === P || (c.who !== 'a' && c.who !== 'b')));
 function coursPanel(P, keys) {
   const tiles = [], present = new Set();
-  const tile = (cls, nom, price, chg, tag) => { present.add(cls); return `<div class="ct ${cls}" title="${esc(nom)}"><span>${esc(nom)}</span><b>${price}</b>${tag || chgHtml(chg)}</div>`; };
-  keys.forEach(k => R.pl[k].actifs.forEach(a => tiles.push(tile(k === 'ctoA' ? 'etc' : 'etf', a.nom, eurPub(num(a.cours), 2), CHG[a.isin], a.auto ? '' : `<em class="man">${num(a.cours) > 0 ? 'dernier cours connu' : 'pas de cours (code ISIN ?)'}</em>`))));
+  const tile = (key, cls, nom, price, chg, tag) => { present.add(cls); return { key, html: `<div class="ct ${cls}" data-key="${esc(key)}" tabindex="0" title="${esc(nom)}" aria-roledescription="tuile déplaçable"><span>${esc(nom)}</span><b>${price}</b>${tag || chgHtml(chg)}</div>` }; };
+  keys.forEach(k => R.pl[k].actifs.forEach(a => tiles.push(tile(a.isin || a.nom, k === 'ctoA' ? 'etc' : 'etf', a.nom, eurPub(num(a.cours), 2), CHG[a.isin], a.auto ? '' : `<em class="man">${num(a.cours) > 0 ? 'dernier cours connu' : 'pas de cours (code ISIN ?)'}</em>`))));
   const auto = !!(METALS.orOnce && R.cours === METALS);
   if (keys.includes('ctoA') || (P === 'b' && S.placements.objets.length)) {
-    if (num(R.cours.argentOnce)) tiles.push(tile('etc', 'Argent (once)', eurPub(num(R.cours.argentOnce), 2), CHG.argent, auto ? '' : '<em class="man">cours de secours</em>'));
-    tiles.push(tile('etc', 'Or (once)', eurPub(num(R.cours.orOnce)), CHG.or, auto ? '' : '<em class="man">cours de secours</em>'));
+    if (num(R.cours.argentOnce)) tiles.push(tile('argent', 'etc', 'Argent (once)', eurPub(num(R.cours.argentOnce), 2), CHG.argent, auto ? '' : '<em class="man">cours de secours</em>'));
+    tiles.push(tile('or', 'etc', 'Or (once)', eurPub(num(R.cours.orOnce)), CHG.or, auto ? '' : '<em class="man">cours de secours</em>'));
   }
-  if (hasCrypto(P) && (CRYPTO.btc || CRYPTO.eth || CRYPTO.sol)) [['Bitcoin', CRYPTO.btc, CHG.btc], ['Ethereum', CRYPTO.eth, CHG.eth], ['Solana', CRYPTO.sol, CHG.sol]].forEach(([n, x, c]) => { if (x) tiles.push(tile('cry', n, eurPub(x, x < 100 ? 2 : 0), c)); });
+  if (hasCrypto(P) && (CRYPTO.btc || CRYPTO.eth || CRYPTO.sol)) [['btc', 'Bitcoin', CRYPTO.btc, CHG.btc], ['eth', 'Ethereum', CRYPTO.eth, CHG.eth], ['sol', 'Solana', CRYPTO.sol, CHG.sol]].forEach(([k, n, x, c]) => { if (x) tiles.push(tile(k, 'cry', n, eurPub(x, x < 100 ? 2 : 0), c)); });
+  const ord = (S.settings.ordreCours || {})[P] || [];                                              // ordre choisi (synchronisé), les nouvelles tuiles vont à la fin
+  const sorted = tiles.map((t, i) => ({ ...t, i })).sort((x, y) => { const ix = ord.indexOf(x.key), iy = ord.indexOf(y.key); return (ix < 0 ? 1e6 : ix) - (iy < 0 ? 1e6 : iy) || x.i - y.i; });
   const errs = Object.entries(LIVE_ERR).filter(([, m]) => m), ed = LS.get('cc.etfdate');
   const st = metalsState === 'busy' ? (LIVE_MSG || 'mise à jour…') : (ed ? 'dernière mise à jour des cours : ' + fmtDT(ed) : 'aucune mise à jour des cours pour l\'instant');
   const leg = [['etf', 'ETF'], ['etc', 'ETC / métaux'], ['cry', 'Crypto']].filter(([c]) => present.has(c)).map(([c, l]) => `<span><i class="lg ${c}"></i>${l}</span>`).join('');
-  return `<section class="sec cours"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Quand l\'appli est ouverte, elle vérifie toutes les 5 minutes l\'âge des cours et lance une mise à jour dès qu\'ils ont plus de 15 minutes : en séance, et 24 h/24 si tu as un compte crypto (sinon 1 heure la nuit et le week-end). Un petit programme de ton dépôt GitHub privé les récupère en environ 15 secondes. Le planning automatique de GitHub sert de renfort, mais il n\'est pas garanti. Le bouton ↻ force une mise à jour immédiate (droit « Actions » du jeton nécessaire). Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique).')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
-    <div class="ctg ${CTG_OPEN ? '' : 'collapsed'}">${tiles.join('')}</div><div class="ctgbar"><div class="legend2">${leg}</div><button class="ctgmore" data-ctg hidden aria-expanded="${CTG_OPEN}"></button></div><div class="mst" data-live>${st}</div>${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
+  return `<section class="sec cours" data-person="${P}"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Quand l\'appli est ouverte, elle vérifie toutes les 5 minutes l\'âge des cours et lance une mise à jour dès qu\'ils ont plus de 15 minutes : en séance, et 24 h/24 si tu as un compte crypto (sinon 1 heure la nuit et le week-end). Un petit programme de ton dépôt GitHub privé les récupère en environ 15 secondes. Le planning automatique de GitHub sert de renfort, mais il n\'est pas garanti. Le bouton ↻ force une mise à jour immédiate (droit « Actions » du jeton nécessaire). Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique).\n\nPour réorganiser les tuiles : maintiens-en une appuyée (ou clique et glisse), puis déplace-la. L\'ordre est synchronisé sur tous tes appareils.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
+    <div class="ctg ${CTG_OPEN ? '' : 'collapsed'}">${sorted.map(t => t.html).join('')}</div><div class="ctgbar"><div class="legend2">${leg}</div><button class="ctgmore" data-ctg hidden aria-expanded="${CTG_OPEN}"></button></div><div class="mst" data-live>${st}</div>${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
 }
 function assetRow(key, i, a, base) {
   const perf = a.cout ? a.pv / a.cout : 0;
@@ -1006,6 +1016,7 @@ function layoutMain(html) {
 let wasDesk = isDesk();
 window.addEventListener('resize', () => { const d = isDesk(); if (d !== wasDesk) { wasDesk = d; render(); } });
 function render() {
+  if (DRAG) cancelDrag();
   R = R || recalc();
   const [title, fn] = VIEWS[view];
   const fresh = lastView !== view; lastView = view;
@@ -1019,7 +1030,7 @@ function render() {
   ${moreOpen ? `<div class="sheet" data-close><div class="sheetin more"><button data-go="achats">${ico('bag')}Achats et ventes</button><button data-go="simu">${ico('home')}Emprunt</button><button data-go="reglages">${ico('sliders')}Réglages</button></div></div>` : ''}
   ${sheetHtml()}<div id="toast" role="status"></div>`;
   paintPill(document.getElementById('syncpill'));
-  fitCours();
+  fitCours(); bindTiles();
 }
 /* Les tuiles de cours tiennent sur 2 lignes au maximum ; au-delà, un bouton à droite déplie ou replie (choix mémorisé) */
 function fitCours() {
@@ -1072,7 +1083,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '30092026-s';
+const APP_BUILD = '30092026-t';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1133,7 +1144,7 @@ function applyFeed(feed, isins) {
   if (notes.length) errs['ETF'] = `${ok}/${isins.length} à jour · ` + notes.slice(0, 2).join(' · ');
   return errs;
 }
-const idleRender = () => { const a = document.activeElement; if (editing || dlg || moreOpen || (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))) return; render(); };   // rafraîchissement automatique : jamais au milieu d'une saisie
+const idleRender = () => { const a = document.activeElement; if (DRAG || editing || dlg || moreOpen || (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))) return; render(); };   // rafraîchissement automatique : jamais au milieu d'une saisie
 async function fetchLive(force) {
   if (force !== true && Date.now() - LAST_LIVE < 120000) return;
   LAST_LIVE = Date.now();
@@ -1167,6 +1178,76 @@ async function fetchLive(force) {
   LIVE_ERR = errs; metalsState = Object.keys(errs).length ? 'err' : 'ok'; R = recalc(); draw();
 }
 
+
+/* ---------- Réorganiser les tuiles de cours (glisser-déposer, ordre synchronisé) ---------- */
+let DRAG = null, DRAGC = null, NOCLICK_UNTIL = 0;
+const EASE = 'cubic-bezier(.23,1,.32,1)', reduceMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const preventTouch = e => { if (DRAG) e.preventDefault(); };                                    // pendant le déplacement, le doigt ne fait pas défiler la page
+const orderKeys = g => [...g.querySelectorAll('.ct[data-key]')].map(e => e.dataset.key);
+const saveOrder = (P, keys) => { S.settings.ordreCours = { ...(S.settings.ordreCours || {}), [P]: keys }; commit(); };
+function bindTiles() { document.querySelectorAll('.cours .ct[data-key]').forEach(t => t.addEventListener('touchmove', preventTouch, { passive: false })); }
+function startDrag(c) {
+  clearTimeout(c.timer); DRAGC = null; hideTip();
+  const { t, g } = c;
+  g.classList.remove('collapsed'); g.style.maxHeight = '';                                       // toutes les tuiles sont visibles pendant le déplacement
+  const r = t.getBoundingClientRect(), ghost = t.cloneNode(true);
+  ['title', 'data-key', 'tabindex', 'aria-roledescription'].forEach(a => ghost.removeAttribute(a));
+  ghost.classList.add('ghost');
+  Object.assign(ghost.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px', margin: '0', zIndex: 40, pointerEvents: 'none' });
+  document.body.appendChild(ghost); t.classList.add('ph'); document.body.classList.add('dragging');
+  if (reduceMotion()) ghost.style.transform = 'scale(1.04)'; else ghost.animate([{ transform: 'scale(1) rotate(0deg)' }, { transform: 'scale(1.07) rotate(-1.6deg)' }], { duration: 170, easing: EASE, fill: 'forwards' });
+  DRAG = { t, g, ghost, offX: c.x - r.left, offY: c.y - r.top, id: c.id, sect: t.closest('.cours'), before: orderKeys(g) };
+  try { navigator.vibrate && navigator.vibrate(10); } catch (e) {}
+}
+function moveDrag(x, y) {
+  const d = DRAG; d.ghost.style.left = (x - d.offX) + 'px'; d.ghost.style.top = (y - d.offY) + 'px';
+  const gr = d.g.getBoundingClientRect(), px = x - gr.left, py = y - gr.top, kids = [...d.g.children].filter(k => k.classList.contains('ct'));
+  let over = kids.find(k => k !== d.t && px >= k.offsetLeft && px <= k.offsetLeft + k.offsetWidth && py >= k.offsetTop && py <= k.offsetTop + k.offsetHeight), after = false;
+  if (!over) {                                                                                   // sous la dernière tuile, ou à droite dans la dernière rangée : à la fin
+    const last = kids[kids.length - 1];
+    if (last !== d.t && (py > last.offsetTop + last.offsetHeight || (py >= last.offsetTop && px > last.offsetLeft + last.offsetWidth))) { over = last; after = true; }
+  }
+  if (!over) return;
+  const ti = kids.indexOf(d.t), oi = kids.indexOf(over), first = new Map(kids.map(k => [k, k.getBoundingClientRect()]));
+  if (after || ti < oi) over.after(d.t); else over.before(d.t);
+  if (reduceMotion()) return;
+  kids.forEach(k => { if (k === d.t) return; const a = first.get(k), b = k.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top; if (dx || dy) k.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 240, easing: EASE }); });
+}
+function endDrag(drop) {
+  const d = DRAG; if (!d) return;
+  DRAG = null; document.body.classList.remove('dragging'); NOCLICK_UNTIL = Date.now() + 400;
+  const keys = orderKeys(d.g), same = JSON.stringify(keys) === JSON.stringify(d.before), P = d.sect.dataset.person;
+  const finish = () => { d.ghost.remove(); d.t.classList.remove('ph'); if (drop && !same) saveOrder(P, keys); else render(); };
+  if (!drop || reduceMotion() || !d.ghost.animate) { finish(); return; }
+  const r = d.t.getBoundingClientRect(), gl = parseFloat(d.ghost.style.left), gt = parseFloat(d.ghost.style.top);
+  d.ghost.animate([{ left: gl + 'px', top: gt + 'px', transform: 'scale(1.07) rotate(-1.6deg)' }, { left: r.left + 'px', top: r.top + 'px', transform: 'scale(1) rotate(0deg)', boxShadow: '0 0 0 rgba(0,0,0,0)' }], { duration: 210, easing: EASE, fill: 'forwards' }).onfinish = finish;
+}
+const cancelDrag = () => endDrag(false);
+document.addEventListener('pointerdown', e => {
+  const t = e.target.closest && e.target.closest('.cours .ct[data-key]');
+  if (!t || DRAG || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  const c = DRAGC = { t, g: t.parentElement, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, touch: e.pointerType !== 'mouse', id: e.pointerId, timer: null };
+  if (c.touch) c.timer = setTimeout(() => { if (DRAGC === c) startDrag(c); }, 280);                // appui long pour déplacer, un glissement rapide fait défiler la page
+});
+document.addEventListener('pointermove', e => {
+  if (DRAG) { if (e.pointerId === DRAG.id) { e.preventDefault(); moveDrag(e.clientX, e.clientY); } return; }
+  const c = DRAGC; if (!c || e.pointerId !== c.id) return;
+  c.x = e.clientX; c.y = e.clientY; const dist = Math.hypot(e.clientX - c.x0, e.clientY - c.y0);
+  if (c.touch) { if (dist > 9) { clearTimeout(c.timer); DRAGC = null; } }
+  else if (dist > 5) { startDrag(c); moveDrag(e.clientX, e.clientY); }
+});
+document.addEventListener('pointerup', e => { if (DRAG && e.pointerId === DRAG.id) endDrag(true); else if (DRAGC && e.pointerId === DRAGC.id) { clearTimeout(DRAGC.timer); DRAGC = null; } });
+document.addEventListener('pointercancel', e => { if (DRAG && e.pointerId === DRAG.id) endDrag(false); if (DRAGC) { clearTimeout(DRAGC.timer); DRAGC = null; } });
+document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('.cours .ct')) e.preventDefault(); });
+document.addEventListener('keydown', e => {                                                      // clavier : Alt + flèches sur une tuile
+  const t = e.target.closest && e.target.closest('.cours .ct[data-key]'); if (!t || !e.altKey) return;
+  const dir = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[e.key]; if (!dir) return;
+  const keys = orderKeys(t.parentElement), i = keys.indexOf(t.dataset.key), j = i + dir; if (j < 0 || j >= keys.length) return;
+  e.preventDefault(); [keys[i], keys[j]] = [keys[j], keys[i]]; const k = t.dataset.key;
+  saveOrder(t.closest('.cours').dataset.person, keys);
+  setTimeout(() => { const n = document.querySelector(`.cours .ct[data-key="${CSS.escape(k)}"]`); if (n) n.focus(); }, 90);
+});
+
 /* ---------- Événements ---------- */
 const NEW = {
   salaires: () => ({ label: '', montant: 0, who: 'a', imposable: true }), quotidien: () => ({ label: '', montant: 0, who: '' }), loisirs: () => ({ label: '', montant: 0, who: '' }),
@@ -1197,6 +1278,7 @@ document.addEventListener('change', e => {
   if (e.target.dataset && e.target.dataset.act === 'import') importFile(e.target.files[0]);
 });
 function closeOverlay() {
+  if (DRAG) { cancelDrag(); return true; }
   if (tipFor) { hideTip(); return true; }
   if (editing || moreOpen || dlg) {
     const a = document.activeElement; if (a && a.blur && a.tagName !== 'BODY') a.blur();          // valide la saisie en cours
@@ -1230,6 +1312,7 @@ function toggleHide() {
 }
 document.addEventListener('keydown', e => { if (e.target.matches && e.target.matches('[data-hide]') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleHide(); } });
 document.addEventListener('click', async e => {
+  if (Date.now() < NOCLICK_UNTIL) return;
   if (e.target.closest('[data-hide]') && !e.target.closest('[data-tip],button,input,select,label,a')) { toggleHide(); return; }
   const tp = e.target.closest('[data-tip]');
   if (tp) { if (tipFor === tp) hideTip(); else showTip(tp); if (tp.classList.contains('info')) return; } else hideTip();
