@@ -757,11 +757,11 @@ function persRow(k) {
     <div><span>Reste pour épargne</span><b class="${sign(d)}">${eur(d)}</b>${gauge(d, part * 0.2, false, tipReste(d, part, part * 0.2))}<em>cible ${eur(part * 0.2)}</em></div></div></div>`;
 }
 function vBudget() {
-  const toggle = `<div class="seg" role="tablist"><button class="${bmode === 'tableau' ? 'on' : ''}" data-bmode="tableau">Tableau de bord</button><button class="${bmode === 'saisie' ? 'on' : ''}" data-bmode="saisie">Modifier</button></div>`;
+  const toggle = `<div class="seg" role="tablist"><button class="${bmode === 'tableau' ? 'on' : ''}" data-bmode="tableau">Tableau de bord</button><button class="${bmode === 'saisie' ? 'on' : ''}" data-bmode="saisie">Détails</button></div>`;
   return toggle + (bmode === 'tableau' ? vBudgetTableau() : vBudgetSaisie());
 }
 function vBudgetTableau() {
-  if (!S.salaires.length) return `<section class="sec empty"><p>Ajoute d'abord les salaires dans « Modifier ».</p></section>`;
+  if (!S.salaires.length) return `<section class="sec empty"><p>Ajoute d'abord les salaires dans « Détails ».</p></section>`;
   const lig = l => l.auto === 'vacances' ? R.vacMoy : num(l.montant);
   const who = t => t.who === 'a' ? 'Payé par ' + N('a') : t.who === 'b' ? 'Payé par ' + N('b') : `Commun : ${N('a')} ${eur(t.v * R.ratio.a)} · ${N('b')} ${eur(t.v * R.ratio.b)} (au prorata des salaires)`;
   const top = [...S.quotidien.map(l => ({ l: l.label, v: lig(l), c: '#4a6fa5', cat: 'Quotidien', who: l.who })), ...S.loisirs.map(l => ({ l: l.label, v: lig(l), c: '#4f9a94', cat: 'Loisirs', who: l.who }))]
@@ -772,7 +772,7 @@ function vBudgetTableau() {
     <div class="pl">brut ${eur(R.brut[k])} · impôt estimé ${eur(R.impots[k])}</div><div class="pl">${pc(R.ratio[k], 1)} du net du foyer</div></div>`;
   return `
   <section class="hero small"><small>Net disponible par mois</small><div class="big">${eur(R.net)}</div><div class="hchips"><span>${eur(R.brutTotal)} brut</span><span>− ${eur(R.impots.a + R.impots.b)} d'impôt</span></div></section>
-  ${sec('Salaires', `<div class="two sal">${salc('a')}${salc('b')}</div>`, '', '', 'Net = brut − impôt estimé (taux de chaque personne, réglé dans « Modifier »). La part de chacun sert à répartir les dépenses communes au prorata des salaires nets.')}
+  ${sec('Salaires', `<div class="two sal">${salc('a')}${salc('b')}</div>`, '', '', 'Net = brut − impôt estimé (taux de chaque personne, réglé dans « Détails »). La part de chacun sert à répartir les dépenses communes au prorata des salaires nets.')}
   ${sec('Où part l\'argent', donut([{ l: 'Quotidien', v: R.quot.tot, c: '#4a6fa5' }, { l: 'Loisirs', v: R.loisirs.tot, c: '#4f9a94' }, { l: 'Reste pour épargne', v: Math.max(0, R.reste), c: '#86a862' }], { center: eur(R.net), top: 'net / mois' }), '', 'enter')}
   <div class="cats">${catCard('Quotidien', '50 %', R.quot.tot, R.cible.besoins, true, '', '', tipCat('Quotidien', '50 %', R.quot.tot, R.net, R.cible.besoins))}
     ${catCard('Loisirs', '30 %', R.loisirs.tot, R.cible.envies, true, `dont vacances ${eur(R.vacMoy)}`, '', tipCat('Loisirs', '30 %', R.loisirs.tot, R.net, R.cible.envies))}
@@ -1135,7 +1135,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '30092026-aa';
+const APP_BUILD = '30092026-ab';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
