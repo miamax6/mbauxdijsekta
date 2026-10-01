@@ -49,7 +49,7 @@ h3{font-size:.95rem;margin:0 0 6px;font-weight:800}h4{margin:14px 0 6px;font-siz
 .vb{display:flex;align-items:flex-end;justify-content:space-around;gap:8px;padding-top:6px}.vbc{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0}.vbc b{font-size:.78rem}.vbb{width:100%;max-width:56px;border-radius:10px 10px 4px 4px}.vbc span{font-size:.78rem;color:var(--mu)}
 .line{width:100%;height:auto;display:block}.lax{display:flex;justify-content:space-between;align-items:baseline;font-size:.78rem;color:var(--mu)}.lax b{color:var(--ink);font-size:.95rem}
 /* jauges & cartes */
-.gauge{height:10px;border-radius:6px;background:var(--track);overflow:hidden;margin:7px 0 2px}.gauge i{display:block;height:100%;border-radius:6px}
+.gauge{position:relative;height:10px;border-radius:6px;background:var(--track);overflow:visible;margin:10px 0 3px}.gauge i{display:block;position:absolute;top:0;bottom:0;left:0;border-radius:6px}
 .gok{background:var(--mint)}.gko{background:var(--coral)}
 .cats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .cat{background:var(--sf);border-radius:18px;padding:12px 10px;box-shadow:var(--shadow)}
@@ -251,6 +251,10 @@ small.mu{color:var(--mu)!important;font-weight:600}
 .ct.ph{opacity:.32;outline:2px dashed var(--mu);outline-offset:-3px}
 .ct.ghost{box-shadow:0 18px 34px rgba(20,40,60,.30);cursor:grabbing;opacity:.98;will-change:transform,left,top}
 body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!important;-webkit-user-select:none!important}
+
+/* ---- v12 : trait de cible et partie qui dépasse (jauges du budget) ---- */
+.gauge .over{border-radius:0 6px 6px 0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.62) 0 3px,rgba(255,255,255,0) 3px 7px)}
+.gauge .mark{position:absolute;top:-5px;bottom:-5px;width:2px;margin-left:-1px;background:repeating-linear-gradient(to bottom,var(--ink) 0 3px,transparent 3px 5px);opacity:.7;pointer-events:none}
 </style></head>
 <body><div id="app"></div>
 <script>/* qrcode-generator 2.0.4, Kazuhiko Arase, licence MIT */
@@ -655,9 +659,11 @@ function lineChart(pts, now) {
     <div class="lax"><span>${lab(pts[0].m)}</span><span>${lab(pts[n - 1].m)}</span></div>
     <div class="lleg"><span><i style="background:#3f7691"></i>Investi <b>${eur(last)}</b></span>${now ? `<span><i style="background:${gain >= 0 ? '#2a8562' : '#b8483d'}"></i>Valeur ${lblV} aujourd'hui <b>${eur(now.value)}</b></span><span>Plus-value ${lblV} <b class="${gain >= 0 ? 'pos' : 'neg'}">${gain >= 0 ? '+' : ''}${eur(gain)}</b></span>` : ''}</div>`;
 }
+/* Jauge avec un trait en pointillés sur la cible : la barre peut dépasser la cible, la partie au-delà est hachurée */
 function gauge(reel, cible, lower, tip) {
-  const ratio = cible > 0 ? reel / cible : 0, w = Math.max(0, Math.min(100, ratio * 100)), ok = lower ? reel <= cible : reel >= cible;
-  return `<div class="gauge" ${tip ? `data-tip="${esc(tip)}"` : ''} role="img" aria-label="${pc(ratio, 0)} de la cible"><i class="${ok ? 'gok' : 'gko'}" style="width:${w}%"></i></div>`;
+  const ratio = cible > 0 ? reel / cible : 0, ok = lower ? reel <= cible : reel >= cible;
+  const scale = Math.max(reel, cible, 1) * 1.1, wFill = Math.max(0, reel) / scale * 100, mark = cible / scale * 100, over = Math.max(0, wFill - mark);
+  return `<div class="gauge" ${tip ? `data-tip="${esc(tip)}"` : ''} role="img" aria-label="${pc(ratio, 0)} de la cible"><i class="fill ${ok ? 'gok' : 'gko'}" style="width:${wFill.toFixed(1)}%"></i>${over > 0.5 ? `<i class="over" style="left:${mark.toFixed(1)}%;width:${over.toFixed(1)}%"></i>` : ''}<u class="mark" style="left:${mark.toFixed(1)}%"></u></div>`;
 }
 function gap(reel, cible, lower) {
   const d = reel - cible, ok = lower ? d <= 0 : d >= 0;
@@ -677,9 +683,9 @@ const chipT = (txt, tip) => `<span>${txt}<i class="ci" data-tip="${esc(tip)}">i<
 /* Textes des bulles d'aide sur les jauges du budget */
 const REGLE = 'Règle 50/30/20 : 50 % du net pour les besoins, 30 % pour les envies, 20 % pour l\'épargne.';
 function tipCat(nom, pctC, reel, base, cible) {
-  return `${nom} : ${eur(reel)} = ${pc(base ? reel / base : 0, 0)} du net.\n${REGLE}\nCible ${pctC} = ${eur(cible)} : ${reel <= cible ? eur(cible - reel) + ' de marge' : eur(reel - cible) + ' de dépassement'}.`;
+  return `${nom} : ${eur(reel)} = ${pc(base ? reel / base : 0, 0)} du net.\n${REGLE}\nCible ${pctC} = ${eur(cible)} : ${reel <= cible ? eur(cible - reel) + ' de marge' : eur(reel - cible) + ' de dépassement'}.\nLe trait en pointillés marque la cible ; la partie hachurée est ce qui la dépasse.`;
 }
-const tipReste = (reel, base, cible) => `Reste = net − quotidien − loisirs = ${eur(reel)} (${pc(base ? reel / base : 0, 0)} du net).\nObjectif d'épargne (20 %) : ${eur(cible)}.\nCe n'est pas de l'épargne réelle : les dépenses non listées (achats, santé, cadeaux, imprévus) n'y sont pas.`;
+const tipReste = (reel, base, cible) => `Reste = net − quotidien − loisirs = ${eur(reel)} (${pc(base ? reel / base : 0, 0)} du net).\nObjectif d'épargne (20 %) : ${eur(cible)}.\nCe n'est pas de l'épargne réelle : les dépenses non listées (achats, santé, cadeaux, imprévus) n'y sont pas.\nLe trait en pointillés marque l'objectif ; la partie hachurée est ce qui le dépasse.`;
 
 /* ---------- Écrans ---------- */
 function vAccueil() {
@@ -728,7 +734,7 @@ function vBudgetTableau() {
   ${sec('Où part l\'argent', donut([{ l: 'Quotidien', v: R.quot.tot, c: '#4a6fa5' }, { l: 'Loisirs', v: R.loisirs.tot, c: '#4f9a94' }, { l: 'Reste pour épargne', v: Math.max(0, R.reste), c: '#86a862' }], { center: eur(R.net), top: 'net / mois' }), '', 'enter')}
   <div class="cats">${catCard('Quotidien', '50 %', R.quot.tot, R.cible.besoins, true, '', '', tipCat('Quotidien', '50 %', R.quot.tot, R.net, R.cible.besoins))}
     ${catCard('Loisirs', '30 %', R.loisirs.tot, R.cible.envies, true, `dont vacances ${eur(R.vacMoy)}`, '', tipCat('Loisirs', '30 %', R.loisirs.tot, R.net, R.cible.envies))}
-    ${catCard('Reste pour épargne', '20 %', R.reste, R.cible.epargne, false, 'sur le papier', `<span>objectif ${eur(R.cible.epargne)}</span>`, tipReste(R.reste, R.net, R.cible.epargne))}</div>
+    ${catCard('Reste pour épargne', '20 %', R.reste, R.cible.epargne, false, 'sur le papier', `<span class="${R.reste >= R.cible.epargne ? 'pos' : 'neg'}">${R.reste >= R.cible.epargne ? '+' + eur(R.reste - R.cible.epargne) + ' au-delà de l\'objectif' : eur(R.cible.epargne - R.reste) + ' sous l\'objectif'}</span>`, tipReste(R.reste, R.net, R.cible.epargne))}</div>
   ${sec('Plus grosses dépenses', hbars(top), 'par mois', '', 'Passe la souris (ou touche) une barre pour voir sa part du net et qui paie.')}
   ${sec('Par personne', persRow('a') + persRow('b'), '', '', 'Dépenses communes réparties au prorata des salaires nets. Les lignes attribuées à une personne comptent en entier pour elle.')}
   ${sec('Virements vers le compte commun', `<div class="vr vh"><span></span><b class="ca">${esc(N('a'))}</b><b class="cb">${esc(N('b'))}</b></div>${v}<div class="vr vt"><span>Total</span><b class="ca">${eur(R.virements.a)}</b><b class="cb">${eur(R.virements.b)}</b></div>`, eur(R.virementsTot), '', 'Chaque virement est réparti au prorata des salaires nets.')}`;
@@ -1083,7 +1089,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '30092026-t';
+const APP_BUILD = '30092026-u';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
