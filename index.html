@@ -290,6 +290,9 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
 /* ---- v17 : la fenêtre suit le doigt ---- */
 .sheetin.dragging{box-shadow:0 -10px 40px rgba(15,22,30,.28);transition:none}
 .grab.active::before{background:var(--mu);width:56px;margin-left:-28px;transition:width .12s ease,margin .12s ease,background .12s ease}
+
+/* ---- v18 : « + Année » en haut de la page Achats et ventes ---- */
+.achats-top>header{align-items:center}
 </style></head>
 <body><div id="app"></div>
 <script>/* qrcode-generator 2.0.4, Kazuhiko Arase, licence MIT */
@@ -907,9 +910,9 @@ function vAchats() {
     const t = R.achats[i];
     const items = y.items.map((it, j) => row(`achats.${i}.items.${j}`, num(it.vente) > 0 && !num(it.achat) ? 'plus' : 'bag', it.label, chip(it.who), num(it.vente) > 0 && !num(it.achat) ? '+' + eur(num(it.vente)) : '− ' + eur(num(it.achat)), num(it.vente) > 0 && !num(it.achat) ? 'pos' : '')).join('');
     return sec(`<button class="yh" data-edit="achats.${i}" aria-label="Modifier ou supprimer l'année">${esc(y.annee)}<span class="yi">${ico('pencil')}</span></button>`, items + addBtn(`achats.${i}.items`, 'Ligne') + kv('Achats', eur(t.achats)) + kv('Ventes', eur(t.ventes)) + kv('Solde', eur(t.solde), sign(t.solde)), eur(t.solde));
-  }).join('');
+  }).reverse().join('');                      // du plus récent au plus ancien
   return `<section class="hero small"><small>Solde cumulé achats / ventes</small><div class="big">${eur(R.achatsSolde)}</div></section>
-    ${sec('Solde par année', vbars(bars), '', 'enter')}${blocks}<div class="addw">${addPill('data-addyearachat', 'Année')}</div>`;
+    ${sec('Solde par année', vbars(bars), addPill('data-addyearachat', 'Année'), 'enter achats-top')}${blocks}`;
 }
 
 function vSimu() {
@@ -1135,7 +1138,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '30092026-ab';
+const APP_BUILD = '01102026-ac';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
