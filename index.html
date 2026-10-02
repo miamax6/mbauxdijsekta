@@ -928,6 +928,7 @@ function vSimu() {
 }
 
 function vReglages() {
+  if (!shareCode) shareCode = newShareCode();                 // un code est déjà proposé dans le champ (pas vide)
   const s = S.settings, st = { off: 'Non configurée', ok: 'À jour', dirty: 'Modifications à envoyer', busy: 'En cours', err: 'Erreur : ' + sync.msg, conflict: 'Conflit : version distante différente' }[sync.state];
   const conflict = sync.state === 'conflict' ? `<div class="warnbox"><b>Deux versions existent.</b><div class="btnrow"><button class="btn" data-act="keeplocal">Garder cet appareil</button><button class="btn" data-act="keepremote">Prendre la version distante</button></div></div>` : '';
   return `
@@ -942,7 +943,7 @@ function vReglages() {
     ${kv('État', esc(st))}${conflict}<div class="btnrow"><button class="btn pri" data-act="syncnow">Synchroniser maintenant</button></div>`)}
   ${sec('Partager la synchronisation', `<p class="hint">Génère un QR code pour configurer un autre appareil, ou une autre personne, sans rien retaper.</p>
     <label class="chk"><input type="checkbox" data-act="shareenc" ${shareEnc ? 'checked' : ''}><span>Protéger le QR par un code (recommandé)</span></label>
-    ${shareEnc ? `<label class="fl"><span>Code de protection (modifiable)</span><input class="f" data-sharecode autocomplete="off" spellcheck="false" value="${esc(showCode(normCode(shareCode)))}"></label>` : ''}
+    ${shareEnc ? `<label class="fl"><span>Code de protection</span><input class="f" data-sharecode autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(showCode(normCode(shareCode)))}"></label><div class="lsec"><span class="hint">Tiré au hasard. Tu peux le remplacer par le tien (6 caractères minimum).</span>${addPill('data-act="newcode"', 'Nouveau code')}</div>` : ''}
     <div class="btnrow"><button class="btn pri" data-act="sharegen">Afficher le QR code</button></div>`, '', '', 'Le QR contient un lien qui ouvre l\'appli : le jeton GitHub, la phrase secrète et le dépôt y sont dans la partie après le « # », qui n\'est jamais envoyée à un serveur. Avec un code, tout est chiffré (AES-256) : sans le code, une photo du QR est inutilisable. Le code est tiré au hasard ; s\'il fait 8 caractères, il est très difficile à deviner. Le jeton donne accès en lecture et écriture au dépôt de données : ne partage le QR qu\'avec la personne concernée.')}
   ${sec('Sauvegarde et import', `<div class="btnrow"><button class="btn" data-act="export">Exporter (fichier lisible)</button><label class="btn">Importer un fichier<input type="file" accept="application/json,.json" data-act="import" hidden></label></div><p class="hint">Le fichier exporté contient tes chiffres en clair : garde-le hors de tout dossier public.</p>`)}
   ${sec('Cours automatiques', `${kv('Dernière mise à jour des cours', LS.get('cc.etfdate') ? fmtDT(LS.get('cc.etfdate')) : 'aucun')}${kv('ETF et ETC à jour', Object.keys(ETFQ).length + ' / ' + allIsins().length)}${kv('Or et argent', METALS.date ? fmtDT(METALS.date) : '–')}${kv('Crypto', CRYPTO.date ? fmtDT(CRYPTO.date) : '–')}
@@ -1138,7 +1139,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '01102026-ad';
+const APP_BUILD = '01102026-ae';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1319,7 +1320,9 @@ function newItem(path) {
   if (/\.items$/.test(path)) return { label: '', achat: 0, vente: 0, who: 'a' };
   return {};
 }
+document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.sharecode !== undefined) shareCode = e.target.value; });
 document.addEventListener('change', e => {
+  if (e.target.dataset && e.target.dataset.sharecode !== undefined) { shareCode = e.target.value; e.target.value = showCode(normCode(shareCode)); return; }
   const sel = e.target.closest && e.target.closest('select[data-mp]');
   if (sel) { const w = sel.parentElement; set(S, sel.dataset.mp, w.querySelector('[data-part="y"]').value + '-' + w.querySelector('[data-part="m"]').value); commit(); return; }
   const el = e.target.closest('[data-p]');
@@ -1481,6 +1484,7 @@ document.addEventListener('click', async e => {
   if (d.delete) { const ks = d.delete.split('.'), i = +ks.pop(); get(S, ks.join('.')).splice(i, 1); editing = null; commit(); return; }
   if ('addyear' in d) { const a = S.interets.annees; a.push(a[a.length - 1] + 1); commit(); return; }
   if ('addyearachat' in d) { const ys = S.achats.map(y => parseInt(y.annee)).filter(Number.isFinite); S.achats.push({ annee: String(ys.length ? Math.max(...ys) + 1 : new Date().getFullYear()), items: [] }); sortAchats(); commit(); return; }
+  if (d.act === 'newcode') { shareCode = newShareCode(); render(); return; }
   if (d.act === 'sharegen') { if (!shareCode) shareCode = newShareCode(); openShare(); return; }
   if (d.act === 'shareimport') { doImport(); return; }
   if (d.act === 'sharecopy') { try { await navigator.clipboard.writeText(dlg.url); toast('Lien copié'); } catch (e) { toast('Copie impossible : sélectionne le lien à la main'); } return; }
