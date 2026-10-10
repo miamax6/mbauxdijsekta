@@ -293,6 +293,30 @@ body.dragging,body.dragging *{cursor:grabbing!important;user-select:none!importa
 
 /* ---- v18 : « + Année » en haut de la page Achats et ventes ---- */
 .achats-top>header{align-items:center}
+/* ---- v9 : « porte secrète » : grande carte à retourner avant d'afficher les montants ---- */
+html.door #app{visibility:hidden}
+#door{--dw:min(calc(100vw - 40px),520px);--dh:min(calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom)),calc(var(--dw)*1.9));--dr:clamp(22px,5.5vw,34px);position:fixed;inset:0;z-index:100000;display:grid;place-items:center;background:var(--bg);overscroll-behavior:none;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+@media (orientation:landscape){#door{--dh:min(calc(100dvh - 64px),calc((100vw - 80px)/1.586),640px);--dw:calc(var(--dh)*1.586)}}
+#door.fadein{animation:dfade .45s ease both}
+@keyframes dfade{from{opacity:0}to{opacity:1}}
+.dscene{position:relative;width:var(--dw);height:var(--dh);perspective:1300px}
+.dshadow{position:absolute;inset:0;border-radius:var(--dr);background:#05121a;filter:blur(24px);opacity:.34;will-change:transform,opacity}
+.dcard{position:absolute;inset:0;border-radius:var(--dr);transform-style:preserve-3d;will-change:transform;cursor:grab;outline:none}
+.dcard.dgrab{cursor:grabbing}
+.dcard:focus-visible .dfront{box-shadow:inset 0 0 0 3px var(--ac)}
+.dface{position:absolute;inset:0;border-radius:var(--dr);overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.dfront{background:#f5ead8;box-shadow:inset 0 0 0 1px rgba(40,30,10,.07)}
+.dback{background:#2f6b82;transform:rotateY(180deg)}
+.dsheen,.dshade{position:absolute;inset:0;pointer-events:none}
+.dsheen{background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.9) 50%,transparent 70%);background-size:260% 100%;opacity:0;mix-blend-mode:soft-light}
+.dshade{background:#0b1a22;opacity:0}
+.dlogo{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2.6vh,22px);padding:0 9%}
+.dlogo svg{width:100%;height:auto;max-height:66%;overflow:visible}
+.dname{color:#2f6b82;font-weight:800;font-size:clamp(19px,5.2vmin,30px);letter-spacing:.01em;text-align:center}
+.dhint{position:absolute;left:0;right:0;bottom:clamp(16px,4.5%,34px);text-align:center;color:#7d8790;font-size:clamp(12px,3.2vmin,15px);font-weight:600;letter-spacing:.02em}
+.dstripe{position:absolute;left:0;right:0;top:11%;height:14%;background:#16232c}
+.dbname{position:absolute;left:0;right:0;bottom:clamp(16px,6%,40px);text-align:center;color:#cfe3ea;font-weight:700;font-size:clamp(13px,3.6vmin,18px);letter-spacing:.04em;opacity:.85}
+@media (prefers-reduced-motion:reduce){.dsheen,.dshade,.dshadow{display:none}}
 </style></head>
 <body><div id="app"></div>
 <script>/* qrcode-generator 2.0.4, Kazuhiko Arase, licence MIT */
@@ -952,6 +976,7 @@ function vReglages() {
   ${sec('Cours de secours', `<div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', s.cours.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', s.cours.argentOnce)}</label><label>Date${fld('settings.cours.date', s.cours.date, { t: 'date' })}</label></div><div class="inl"><span>Coefficient de revente or</span>${fld('settings.reventeOr', s.reventeOr, { t: 'pct' })}</div>`, '', '', 'Ces valeurs ne servent que si la mise à jour automatique des cours est injoignable.')}
   ${sec('Prénoms et fiscalité', `<div class="grid3"><label>Prénom 1${fld('settings.noms.a', s.noms.a, { t: 'text' })}</label><label>Prénom 2${fld('settings.noms.b', s.noms.b, { t: 'text' })}</label></div>
     <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>`, '', '', 'Part qui reste après impôt (82,8 % = 17,2 % prélevés). Ces taux étaient écrits en dur dans l\'Excel : à valider.')}
+  ${sec('Carte d\'accueil', `<label class="chk"><input type="checkbox" data-act="door" ${Door.enabled() ? 'checked' : ''}><span>Afficher la carte à l\'ouverture de l\'appli</span></label><p class="hint">Les montants restent cachés tant que tu n\'as pas retourné la carte. Elle se referme après 2 minutes en arrière-plan. Ce n\'est pas un verrou : ça protège des regards, pas de quelqu\'un qui a ton téléphone déverrouillé.</p>`)}
   ${sec('À propos', kv('Version de l\'appli', APP_BUILD), '', '', 'Si tu ne vois pas une nouveauté, ce numéro te dit quelle version ton appareil affiche.')}
   ${sec('Vider cet appareil', `<button class="btn danger" data-act="reset">Effacer les données locales</button>`, '', '', 'Ne touche pas au dépôt GitHub.')}`;
 }
@@ -1139,7 +1164,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '01102026-ae';
+const APP_BUILD = '10102026-a';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1335,6 +1360,7 @@ document.addEventListener('change', e => {
   }
   if (e.target.dataset && e.target.dataset.act === 'shareenc') { shareEnc = e.target.checked; render(); return; }
   if (e.target.dataset && e.target.dataset.act === 'showsecrets') { showSecrets = e.target.checked; render(); return; }
+  if (e.target.dataset && e.target.dataset.act === 'door') { LS.set('cc.door', e.target.checked ? '1' : '0'); return; }
   if (e.target.dataset && e.target.dataset.act === 'import') importFile(e.target.files[0]);
 });
 
@@ -1504,8 +1530,163 @@ async function importFile(f) {
   } catch (e) { toast('Import impossible : ' + e.message); }
 }
 
+/* ---------- Porte secrète : grande carte à retourner ----------
+   Carte 3D (CSS) pilotée à la main : quaternion d'orientation + vitesse angulaire.
+   - glisser : l'axe de rotation est perpendiculaire au geste, la prise décentrée ajoute une torsion dans le plan ;
+   - lâcher : inertie, puis ressort amorti vers la face la plus proche (le côté choisi dépend de l'élan) ;
+   - carte retournée : elle tombe, et les blocs de la page tombent du haut, l'un après l'autre. */
+const Door = (() => {
+  const KEY = 'cc.door', LOCK_AFTER = 120000;                     // se referme après 2 min en arrière-plan
+  const enabled = () => LS.get(KEY) !== '0';
+  const qmul = (a, b) => [a[0]*b[0]-a[1]*b[1]-a[2]*b[2]-a[3]*b[3], a[0]*b[1]+a[1]*b[0]+a[2]*b[3]-a[3]*b[2], a[0]*b[2]-a[1]*b[3]+a[2]*b[0]+a[3]*b[1], a[0]*b[3]+a[1]*b[2]-a[2]*b[1]+a[3]*b[0]];
+  const qnorm = q => { const n = Math.hypot(q[0], q[1], q[2], q[3]) || 1; return q.map(v => v / n); };
+  const qaxis = (x, y, z, a) => { const n = Math.hypot(x, y, z) || 1, s = Math.sin(a / 2) / n; return [Math.cos(a / 2), x * s, y * s, z * s]; };
+  const qconj = q => [q[0], -q[1], -q[2], -q[3]];
+  const qdot = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
+  const TARGETS = { front: [[1, 0, 0, 0]], back: [[0, 0, 1, 0], [0, 1, 0, 0]] };   // dos : retourné autour de y (droit) ou de x (la bande passe en bas)
+  const Rm = q => { const [w, x, y, z] = q; return [[1-2*(y*y+z*z), 2*(x*y-w*z), 2*(x*z+w*y)], [2*(x*y+w*z), 1-2*(x*x+z*z), 2*(y*z-w*x)], [2*(x*z-w*y), 2*(y*z+w*x), 1-2*(x*x+y*y)]]; };
+  const LOGO = `<svg viewBox="52 78 396 336" aria-hidden="true"><g transform="rotate(-12 265 180)"><rect x="150" y="140" width="230" height="160" rx="30" fill="#6f9a74"/><path d="M196 216 L236 192 L262 200 L304 178 L324 186 L352 176" fill="none" stroke="#8fb394" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/></g><rect x="96" y="190" width="320" height="210" rx="52" fill="#2f6b82"/><rect x="290" y="258" width="150" height="74" rx="37" fill="#a9cdd8"/><circle cx="336" cy="295" r="15" fill="#2f6b82"/><circle cx="130" cy="388" r="52" fill="#a67c1a" stroke="#f5ead8" stroke-width="16"/><circle cx="130" cy="388" r="22" fill="#d9b45a"/></svg>`;
+  let el, scene, card, shadow, faces, st = null, open = true, hiddenAt = 0, raf = 0;
+  const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function build() {
+    el = document.createElement('div'); el.id = 'door';
+    el.innerHTML = `<div class="dscene"><div class="dshadow"></div>
+      <div class="dcard" role="button" tabindex="0" aria-label="Ouvrir les comptes : retourne la carte (ou appuie sur Entrée)">
+        <div class="dface dfront"><div class="dlogo">${LOGO}<div class="dname">Comptes du foyer</div></div><div class="dhint">Retourne la carte</div><div class="dsheen"></div><div class="dshade"></div></div>
+        <div class="dface dback"><div class="dstripe"></div><div class="dbname">COMPTES DU FOYER</div><div class="dsheen"></div><div class="dshade"></div></div>
+      </div></div>`;
+    document.body.appendChild(el);
+    scene = el.firstElementChild; shadow = scene.children[0]; card = scene.children[1]; faces = [...el.querySelectorAll('.dface')];
+    card.addEventListener('pointerdown', down); card.addEventListener('pointermove', move); card.addEventListener('pointerup', up); card.addEventListener('pointercancel', up);
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flick(0, 1, 0.15); } });
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  }
+  function lock(animate) {
+    open = false; document.documentElement.classList.add('door');
+    if (!el) build();
+    el.style.display = ''; el.classList.remove('fadein'); void el.offsetWidth; if (animate) el.classList.add('fadein');
+    scene.getAnimations && scene.getAnimations().forEach(a => a.cancel());
+    st = { q: [1, 0, 0, 0], w: [0, 0, 0], drag: null, target: 'front', t: [1, 0, 0, 0], done: false, last: performance.now(), t0: performance.now(), swayAmp: 1 };
+    paint(); start();
+  }
+  function start() { if (!raf) { st.last = performance.now(); raf = requestAnimationFrame(loop); } }
+  /* ----- saisie ----- */
+  function down(e) {
+    if (!st || st.done || e.button > 0) return;
+    card.setPointerCapture(e.pointerId); card.classList.add('dgrab');
+    const r = scene.getBoundingClientRect();
+    st.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now(), cx: r.left + r.width / 2, cy: r.top + r.height / 2, dim: Math.min(r.width, r.height), hist: [] };
+    st.w = [0, 0, 0]; st.lift = 1; st.swayAmp = 0; start();
+  }
+  function move(e) {
+    const d = st && st.drag; if (!d || e.pointerId !== d.id) return;
+    const dx = e.clientX - d.x, dy = e.clientY - d.y; if (!dx && !dy) return;
+    const now = performance.now(), lever = 0.32 * d.dim;
+    const gx = d.x - d.cx, gy = -(d.y - d.cy);                      // point saisi, y vers le haut
+    const wx = dy / lever, wy = dx / lever;                          // la face avant suit le doigt
+    const wz = 0.55 * (gx * -dy - gy * dx) / (gx * gx + gy * gy + (0.5 * d.dim) ** 2);   // prise décentrée : torsion dans le plan
+    const ang = Math.hypot(wx, wy, wz);
+    if (ang > 1e-5) st.q = qnorm(qmul(qaxis(wx, wy, wz, ang), st.q));
+    d.hist.push([now, wx, wy, wz]); while (d.hist.length && now - d.hist[0][0] > 90) d.hist.shift();
+    d.x = e.clientX; d.y = e.clientY;
+    paint();
+  }
+  function up(e) {
+    const d = st && st.drag; if (!d || e.pointerId !== d.id) return;
+    card.classList.remove('dgrab'); st.drag = null;
+    const now = performance.now(), moved = Math.hypot(e.clientX - d.x0, e.clientY - d.y0);
+    if (moved < 7 && now - d.t0 < 350) { const nx = (e.clientX - d.cx) / (d.dim / 2), ny = -(e.clientY - d.cy) / (d.dim / 2); flick(-ny * 0.9, nx >= 0 ? 1 : -1, 0.15); return; }
+    let sw = [0, 0, 0], T = 0;                                       // vitesse de lâcher : moyenne des derniers 90 ms
+    d.hist.forEach(h => { sw[0] += h[1]; sw[1] += h[2]; sw[2] += h[3]; });
+    const span = d.hist.length > 1 ? (now - d.hist[0][0]) / 1000 : 0;
+    st.w = span > 0.012 && now - d.hist[d.hist.length - 1][0] < 60 ? sw.map(v => v / span) : [0, 0, 0];
+    decide(); start();
+  }
+  function flick(wx, side, wz) { st.w = [wx * 7, side * 7.4, wz * 7]; st.swayAmp = 0; decide(); start(); }
+  /* le côté d'arrivée est choisi une fois pour toutes au lâcher, d'après l'orientation prévue 0,45 s plus tard */
+  function decide() {
+    const sp = Math.hypot(...st.w), pred = sp > 1e-4 ? qnorm(qmul(qaxis(st.w[0], st.w[1], st.w[2], sp * 0.45), st.q)) : st.q;
+    st.target = Rm(pred)[2][2] >= 0 ? 'front' : 'back';
+    const list = TARGETS[st.target]; st.t = list.reduce((b, c) => Math.abs(qdot(c, pred)) > Math.abs(qdot(b, pred)) ? c : b, list[0]);
+  }
+  /* ----- boucle physique ----- */
+  function loop(now) {
+    raf = 0; if (!st || document.hidden) return;
+    const dt = Math.min(0.033, (now - st.last) / 1000 || 0.016); st.last = now;
+    if (!st.drag && !st.done) {
+      let t = st.t;
+      if (st.target === 'front' && st.swayAmp > 0 && !reduced()) {   // la carte « respire » au repos pour qu'on devine qu'elle est en 3D
+        const s = (now - st.t0) / 1000;
+        t = qnorm(qmul(qaxis(0, 1, 0, 0.06 * Math.sin(s * 1.15) * st.swayAmp), qaxis(1, 0, 0, 0.04 * Math.sin(s * 0.83 + 1) * st.swayAmp)));
+      }
+      let e = qmul(t, qconj(st.q)); if (e[0] < 0) e = e.map(v => -v);
+      const s2 = Math.hypot(e[1], e[2], e[3]), ang = 2 * Math.atan2(s2, e[0]), rv = s2 > 1e-6 ? [e[1] / s2 * ang, e[2] / s2 * ang, e[3] / s2 * ang] : [0, 0, 0];
+      const K = 70, C = 11;                                           // ressort un peu sous-amorti : léger rebond à l'arrivée
+      for (let i = 0; i < 3; i++) st.w[i] += (K * rv[i] - C * st.w[i]) * dt;
+      const sp = Math.hypot(...st.w);
+      if (sp > 1e-5) st.q = qnorm(qmul(qaxis(st.w[0], st.w[1], st.w[2], sp * dt), st.q));
+      if (st.target === 'back' && ang < 0.05 && sp < 0.35) { st.done = true; paint(); reveal(); return; }
+    }
+    st.lift = (st.lift || 0) + ((st.drag ? 1 : 0) - (st.lift || 0)) * Math.min(1, dt * 12);
+    paint(); raf = requestAnimationFrame(loop);
+  }
+  function paint() {
+    const R = Rm(st.q), lift = st.lift || 0;
+    const m = [R[0][0], -R[1][0], R[2][0], 0, -R[0][1], R[1][1], -R[2][1], 0, R[0][2], -R[1][2], R[2][2], 0, 0, 0, 0, 1];
+    card.style.transform = `translate3d(0,0,${(lift * 44).toFixed(1)}px) matrix3d(${m.map(v => v.toFixed(5)).join(',')})`;
+    const sx = Math.max(0.1, Math.hypot(R[0][0], R[1][0])), sy = Math.max(0.1, Math.hypot(R[0][1], R[1][1])), rot = Math.atan2(-R[1][0], R[0][0]);
+    const nx = R[0][2], ny = R[1][2], nz = R[2][2];
+    shadow.style.transform = `translate(${(-nx * 26).toFixed(1)}px,${(26 + ny * 14 + lift * 14).toFixed(1)}px) rotate(${(-rot).toFixed(3)}rad) scale(${sx.toFixed(3)},${sy.toFixed(3)}) scale(${(0.97 - lift * 0.02).toFixed(3)})`;
+    shadow.style.opacity = (0.3 + lift * 0.12) * (0.4 + 0.6 * Math.abs(nz));
+    faces.forEach((f, i) => {
+      const k = i ? -1 : 1, fz = k * nz, spec = Math.pow(Math.max(0, (k * nx * -0.35 + k * ny * 0.45 + fz * 0.82) / 0.8), 7);
+      f.children[f.children.length - 2].style.opacity = (0.12 + 0.75 * spec).toFixed(3);
+      f.children[f.children.length - 2].style.backgroundPosition = (50 - k * nx * 160) + '% 50%';
+      f.children[f.children.length - 1].style.opacity = (Math.max(0, 1 - Math.abs(nz)) * 0.32).toFixed(3);
+    });
+  }
+  /* ----- ouverture : la carte tombe, les blocs de la page tombent du haut ----- */
+  function reveal() {
+    open = true; try { navigator.vibrate && navigator.vibrate(12); } catch (e) {}
+    const rm = reduced();
+    document.documentElement.classList.remove('door');
+    const main = document.querySelector('main'), items = [];
+    if (main) [...main.children].forEach(c => /\bm(top|flow|prods)\b/.test(c.className) ? items.push(...c.children) : items.push(c));
+    const head = document.querySelectorAll('.top,.nav');
+    if (!rm && scene.animate) {
+      scene.animate([{ transform: 'translateY(0) scale(1)', opacity: 1 }, { transform: 'translateY(14vh) scale(.94)', opacity: 0 }], { duration: 520, easing: 'cubic-bezier(.5,0,.9,.5)', fill: 'forwards' });
+      el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 480, delay: 120, easing: 'ease-out', fill: 'forwards' });
+      head.forEach(h => h.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: 250, fill: 'backwards' }));
+      items.filter(it => it.getBoundingClientRect().top < innerHeight).forEach((it, i) => {
+        const r = it.getBoundingClientRect(), h = r.bottom + 90, rz = (i % 2 ? 1 : -1) * (5 + (i * 7) % 6), rx = 34 + (i * 11) % 14, delay = 180 + i * 110;
+        const f = (y, ax, az) => `perspective(1000px) translateY(${y}px) rotateX(${ax}deg) rotateZ(${az}deg)`;
+        it.animate([
+          { transform: f(-h, rx, rz), offset: 0, easing: 'cubic-bezier(.5,0,.9,.55)' },
+          { transform: f(0, -3, -rz * 0.22), offset: 0.52, easing: 'cubic-bezier(.2,.6,.4,1)' },
+          { transform: f(-18, 1.5, rz * 0.08), offset: 0.68, easing: 'cubic-bezier(.5,0,.9,.6)' },
+          { transform: f(0, -0.6, 0), offset: 0.8, easing: 'cubic-bezier(.2,.6,.4,1)' },
+          { transform: f(-5, 0, 0), offset: 0.9, easing: 'cubic-bezier(.5,0,.9,.6)' },
+          { transform: f(0, 0, 0), offset: 1 }], { duration: 1250, delay, fill: 'backwards' });
+      });
+      setTimeout(done, 700);
+    } else { el.style.display = 'none'; done(); }
+    function done() { el.style.display = 'none'; el.getAnimations().forEach(a => a.cancel()); scene.getAnimations().forEach(a => a.cancel()); st = null; }
+  }
+  function init() {
+    if (!enabled() || !S.salaires.length) return;
+    lock(false);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { hiddenAt = Date.now(); return; }
+      if (open && enabled() && hiddenAt && Date.now() - hiddenAt > LOCK_AFTER && S.salaires.length) lock(true);
+      else if (st && !st.done) start();
+    });
+  }
+  return { init, enabled };
+})();
+
 /* ---------- Démarrage ---------- */
-loadLocal(); R = recalc(); render();
+loadLocal(); R = recalc(); Door.init(); render();
 /* Lien de partage : traité à l'ouverture ET quand l'appli est déjà ouverte (le lien ne change alors que la partie après le #) */
 function checkShareHash() { const m = location.hash.match(/^#partage=(.+)$/); if (m) { dlg = { type: 'in', payload: m[1] }; try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} render(); } }
 checkShareHash(); window.addEventListener('hashchange', checkShareHash);
