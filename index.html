@@ -169,7 +169,7 @@ button.ct{cursor:pointer}button.ct:active{transform:scale(.97)}
   .mprods>*{margin:0}
   main>.seg,.mtop>.seg{max-width:460px}
   .nav{left:0;top:0;bottom:0;right:auto;width:214px;max-width:none;margin:0;border-radius:0;flex-direction:column;justify-content:flex-start;gap:4px;padding:78px 10px 16px;background:var(--sf);box-shadow:1px 0 0 var(--ln);backdrop-filter:none}
-  .nav::before{content:"Comptes du foyer";position:absolute;top:24px;left:22px;font-weight:800;font-size:1.05rem;letter-spacing:-.01em}
+  .nav::before{content:var(--appname,"Comptes du foyer");position:absolute;top:24px;left:22px;font-weight:800;font-size:1.05rem;letter-spacing:-.01em}
   .tab{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;flex:none;font-size:.95rem;padding:11px 14px}
   .te{height:auto}
   .tab.plus{display:none}.tab.extra{display:flex}
@@ -333,6 +333,7 @@ const EMPTY_STATE = () => ({
   app: 'comptes-couple', schema: 1,
   settings: {
     noms: { a: 'Moi', b: 'Conjoint·e' },
+    appName: '', payeCouple: false,
     impotTaux: { a: 0, b: 0 },
     taxes: { pea: 0.828, av: 0.828, cto: 0.7 },
     livretA: 0.015,
@@ -447,7 +448,11 @@ function calc(S, now = new Date(), cours = null, quotes = null) {
   R.quot = split(S.quotidien); R.loisirs = split(S.loisirs);
   R.cible = { besoins: R.net * 0.5, envies: R.net * 0.3, epargne: R.net * 0.2 };
   R.reste = R.net - R.quot.tot - R.loisirs.tot;
-  R.dispo = { a: R.part.a - R.quot.parA - R.loisirs.parA, b: R.part.b - R.quot.parB - R.loisirs.parB };
+  /* payeCouple : une dépense « pour X » est payée par le couple -> elle ne pèse pas sur le reste de X, tout est réparti au prorata */
+  const tot = R.quot.tot + R.loisirs.tot;
+  R.dispo = cfg.payeCouple
+    ? { a: R.part.a - tot * R.ratio.a, b: R.part.b - tot * R.ratio.b }
+    : { a: R.part.a - R.quot.parA - R.loisirs.parA, b: R.part.b - R.quot.parB - R.loisirs.parB };
   // --- Virements vers le compte commun
   R.virements = { a: sum(S.virements, v => num(v.montant) * R.ratio.a), b: sum(S.virements, v => num(v.montant) * R.ratio.b) };
   R.virementsTot = sum(S.virements, v => num(v.montant));
@@ -538,6 +543,8 @@ const cfgDefault = { owner: '', repo: '', path: 'budget/donnees.enc.json', branc
 let CFG = Object.assign({}, cfgDefault, JSON.parse(LS.get('cc.cfg') || '{}'));
 
 const N = k => (S.settings.noms[k] || k);
+const APP_DEFAULT = 'Comptes du foyer';
+const appName = () => ((S.settings && S.settings.appName) || '').trim() || APP_DEFAULT;
 const get = (o, p) => p.startsWith('@draft') ? p.split('.').slice(1).reduce((x, k) => x == null ? x : x[k], DRAFT && DRAFT.item) : p.split('.').reduce((x, k) => x == null ? x : x[k], o);   // « @draft » = ligne en cours de création, pas encore dans les données
 const set = (o, p, v) => { const draft = p.startsWith('@draft'), ks = p.split('.'); if (draft) ks.shift(); const last = ks.pop(); const t = ks.reduce((x, k) => x[k], draft ? DRAFT.item : o); t[last] = v; };
 
@@ -797,7 +804,7 @@ function vBudget() {
 function vBudgetTableau() {
   if (!S.salaires.length) return `<section class="sec empty"><p>Ajoute d'abord les salaires dans « Détails ».</p></section>`;
   const lig = l => l.auto === 'vacances' ? R.vacMoy : num(l.montant);
-  const who = t => t.who === 'a' ? 'Payé par ' + N('a') : t.who === 'b' ? 'Payé par ' + N('b') : `Commun : ${N('a')} ${eur(t.v * R.ratio.a)} · ${N('b')} ${eur(t.v * R.ratio.b)} (au prorata des salaires)`;
+  const who = t => t.who === 'a' || t.who === 'b' ? (S.settings.payeCouple ? 'Pour ' + N(t.who) + ', payé par le couple (prorata des salaires)' : 'Payé par ' + N(t.who)) : `Commun : ${N('a')} ${eur(t.v * R.ratio.a)} · ${N('b')} ${eur(t.v * R.ratio.b)} (au prorata des salaires)`;
   const top = [...S.quotidien.map(l => ({ l: l.label, v: lig(l), c: '#4a6fa5', cat: 'Quotidien', who: l.who })), ...S.loisirs.map(l => ({ l: l.label, v: lig(l), c: '#4f9a94', cat: 'Loisirs', who: l.who }))]
     .filter(x => x.v > 0).sort((a, b) => b.v - a.v).slice(0, 8).map(t => ({ ...t, tip: `${t.l} : ${eur(t.v)} par mois = ${pc(t.v / R.net, 1)} du net.\n${t.cat}. ${who(t)}` }));
   const v = S.virements.map(x => `<div class="vr"><span>${esc(x.label || '–')}</span><b class="ca">${eur(num(x.montant) * R.ratio.a)}</b><b class="cb">${eur(num(x.montant) * R.ratio.b)}</b></div>`).join('');
@@ -983,6 +990,8 @@ function vReglages() {
   ${sec('Cours de secours', `<div class="grid3"><label>Or €/once${fld('settings.cours.orOnce', s.cours.orOnce)}</label><label>Argent €/once${fld('settings.cours.argentOnce', s.cours.argentOnce)}</label><label>Date${fld('settings.cours.date', s.cours.date, { t: 'date' })}</label></div><div class="inl"><span>Coefficient de revente or</span>${fld('settings.reventeOr', s.reventeOr, { t: 'pct' })}</div>`, '', '', 'Ces valeurs ne servent que si la mise à jour automatique des cours est injoignable.')}
   ${sec('Prénoms et fiscalité', `<div class="grid3"><label>Prénom 1${fld('settings.noms.a', s.noms.a, { t: 'text' })}</label><label>Prénom 2${fld('settings.noms.b', s.noms.b, { t: 'text' })}</label></div>
     <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>`, '', '', 'Part qui reste après impôt (82,8 % = 17,2 % prélevés). Ces taux étaient écrits en dur dans l\'Excel : à valider.')}
+  ${sec('Nom de l\'appli', `<label>Nom affiché${fld('settings.appName', s.appName || '', { t: 'text' })}</label><p class="hint">Laisse vide pour « ${APP_DEFAULT} ». Visible dans le titre de la page, le menu et la carte d\'accueil. Le nom de l\'icône installée (écran d\'accueil, bureau) ne change pas : il faut réinstaller l\'appli pour qu\'elle le reprenne.</p>`)}
+  ${sec('Qui paie les dépenses « pour » quelqu\'un', `<label class="chk"><input type="checkbox" data-p="settings.payeCouple" data-t="chk" ${s.payeCouple ? 'checked' : ''}><span>Ces dépenses sont payées par le couple</span></label><p class="hint">Désactivé : une dépense « pour ${esc(N('a'))} » est payée avec le salaire de ${esc(N('a'))} et réduit son reste pour épargne. Activé : elle est juste attribuée à ${esc(N('a'))} (pour suivre qui en profite), mais payée par le couple, donc répartie au prorata des salaires. Les jauges Quotidien et Loisirs restent « pour la personne » ; seul le reste pour épargne change.</p>`)}
   ${sec('Carte d\'accueil', `<label class="chk"><input type="checkbox" data-act="door" ${Door.enabled() ? 'checked' : ''}><span>Afficher la carte à l\'ouverture de l\'appli</span></label><p class="hint">Les montants restent cachés tant que tu n\'as pas retourné la carte. Elle se referme après 2 minutes en arrière-plan. Ce n\'est pas un verrou : ça protège des regards, pas de quelqu\'un qui a ton téléphone déverrouillé.</p>`)}
   ${sec('À propos', kv('Version de l\'appli', APP_BUILD), '', '', 'Si tu ne vois pas une nouveauté, ce numéro te dit quelle version ton appareil affiche.')}
   ${sec('Vider cet appareil', `<button class="btn danger" data-act="reset">Effacer les données locales</button>`, '', '', 'Ne touche pas au dépôt GitHub.')}`;
@@ -1100,8 +1109,13 @@ function layoutMain(html) {
 }
 let wasDesk = isDesk();
 window.addEventListener('resize', () => { const d = isDesk(); if (d !== wasDesk) { wasDesk = d; render(); } });
+function applyName() {
+  const n = appName(); document.title = n;
+  document.documentElement.style.setProperty('--appname', JSON.stringify(n));
+}
 function render() {
   if (DRAG) cancelDrag();
+  applyName();
   SD = null;
   R = R || recalc();
   const [title, fn] = VIEWS[view];
@@ -1171,7 +1185,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '10102026-b';
+const APP_BUILD = '10102026-c';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1563,8 +1577,8 @@ const Door = (() => {
     el = document.createElement('div'); el.id = 'door';
     el.innerHTML = `<div class="dscene"><div class="dshadow"></div>
       <div class="dcard" role="button" tabindex="0" aria-label="Ouvrir les comptes : retourne la carte (ou appuie sur Entrée)">
-        <div class="dface dfront"><div class="dlogo">${LOGO}<div class="dname">Comptes du foyer</div></div><div class="dhint">Retourne la carte</div><div class="dsheen"></div><div class="dshade"></div></div>
-        <div class="dface dback"><div class="dbk"><div class="dstripe"></div><div class="dsig"><span class="dnames"></span></div><div class="dbname">COMPTES DU FOYER</div></div><div class="dsheen"></div><div class="dshade"></div></div>
+        <div class="dface dfront"><div class="dlogo">${LOGO}<div class="dname"></div></div><div class="dhint">Retourne la carte</div><div class="dsheen"></div><div class="dshade"></div></div>
+        <div class="dface dback"><div class="dbk"><div class="dstripe"></div><div class="dsig"><span class="dnames"></span></div><div class="dbname"></div></div><div class="dsheen"></div><div class="dshade"></div></div>
       </div></div>`;
     document.body.appendChild(el);
     scene = el.firstElementChild; shadow = scene.children[0]; card = scene.children[1]; faces = [...el.querySelectorAll('.dface')];
@@ -1581,7 +1595,7 @@ const Door = (() => {
     open = false; document.documentElement.classList.add('door');
     if (!el) build();
     el.style.display = ''; el.classList.remove('fadein');
-    const nm = [N('a'), N('b')].filter(Boolean).join(' & '), tx = el.querySelector('.dnames'); tx.textContent = nm; tx.style.fontSize = '';
+    const nm = [N('a'), N('b')].filter(Boolean).join(' & '), tx = el.querySelector('.dnames'); tx.textContent = nm; el.querySelector('.dname').textContent = appName(); el.querySelector('.dbname').textContent = appName().toUpperCase(); tx.style.fontSize = '';
     for (let k = 0; k < 30 && tx.parentElement.clientWidth && tx.scrollWidth > tx.parentElement.clientWidth - tx.parentElement.clientWidth * 0.1; k++) tx.style.fontSize = (parseFloat(getComputedStyle(tx).fontSize) * 0.93) + 'px'; void el.offsetWidth; if (animate) el.classList.add('fadein');
     scene.getAnimations && scene.getAnimations().forEach(a => a.cancel());
     st = { q: [1, 0, 0, 0], w: [0, 0, 0], drag: null, target: 'front', t: [1, 0, 0, 0], done: false, last: performance.now(), t0: performance.now(), swayAmp: 1 };
