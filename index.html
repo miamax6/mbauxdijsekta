@@ -333,7 +333,7 @@ const EMPTY_STATE = () => ({
   app: 'comptes-couple', schema: 1,
   settings: {
     noms: { a: 'Moi', b: 'Conjoint·e' },
-    appName: '', payeCouple: false,
+    appName: '', payeCouple: false, garAlerte: 2,
     impotTaux: { a: 0, b: 0 },
     taxes: { pea: 0.828, av: 0.828, cto: 0.7 },
     livretA: 0.015,
@@ -345,6 +345,7 @@ const EMPTY_STATE = () => ({
     fmpKey: '',
     ordreCours: { a: [], b: [] }
   },
+  garanties: [],
   salaires: [], quotidien: [], loisirs: [], vacances: [], virements: [], comptes: [],
   interets: { annees: [new Date().getFullYear()], lignes: [] },
   placements: {
@@ -626,7 +627,7 @@ async function pull(silent) {
     if (meta.dirty) { setSync('conflict', 'La version distante a changé'); render(); return; }
     S = Object.assign(EMPTY_STATE(), JSON.parse(await decrypt(rem.text, CFG.pass)));
     const mg = migrate(S);
-    meta = { sha: rem.sha, dirty: mg, at: new Date().toISOString() }; saveLocal(); setSync(mg ? 'dirty' : 'ok'); if (mg) schedulePush(); R = recalc(); render(); if (typeof fetchLive === 'function') fetchLive();
+    meta = { sha: rem.sha, dirty: mg, at: new Date().toISOString() }; saveLocal(); setSync(mg ? 'dirty' : 'ok'); if (mg) schedulePush(); R = recalc(); render(); garPopup(); if (typeof fetchLive === 'function') fetchLive();
   } catch (e) { setSync('err', e.name === 'OperationError' ? 'Phrase secrète incorrecte' : e.message); if (!silent) toast(sync.msg); }
 }
 async function push(force) {
@@ -671,6 +672,7 @@ const ICONS = {
   pencil: '<path d="M4 20h4L20 8l-4-4L4 16z"/>',
   eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   eyeOff: '<path d="M3 3l18 18"/><path d="M10.6 6.1A10.4 10.4 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.6 7.6C3.9 9.4 2 12 2 12s3.6 7 10 7c1.7 0 3.2-.4 4.6-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+  shield: '<path d="M12 3l8 3v6c0 4.5-3.2 7.6-8 9-4.8-1.4-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
   dot: '<circle cx="12" cy="12" r="3"/>'
 };
 const ico = n => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ICONS.dot}</svg>`;
@@ -942,6 +944,44 @@ function vPlacements() {
   ${keys.map(k => placeBlock(k)).join('')}${objBlock}`;
 }
 
+/* ---------- Garanties ---------- */
+const DAY = 864e5;
+const todayD = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); };
+const addMonths = (d, n) => { const e = new Date(d.getFullYear(), d.getMonth() + n, d.getDate()); if (e.getDate() !== d.getDate()) e.setDate(0); return e; };   // 31 janv. + 1 mois = 28/29 févr.
+const frDay = d => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+const garAlerte = () => { const n = S.settings.garAlerte; return n === undefined || n === '' || n === null ? 2 : Math.max(0, Math.round(num(n))); };
+function garInfo(g) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(g.dateAchat || ''), mois = Math.round(num(g.duree));
+  if (!m || mois <= 0) return { fin: null, st: 'inc' };
+  const fin = addMonths(new Date(+m[1], +m[2] - 1, +m[3]), mois), t = todayD(), j = Math.round((fin - t) / DAY), n = garAlerte();
+  return { fin, j, st: j < 0 ? 'exp' : (n > 0 && fin <= addMonths(t, n)) ? 'soon' : 'ok' };
+}
+function garDelai(x) {
+  if (x.st === 'inc') return '—';
+  const a = Math.abs(x.j), txt = a === 0 ? '' : a < 60 ? a + ' j' : Math.round(a / 30.44) + ' mois';
+  return x.j === 0 ? 'aujourd\'hui' : x.j > 0 ? 'dans ' + txt : 'il y a ' + txt;
+}
+const garList = () => S.garanties.map((g, i) => ({ g, i, ...garInfo(g) }));
+const garSoon = () => garList().filter(x => x.st === 'soon').sort((a, b) => a.fin - b.fin);
+function vGaranties() {
+  const L = garList(), by = k => L.filter(x => x.st === k).sort((a, b) => a.fin - b.fin);
+  const soon = by('soon'), ok = by('ok'), exp = by('exp').reverse(), inc = L.filter(x => x.st === 'inc');
+  const r = x => row(`garanties.${x.i}`, 'shield', x.g.label, (x.fin ? 'Fin le ' + frDay(x.fin) : 'Date ou durée manquante') + (x.g.who ? ' ' + chip(x.g.who) : ''), garDelai(x), x.st === 'exp' || x.st === 'soon' ? 'neg' : '');
+  const next = [...soon, ...ok][0], n = garAlerte();
+  const hero = `<section class="hero small"><small>${next ? 'Prochaine fin de garantie' : 'Garanties'}</small><div class="big">${next ? esc(next.g.label || 'Sans nom') : L.length ? 'Aucune active' : '—'}</div>${next ? `<small>${frDay(next.fin)} · ${garDelai(next)}</small>` : ''}</section>`;
+  const blocks = [['À surveiller', soon, n ? `Fin dans moins de ${n} mois` : ''], ['Actives', ok, ''], ['À compléter', inc, ''], ['Expirées', exp, '']].filter(b => b[1].length)
+    .map(([t, a, tip]) => sec(t, a.map(r).join(''), String(a.length), '', tip)).join('');
+  return hero + `<div class="addw top">${addPill('data-add="garanties"', 'Garantie')}</div>`
+    + (L.length ? blocks : `<section class="sec empty"><p>Aucune garantie. Ajoute un objet acheté avec sa date d'achat et la durée de sa garantie.</p></section>`);
+}
+/* Fenêtre d'alerte : une fois par jour et par appareil, quand une garantie arrive bientôt à échéance */
+function garPopup() {
+  if (dlg || editing || document.documentElement.classList.contains('door')) return;
+  const soon = garSoon(); if (!soon.length) return;
+  const day = todayD().toDateString(); if (LS.get('cc.garpop') === day) return;
+  LS.set('cc.garpop', day); dlg = { type: 'gar' }; render();
+}
+
 function vAchats() {
   const bars = R.achats.map(y => ({ l: y.annee, v: y.solde }));
   const blocks = S.achats.map((y, i) => {
@@ -992,6 +1032,7 @@ function vReglages() {
     <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>`, '', '', 'Part qui reste après impôt (82,8 % = 17,2 % prélevés). Ces taux étaient écrits en dur dans l\'Excel : à valider.')}
   ${sec('Nom de l\'appli', `<label>Nom affiché${fld('settings.appName', s.appName || '', { t: 'text' })}</label><p class="hint">Laisse vide pour « ${APP_DEFAULT} ». Visible dans le titre de la page, le menu et la carte d\'accueil. Le nom de l\'icône installée (écran d\'accueil, bureau) ne change pas : il faut réinstaller l\'appli pour qu\'elle le reprenne.</p>`)}
   ${sec('Qui paie les dépenses « pour » quelqu\'un', `<label class="chk"><input type="checkbox" data-p="settings.payeCouple" data-t="chk" ${s.payeCouple ? 'checked' : ''}><span>Ces dépenses sont payées par le couple</span></label><p class="hint">Désactivé : une dépense « pour ${esc(N('a'))} » est payée avec le salaire de ${esc(N('a'))} et réduit son reste pour épargne. Activé : elle est juste attribuée à ${esc(N('a'))} (pour suivre qui en profite), mais payée par le couple, donc répartie au prorata des salaires. Les jauges Quotidien et Loisirs restent « pour la personne » ; seul le reste pour épargne change.</p>`)}
+  ${sec('Alerte de garantie', `<label>Prévenir X mois avant la fin${fld('settings.garAlerte', garAlerte())}</label><p class="hint">Une fenêtre s\'ouvre au plus une fois par jour à l\'ouverture de l\'appli quand une garantie se termine dans ce délai. 0 = pas d\'alerte.</p>`)}
   ${sec('Carte d\'accueil', `<label class="chk"><input type="checkbox" data-act="door" ${Door.enabled() ? 'checked' : ''}><span>Afficher la carte à l\'ouverture de l\'appli</span></label><p class="hint">Les montants restent cachés tant que tu n\'as pas retourné la carte. Elle se referme après 2 minutes en arrière-plan. Ce n\'est pas un verrou : ça protège des regards, pas de quelqu\'un qui a ton téléphone déverrouillé.</p>`)}
   ${sec('À propos', kv('Version de l\'appli', APP_BUILD), '', '', 'Si tu ne vois pas une nouveauté, ce numéro te dit quelle version ton appareil affiche.')}
   ${sec('Vider cet appareil', `<button class="btn danger" data-act="reset">Effacer les données locales</button>`, '', '', 'Ne touche pas au dépôt GitHub.')}`;
@@ -1037,6 +1078,13 @@ async function doImport() {
   LS.set('cc.cfg', JSON.stringify(CFG)); dlg = null; render(); toast('Synchronisation configurée : récupération des données…'); await pull(false); render();
 }
 function dlgHtml() {
+  if (dlg.type === 'gar') {
+    const L = garSoon();
+    return `<div class="sheet" data-close><div class="sheetin" role="dialog" aria-label="Garanties bientôt terminées"><div class="grab"></div><h3>Garanties bientôt terminées</h3><div class="sbody">
+      ${L.map(x => `<div class="kv"><span style="display:block">${esc(x.g.label || 'Sans nom')}${x.g.who ? ' ' + chip(x.g.who) : ''}<small style="display:block;color:var(--mu);margin-top:2px">${frDay(x.fin)}</small></span><b class="neg">${garDelai(x)}</b></div>`).join('')}
+      <p class="hint">Si un objet a un défaut, c'est le moment de le faire valoir.</p></div>
+      <div class="btnrow"><button class="btn" data-done>Plus tard</button><button class="btn pri grow" data-go="garanties">Voir les garanties</button></div></div></div>`;
+  }
   if (dlg.type === 'out') return `<div class="sheet" data-close><div class="sheetin" role="dialog" aria-label="Partager la synchronisation"><div class="grab"></div><h3>Partager la synchronisation</h3><div class="sbody">
     <div class="qrbox">${qrSvg(dlg.url)}</div>
     <p class="hint">Scanne ce code avec l'appareil photo du téléphone : il ouvre l'appli et propose d'importer les réglages.</p>
@@ -1058,6 +1106,7 @@ function specFor(path) {
   if (/^salaires\.\d+$/.test(path)) return { title: 'Salaire', f: [['label', 'text', 'Libellé'], ['montant', 'num', 'Montant mensuel (€)'], who(false), ['imposable', 'chk', 'Soumis au calcul d\'impôt']] };
   const cur = () => get(S, editing && editing.specPath === path ? editing.path : path);
   if (/^(quotidien|loisirs)\.\d+$/.test(path)) { const o = cur(); return { title: 'Dépense', f: [['label', 'text', 'Libellé'], ...(o.auto ? [] : [['montant', 'num', 'Montant mensuel (€)']]), who(true)], note: o.auto ? 'Le montant est calculé depuis les vacances.' : '' }; }
+  if (/^garanties\.\d+$/.test(path)) return { title: 'Garantie', f: [['label', 'text', 'Objet'], ['dateAchat', 'date', 'Date d\'achat'], ['duree', 'num', 'Durée de la garantie (mois, ex : 24 = 2 ans)'], ['prix', 'num', 'Prix (€, facultatif)'], who(true), ['note', 'text', 'Magasin, n° de série… (facultatif)']] };
   if (/^vacances\.\d+$/.test(path)) return { title: 'Séjour', f: [['label', 'text', 'Libellé'], ['montant', 'num', 'Coût (€)']] };
   if (/^virements\.\d+$/.test(path)) return { title: 'Virement', f: [['label', 'text', 'Libellé'], ['montant', 'num', 'Montant total (€)']], note: 'Réparti au prorata des salaires nets.' };
   if (/^comptes\.\d+$/.test(path)) { const o = cur(); return { title: 'Compte', f: [['label', 'text', 'Nom'], ...(o.auto ? [] : [['montant', 'num', 'Solde (€)']]), who(true), ['banque', 'text', 'Banque (CA, F, HB…)'], ['apport', 'chk', 'Compte dans l\'apport du simulateur']], note: o.auto ? 'Le solde est calculé depuis Placements.' : '' }; }
@@ -1094,9 +1143,9 @@ function sheetHtml() {
     <div class="btnrow">${editing.draft ? `<button class="btn" data-cancel>Annuler</button>` : canDel ? `<button class="btn danger" data-delete="${editing.path}">Supprimer</button>` : ''}<button class="btn pri grow" data-done>${editing.draft ? 'Ajouter' : 'Terminé'}</button></div></div></div>`;
 }
 
-const VIEWS = { accueil: ['Accueil', vAccueil], budget: ['Budget', vBudget], epargne: ['Épargne', vEpargne], placements: ['Placements', vPlacements], achats: ['Achats et ventes', vAchats], simu: ['Emprunt', vSimu], reglages: ['Réglages', vReglages] };
+const VIEWS = { accueil: ['Accueil', vAccueil], budget: ['Budget', vBudget], epargne: ['Épargne', vEpargne], placements: ['Placements', vPlacements], achats: ['Achats et ventes', vAchats], garanties: ['Garanties', vGaranties], simu: ['Emprunt', vSimu], reglages: ['Réglages', vReglages] };
 const TABS = [['accueil', 'home', 'Accueil'], ['budget', 'receipt', 'Budget'], ['epargne', 'wallet', 'Épargne'], ['placements', 'trend', 'Placements']];
-const EXTRA = [['achats', 'bag', 'Achats et ventes'], ['simu', 'home', 'Emprunt'], ['reglages', 'sliders', 'Réglages']];
+const EXTRA = [['achats', 'bag', 'Achats et ventes'], ['garanties', 'shield', 'Garanties'], ['simu', 'home', 'Emprunt'], ['reglages', 'sliders', 'Réglages']];
 let lastView = null;
 const isDesk = () => window.matchMedia('(min-width: 900px)').matches;
 /* PC : les blocs larges (bandeau, cartes de synthèse) vont en haut, les autres cartes se répartissent en colonnes */
@@ -1126,9 +1175,9 @@ function render() {
   <header class="top"><h1>${title}</h1><span id="syncpill" class="pill off"></span></header>
   <main class="${fresh ? 'anim' : ''}">${layoutMain(fn())}</main>
   <nav class="nav">${TABS.map(([k, e, l]) => `<button class="tab ${view === k ? 'on' : ''}" data-go="${k}"><span class="te">${ico(e)}</span><span>${l}</span></button>`).join('')}
-    <button class="tab plus ${['achats', 'simu', 'reglages'].includes(view) ? 'on' : ''}" data-more><span class="te">${ico('dots')}</span><span>Plus</span></button>
+    <button class="tab plus ${['achats', 'garanties', 'simu', 'reglages'].includes(view) ? 'on' : ''}" data-more><span class="te">${ico('dots')}</span><span>Plus</span></button>
     ${EXTRA.map(([k, e, l]) => `<button class="tab extra ${view === k ? 'on' : ''}" data-go="${k}"><span class="te">${ico(e)}</span><span>${l}</span></button>`).join('')}</nav>
-  ${moreOpen ? `<div class="sheet" data-close><div class="sheetin more"><div class="grab"></div><button data-go="achats">${ico('bag')}Achats et ventes</button><button data-go="simu">${ico('home')}Emprunt</button><button data-go="reglages">${ico('sliders')}Réglages</button></div></div>` : ''}
+  ${moreOpen ? `<div class="sheet" data-close><div class="sheetin more"><div class="grab"></div><button data-go="achats">${ico('bag')}Achats et ventes</button><button data-go="garanties">${ico('shield')}Garanties</button><button data-go="simu">${ico('home')}Emprunt</button><button data-go="reglages">${ico('sliders')}Réglages</button></div></div>` : ''}
   ${sheetHtml()}<div id="toast" role="status"></div>`;
   if (hadSheet) document.querySelectorAll('.sheet').forEach(s => s.classList.add('still'));
   paintPill(document.getElementById('syncpill'));
@@ -1185,7 +1234,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '10102026-c';
+const APP_BUILD = '15102026-a';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1353,6 +1402,7 @@ document.addEventListener('keydown', e => {                                     
 /* ---------- Événements ---------- */
 const NEW = {
   salaires: () => ({ label: '', montant: 0, who: 'a', imposable: true }), quotidien: () => ({ label: '', montant: 0, who: '' }), loisirs: () => ({ label: '', montant: 0, who: '' }),
+  garanties: () => ({ label: '', dateAchat: new Date().toISOString().slice(0, 10), duree: 24, prix: 0, who: '', note: '' }),
   vacances: () => ({ label: '', montant: 0 }), virements: () => ({ label: '', montant: 0 }), comptes: () => ({ label: '', banque: '', who: 'a', montant: 0 }),
   'interets.lignes': () => ({ label: '', who: 'a', v: {} }), 'placements.objets': () => ({ label: '', grammes: 0, titre: 1 })
 };
@@ -1387,7 +1437,7 @@ document.addEventListener('change', e => {
 
 /* ---------- Une nouvelle ligne n'est créée que par « Terminé » (et seulement si quelque chose est renseigné) ---------- */
 let DRAFT = null;
-const BLANK_IGNORE = new Set(['who', 'imposable', 'apport', 'titre', 'date', 'banque']);
+const BLANK_IGNORE = new Set(['dateAchat', 'duree', 'who', 'imposable', 'apport', 'titre', 'date', 'banque']);
 const isBlank = o => {
   if (o === null || o === undefined || o === false || o === 0) return true;
   if (typeof o === 'string') return o.trim() === '';
@@ -1525,7 +1575,7 @@ document.addEventListener('click', async e => {
   if (d.ef) { ef = d.ef; LS.set('cc.ef', ef); render(); window.scrollTo(0, 0); return; }
   if (d.pf) { pf = d.pf; LS.set('cc.pf', pf); render(); window.scrollTo(0, 0); return; }
   if (d.bmode) { bmode = d.bmode; LS.set('cc.bmode', bmode); render(); window.scrollTo(0, 0); return; }
-  if (d.go) { view = d.go; moreOpen = false; closeEditing(false); render(); window.scrollTo(0, 0); return; }
+  if (d.go) { view = d.go; moreOpen = false; dlg = null; closeEditing(false); render(); window.scrollTo(0, 0); return; }
   if ('more' in d) { moreOpen = true; render(); return; }
   if (d.qv) { const arr = get(S, d.qv), m = thisMonth(); if (!arr.some(v => v.date === m)) arr.push({ date: m, montant: arr.length ? num(arr[arr.length - 1].montant) : 0 }); editing = { path: d.qv }; commit(); return; }
   if (d.add) { DRAFT = { arrPath: d.add, item: newItem(d.add) }; editing = { path: '@draft', specPath: d.add + '.0', draft: true }; render(); return; }          // la ligne n'existe pas encore dans les données
@@ -1703,7 +1753,7 @@ const Door = (() => {
       });
       setTimeout(done, 700);
     } else { el.style.display = 'none'; done(); }
-    function done() { el.style.display = 'none'; el.getAnimations().forEach(a => a.cancel()); scene.getAnimations().forEach(a => a.cancel()); st = null; }
+    function done() { setTimeout(garPopup, 300); el.style.display = 'none'; el.getAnimations().forEach(a => a.cancel()); scene.getAnimations().forEach(a => a.cancel()); st = null; }
   }
   function init() {
     if (!enabled() || !S.salaires.length) return;
@@ -1718,7 +1768,7 @@ const Door = (() => {
 })();
 
 /* ---------- Démarrage ---------- */
-loadLocal(); R = recalc(); Door.init(); render();
+loadLocal(); R = recalc(); Door.init(); render(); setTimeout(garPopup, 400);
 /* Lien de partage : traité à l'ouverture ET quand l'appli est déjà ouverte (le lien ne change alors que la partie après le #) */
 function checkShareHash() { const m = location.hash.match(/^#partage=(.+)$/); if (m) { dlg = { type: 'in', payload: m[1] }; try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} render(); } }
 checkShareHash(); window.addEventListener('hashchange', checkShareHash);
