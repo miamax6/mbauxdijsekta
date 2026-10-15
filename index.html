@@ -554,10 +554,11 @@ function saveLocal() { LS.set('cc.state', JSON.stringify(S)); LS.set('cc.meta', 
 /* Ancienne version : espèces du compte-titres saisies à la main -> versements reconstitués depuis les achats */
 function migrate(s) { const a = migrateCto(s), b = migrateAchats(s); return a || b; }
 /* Années d'achats : « À venir » = années avant 2024 -> 2020 ; toujours classées par année */
+const uid = () => Math.random().toString(36).slice(2, 10);
 function migrateAchats(s) {
   if (!Array.isArray(s.achats)) return false;
   let ch = false;
-  s.achats.forEach(y => { if (y.annee === 'À venir') { y.annee = '2020'; ch = true; } });
+  s.achats.forEach(y => { if (y.annee === 'À venir') { y.annee = '2020'; ch = true; } (y.items || []).forEach(it => { if (!it.id) { it.id = uid(); ch = true; } }); });   // identifiant stable : sert au lien avec les garanties
   const key = y => parseInt(y.annee) || 9999, before = s.achats.map(key).join();
   s.achats.sort((a, b) => key(a) - key(b));
   return ch || before !== s.achats.map(key).join();
@@ -962,12 +963,16 @@ function garDelai(x) {
   return x.j === 0 ? 'aujourd\'hui' : x.j > 0 ? 'dans ' + txt : 'il y a ' + txt;
 }
 const safeUrl = v => { const t = String(v || '').trim(); return /^https?:\/\/[^\s]+$/i.test(t) ? t : ''; };   // seulement http(s) : jamais javascript:
+const achatById = id => { if (!id) return null; for (const y of S.achats) for (const it of (y.items || [])) if (it.id === id) return { y, it }; return null; };
+const garOf = id => id ? S.garanties.findIndex(g => g.achat === id) : -1;
+const normL = v => String(v || '').trim().toLowerCase().replace(/\s+/g, ' ');
+const achatOpts = () => [['', 'Aucun (garantie sans achat enregistré)'], ...S.achats.flatMap(y => (y.items || []).filter(it => it.id).map(it => [it.id, `${y.annee} · ${it.label || 'Sans nom'}${num(it.achat) ? ' (' + eur(num(it.achat)) + ')' : ''}`]))];
 const garList = () => S.garanties.map((g, i) => ({ g, i, ...garInfo(g) }));
 const garSoon = () => garList().filter(x => x.st === 'soon').sort((a, b) => a.fin - b.fin);
 function vGaranties() {
   const L = garList(), by = k => L.filter(x => x.st === k).sort((a, b) => a.fin - b.fin);
   const soon = by('soon'), ok = by('ok'), exp = by('exp').reverse(), inc = L.filter(x => x.st === 'inc');
-  const r = x => row(`garanties.${x.i}`, 'shield', x.g.label, (x.fin ? 'Fin le ' + frDay(x.fin) : 'Date ou durée manquante') + (x.g.who ? ' ' + chip(x.g.who) : '') + (safeUrl(x.g.lien) ? ' · facture liée' : ''), garDelai(x), x.st === 'exp' || x.st === 'soon' ? 'neg' : '');
+  const r = x => row(`garanties.${x.i}`, 'shield', x.g.label, (x.fin ? 'Fin le ' + frDay(x.fin) : 'Date ou durée manquante') + (x.g.who ? ' ' + chip(x.g.who) : '') + (achatById(x.g.achat) && num(achatById(x.g.achat).it.achat) ? ' · ' + eur(num(achatById(x.g.achat).it.achat)) : '') + (safeUrl(x.g.lien) ? ' · facture liée' : ''), garDelai(x), x.st === 'exp' || x.st === 'soon' ? 'neg' : '');
   const next = [...soon, ...ok][0], n = garAlerte();
   const hero = `<section class="hero small"><small>${next ? 'Prochaine fin de garantie' : 'Garanties'}</small><div class="big">${next ? esc(next.g.label || 'Sans nom') : L.length ? 'Aucune active' : '—'}</div>${next ? `<small>${frDay(next.fin)} · ${garDelai(next)}</small>` : ''}</section>`;
   const blocks = [['À surveiller', soon, n ? `Fin dans moins de ${n} mois` : ''], ['Actives', ok, ''], ['À compléter', inc, ''], ['Expirées', exp, '']].filter(b => b[1].length)
@@ -990,11 +995,16 @@ function garPopup() {
   LS.set('cc.garack', JSON.stringify(ack)); dlg = { type: 'gar', keys: list.map(garKey) }; render();
 }
 
+function garBadge(it) {
+  const k = garOf(it.id); if (k < 0) return '';
+  const x = { g: S.garanties[k], ...garInfo(S.garanties[k]) };
+  return ` <i class="chip bk">Garantie${x.fin ? ' ' + (x.st === 'exp' ? 'expirée' : '→ ' + x.fin.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })) : ''}</i>`;
+}
 function vAchats() {
   const bars = R.achats.map(y => ({ l: y.annee, v: y.solde }));
   const blocks = S.achats.map((y, i) => {
     const t = R.achats[i];
-    const items = y.items.map((it, j) => row(`achats.${i}.items.${j}`, num(it.vente) > 0 && !num(it.achat) ? 'plus' : 'bag', it.label, chip(it.who), num(it.vente) > 0 && !num(it.achat) ? '+' + eur(num(it.vente)) : '− ' + eur(num(it.achat)), num(it.vente) > 0 && !num(it.achat) ? 'pos' : '')).join('');
+    const items = y.items.map((it, j) => row(`achats.${i}.items.${j}`, num(it.vente) > 0 && !num(it.achat) ? 'plus' : 'bag', it.label, chip(it.who) + garBadge(it), num(it.vente) > 0 && !num(it.achat) ? '+' + eur(num(it.vente)) : '− ' + eur(num(it.achat)), num(it.vente) > 0 && !num(it.achat) ? 'pos' : '')).join('');
     return sec(`<button class="yh" data-edit="achats.${i}" aria-label="Modifier ou supprimer l'année">${esc(y.annee)}<span class="yi">${ico('pencil')}</span></button>`, items + addBtn(`achats.${i}.items`, 'Ligne') + kv('Achats', eur(t.achats)) + kv('Ventes', eur(t.ventes)) + kv('Solde', eur(t.solde), sign(t.solde)), eur(t.solde));
   }).reverse().join('');                      // du plus récent au plus ancien
   return `<section class="hero small"><small>Solde cumulé achats / ventes</small><div class="big">${eur(R.achatsSolde)}</div></section>
@@ -1114,7 +1124,7 @@ function specFor(path) {
   if (/^salaires\.\d+$/.test(path)) return { title: 'Salaire', f: [['label', 'text', 'Libellé'], ['montant', 'num', 'Montant mensuel (€)'], who(false), ['imposable', 'chk', 'Soumis au calcul d\'impôt']] };
   const cur = () => get(S, editing && editing.specPath === path ? editing.path : path);
   if (/^(quotidien|loisirs)\.\d+$/.test(path)) { const o = cur(); return { title: 'Dépense', f: [['label', 'text', 'Libellé'], ...(o.auto ? [] : [['montant', 'num', 'Montant mensuel (€)']]), who(true)], note: o.auto ? 'Le montant est calculé depuis les vacances.' : '' }; }
-  if (/^garanties\.\d+$/.test(path)) return { title: 'Garantie', f: [['label', 'text', 'Objet'], ['dateAchat', 'date', 'Date d\'achat'], ['duree', 'num', 'Durée de la garantie (mois, ex : 24 = 2 ans)'], ['prix', 'num', 'Prix (€, facultatif)'], who(true), ['note', 'text', 'Magasin, n° de série… (facultatif)'], ['lien', 'text', 'Lien de la facture (OneDrive…, facultatif)']], link: 'lien' };
+  if (/^garanties\.\d+$/.test(path)) return { title: 'Garantie', f: [['label', 'text', 'Objet'], ['dateAchat', 'date', 'Date d\'achat'], ['duree', 'num', 'Durée de la garantie (mois, ex : 24 = 2 ans)'], who(true), ['note', 'text', 'Magasin, n° de série… (facultatif)'], ['lien', 'text', 'Lien de la facture (OneDrive…, facultatif)']], link: 'lien', gar: true };
   if (/^vacances\.\d+$/.test(path)) return { title: 'Séjour', f: [['label', 'text', 'Libellé'], ['montant', 'num', 'Coût (€)']] };
   if (/^virements\.\d+$/.test(path)) return { title: 'Virement', f: [['label', 'text', 'Libellé'], ['montant', 'num', 'Montant total (€)']], note: 'Réparti au prorata des salaires nets.' };
   if (/^comptes\.\d+$/.test(path)) { const o = cur(); return { title: 'Compte', f: [['label', 'text', 'Nom'], ...(o.auto ? [] : [['montant', 'num', 'Solde (€)']]), who(true), ['banque', 'text', 'Banque (CA, F, HB…)'], ['apport', 'chk', 'Compte dans l\'apport du simulateur']], note: o.auto ? 'Le solde est calculé depuis Placements.' : '' }; }
@@ -1141,11 +1151,23 @@ function sheetHtml() {
     body = spec.f.map(([k, t, l, opts]) => t === 'chk' ? fld(`${editing.path}.${k}`, k === 'apport' ? get(obj, k) !== false : !!get(obj, k), { t: 'chk', txt: l }) :
       field(l, t === 'sel' ? fld(`${editing.path}.${k}`, get(obj, k), { t: 'sel', opts }) : fld(`${editing.path}.${k}`, get(obj, k), { t }))).join('');
     if (spec.note) body += `<p class="hint">${spec.note}</p>`;
+    if (spec.gar) {
+      const cur = get(obj, 'achat') || '', found = achatById(cur);
+      body += field('Achat lié (menu Achats et ventes)', fld(`${editing.path}.achat`, found ? cur : '', { t: 'sel', opts: achatOpts() }));
+      const sug = !found && !editing.draft ? achatOpts().slice(1).find(([id]) => { const a = achatById(id); return normL(a.it.label) && normL(a.it.label) === normL(obj.label) && garOf(id) < 0; }) : null;
+      if (sug) body += `<button class="btn" data-ganchor="${editing.path}" data-gid="${sug[0]}">Lier à « ${esc(sug[1])} »</button>`;
+      body += `<p class="hint">Le prix vient de l\'achat lié : rien à saisir en double.</p>`;
+    }
     if (spec.link) { const u = safeUrl(get(obj, spec.link)); body += u ? `<a class="btn" href="${esc(u)}" target="_blank" rel="noopener noreferrer">Ouvrir la facture</a>` : `<p class="hint">Dans OneDrive : clic droit sur le fichier → Partager → Copier le lien, puis colle-le ici.</p>`; }
     if (spec.lots) {
       const lots = obj.lots || [];
       body += `<div class="lsec"><h4>Achats</h4>${addPill(`data-addin="${editing.path}.lots"`, 'Achat')}</div>${lots.length ? `<div class="lhead"><span class="h1">Mois</span><span class="h2">Qté</span>${spec.lotCost ? '<span class="h3">€ payés</span>' : ''}</div>` : ''}` + lots.map((l, j) => `<div class="lrow">${fld(`${editing.path}.lots.${j}.date`, l.date, { t: 'month' })}${fld(`${editing.path}.lots.${j}.qty`, l.qty, { ph: 'Qté', cls: 'qty' })}${spec.lotCost ? fld(`${editing.path}.lots.${j}.montant`, l.montant, { ph: '€ payés', cls: 'eur' }) : ''}<button class="x" data-delin="${editing.path}.lots.${j}" aria-label="Supprimer">×</button></div>`).reverse().join('');
     }
+  }
+  if (/^achats\.\d+\.items\.\d+$/.test(editing.path) && !editing.draft && obj.id) {
+    const k = garOf(obj.id);
+    if (k >= 0) { const x = garInfo(S.garanties[k]); body += `<div class="kv"><span>Garantie</span><b>${x.fin ? 'jusqu\'au ' + frDay(x.fin) : 'à compléter'}</b></div><button class="btn" data-gview="${k}">Voir la garantie</button>`; }
+    else body += `<button class="btn" data-garfrom="${editing.path}">Ajouter une garantie pour cet achat</button>`;
   }
   const canDel = !spec.list;
   return `<div class="sheet" data-close><div class="sheetin" role="dialog" aria-label="${esc(spec.title)}"><div class="grab"></div><h3>${esc(spec.title)}</h3><div class="sbody">${body}</div>
@@ -1243,7 +1265,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '15102026-c';
+const APP_BUILD = '15102026-d';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1411,7 +1433,7 @@ document.addEventListener('keydown', e => {                                     
 /* ---------- Événements ---------- */
 const NEW = {
   salaires: () => ({ label: '', montant: 0, who: 'a', imposable: true }), quotidien: () => ({ label: '', montant: 0, who: '' }), loisirs: () => ({ label: '', montant: 0, who: '' }),
-  garanties: () => ({ label: '', dateAchat: new Date().toISOString().slice(0, 10), duree: 24, prix: 0, who: '', note: '', lien: '' }),
+  garanties: () => ({ label: '', dateAchat: new Date().toISOString().slice(0, 10), duree: 24, who: '', note: '', lien: '', achat: '' }),
   vacances: () => ({ label: '', montant: 0 }), virements: () => ({ label: '', montant: 0 }), comptes: () => ({ label: '', banque: '', who: 'a', montant: 0 }),
   'interets.lignes': () => ({ label: '', who: 'a', v: {} }), 'placements.objets': () => ({ label: '', grammes: 0, titre: 1 })
 };
@@ -1422,7 +1444,7 @@ function newItem(path) {
   if (/\.actifs$/.test(path)) return { nom: '', isin: '', cours: 0, pru: 0, lots: [] };
   if (/\.lots$/.test(path)) return { date: thisMonth(), qty: 0, ...(/\.(ctoA|avA)\./.test(path) ? { montant: 0 } : {}) };
   if (/\.virements$/.test(path)) return { date: thisMonth(), montant: 0 };
-  if (/\.items$/.test(path)) return { label: '', achat: 0, vente: 0, who: 'a' };
+  if (/\.items$/.test(path)) return { id: uid(), label: '', achat: 0, vente: 0, who: 'a' };
   return {};
 }
 document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.sharecode !== undefined) shareCode = e.target.value; });
@@ -1584,6 +1606,14 @@ document.addEventListener('click', async e => {
   if (d.ef) { ef = d.ef; LS.set('cc.ef', ef); render(); window.scrollTo(0, 0); return; }
   if (d.pf) { pf = d.pf; LS.set('cc.pf', pf); render(); window.scrollTo(0, 0); return; }
   if (d.bmode) { bmode = d.bmode; LS.set('cc.bmode', bmode); render(); window.scrollTo(0, 0); return; }
+  if (d.gview !== undefined) { const k = +d.gview; closeEditing(true); view = 'garanties'; editing = { path: 'garanties.' + k }; render(); window.scrollTo(0, 0); return; }
+  if (d.garfrom) {
+    const it = get(S, d.garfrom); if (!it) return; if (!it.id) it.id = uid();
+    const y = S.achats.find(a => (a.items || []).includes(it)), yr = y ? String(y.annee) : '', now = new Date().toISOString().slice(0, 10);
+    S.garanties.push({ label: it.label || '', dateAchat: /^\d{4}$/.test(yr) && yr !== now.slice(0, 4) ? yr + '-01-01' : now, duree: 24, who: it.who || '', note: '', lien: '', achat: it.id });
+    closeEditing(true); view = 'garanties'; editing = { path: 'garanties.' + (S.garanties.length - 1) }; commit(); window.scrollTo(0, 0); return;
+  }
+  if (d.ganchor) { const g = get(S, d.ganchor); if (g) g.achat = d.gid; commit(); return; }
   if (d.go) { view = d.go; moreOpen = false; dlg = null; closeEditing(false); render(); window.scrollTo(0, 0); return; }
   if ('more' in d) { moreOpen = true; render(); return; }
   if (d.qv) { const arr = get(S, d.qv), m = thisMonth(); if (!arr.some(v => v.date === m)) arr.push({ date: m, montant: arr.length ? num(arr[arr.length - 1].montant) : 0 }); editing = { path: d.qv }; commit(); return; }
