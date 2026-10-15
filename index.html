@@ -961,12 +961,13 @@ function garDelai(x) {
   const a = Math.abs(x.j), txt = a === 0 ? '' : a < 60 ? a + ' j' : Math.round(a / 30.44) + ' mois';
   return x.j === 0 ? 'aujourd\'hui' : x.j > 0 ? 'dans ' + txt : 'il y a ' + txt;
 }
+const safeUrl = v => { const t = String(v || '').trim(); return /^https?:\/\/[^\s]+$/i.test(t) ? t : ''; };   // seulement http(s) : jamais javascript:
 const garList = () => S.garanties.map((g, i) => ({ g, i, ...garInfo(g) }));
 const garSoon = () => garList().filter(x => x.st === 'soon').sort((a, b) => a.fin - b.fin);
 function vGaranties() {
   const L = garList(), by = k => L.filter(x => x.st === k).sort((a, b) => a.fin - b.fin);
   const soon = by('soon'), ok = by('ok'), exp = by('exp').reverse(), inc = L.filter(x => x.st === 'inc');
-  const r = x => row(`garanties.${x.i}`, 'shield', x.g.label, (x.fin ? 'Fin le ' + frDay(x.fin) : 'Date ou durée manquante') + (x.g.who ? ' ' + chip(x.g.who) : ''), garDelai(x), x.st === 'exp' || x.st === 'soon' ? 'neg' : '');
+  const r = x => row(`garanties.${x.i}`, 'shield', x.g.label, (x.fin ? 'Fin le ' + frDay(x.fin) : 'Date ou durée manquante') + (x.g.who ? ' ' + chip(x.g.who) : '') + (safeUrl(x.g.lien) ? ' · facture liée' : ''), garDelai(x), x.st === 'exp' || x.st === 'soon' ? 'neg' : '');
   const next = [...soon, ...ok][0], n = garAlerte();
   const hero = `<section class="hero small"><small>${next ? 'Prochaine fin de garantie' : 'Garanties'}</small><div class="big">${next ? esc(next.g.label || 'Sans nom') : L.length ? 'Aucune active' : '—'}</div>${next ? `<small>${frDay(next.fin)} · ${garDelai(next)}</small>` : ''}</section>`;
   const blocks = [['À surveiller', soon, n ? `Fin dans moins de ${n} mois` : ''], ['Actives', ok, ''], ['À compléter', inc, ''], ['Expirées', exp, '']].filter(b => b[1].length)
@@ -1081,7 +1082,7 @@ function dlgHtml() {
   if (dlg.type === 'gar') {
     const L = garSoon();
     return `<div class="sheet" data-close><div class="sheetin" role="dialog" aria-label="Garanties bientôt terminées"><div class="grab"></div><h3>Garanties bientôt terminées</h3><div class="sbody">
-      ${L.map(x => `<div class="kv"><span style="display:block">${esc(x.g.label || 'Sans nom')}${x.g.who ? ' ' + chip(x.g.who) : ''}<small style="display:block;color:var(--mu);margin-top:2px">${frDay(x.fin)}</small></span><b class="neg">${garDelai(x)}</b></div>`).join('')}
+      ${L.map(x => `<div class="kv"><span style="display:block">${esc(x.g.label || 'Sans nom')}${x.g.who ? ' ' + chip(x.g.who) : ''}<small style="display:block;color:var(--mu);margin-top:2px">${frDay(x.fin)}${safeUrl(x.g.lien) ? ` · <a href="${esc(safeUrl(x.g.lien))}" target="_blank" rel="noopener noreferrer">facture</a>` : ''}</small></span><b class="neg">${garDelai(x)}</b></div>`).join('')}
       <p class="hint">Si un objet a un défaut, c'est le moment de le faire valoir.</p></div>
       <div class="btnrow"><button class="btn" data-done>Plus tard</button><button class="btn pri grow" data-go="garanties">Voir les garanties</button></div></div></div>`;
   }
@@ -1106,7 +1107,7 @@ function specFor(path) {
   if (/^salaires\.\d+$/.test(path)) return { title: 'Salaire', f: [['label', 'text', 'Libellé'], ['montant', 'num', 'Montant mensuel (€)'], who(false), ['imposable', 'chk', 'Soumis au calcul d\'impôt']] };
   const cur = () => get(S, editing && editing.specPath === path ? editing.path : path);
   if (/^(quotidien|loisirs)\.\d+$/.test(path)) { const o = cur(); return { title: 'Dépense', f: [['label', 'text', 'Libellé'], ...(o.auto ? [] : [['montant', 'num', 'Montant mensuel (€)']]), who(true)], note: o.auto ? 'Le montant est calculé depuis les vacances.' : '' }; }
-  if (/^garanties\.\d+$/.test(path)) return { title: 'Garantie', f: [['label', 'text', 'Objet'], ['dateAchat', 'date', 'Date d\'achat'], ['duree', 'num', 'Durée de la garantie (mois, ex : 24 = 2 ans)'], ['prix', 'num', 'Prix (€, facultatif)'], who(true), ['note', 'text', 'Magasin, n° de série… (facultatif)']] };
+  if (/^garanties\.\d+$/.test(path)) return { title: 'Garantie', f: [['label', 'text', 'Objet'], ['dateAchat', 'date', 'Date d\'achat'], ['duree', 'num', 'Durée de la garantie (mois, ex : 24 = 2 ans)'], ['prix', 'num', 'Prix (€, facultatif)'], who(true), ['note', 'text', 'Magasin, n° de série… (facultatif)'], ['lien', 'text', 'Lien de la facture (OneDrive…, facultatif)']], link: 'lien' };
   if (/^vacances\.\d+$/.test(path)) return { title: 'Séjour', f: [['label', 'text', 'Libellé'], ['montant', 'num', 'Coût (€)']] };
   if (/^virements\.\d+$/.test(path)) return { title: 'Virement', f: [['label', 'text', 'Libellé'], ['montant', 'num', 'Montant total (€)']], note: 'Réparti au prorata des salaires nets.' };
   if (/^comptes\.\d+$/.test(path)) { const o = cur(); return { title: 'Compte', f: [['label', 'text', 'Nom'], ...(o.auto ? [] : [['montant', 'num', 'Solde (€)']]), who(true), ['banque', 'text', 'Banque (CA, F, HB…)'], ['apport', 'chk', 'Compte dans l\'apport du simulateur']], note: o.auto ? 'Le solde est calculé depuis Placements.' : '' }; }
@@ -1133,6 +1134,7 @@ function sheetHtml() {
     body = spec.f.map(([k, t, l, opts]) => t === 'chk' ? fld(`${editing.path}.${k}`, k === 'apport' ? get(obj, k) !== false : !!get(obj, k), { t: 'chk', txt: l }) :
       field(l, t === 'sel' ? fld(`${editing.path}.${k}`, get(obj, k), { t: 'sel', opts }) : fld(`${editing.path}.${k}`, get(obj, k), { t }))).join('');
     if (spec.note) body += `<p class="hint">${spec.note}</p>`;
+    if (spec.link) { const u = safeUrl(get(obj, spec.link)); body += u ? `<a class="btn" href="${esc(u)}" target="_blank" rel="noopener noreferrer">Ouvrir la facture</a>` : `<p class="hint">Dans OneDrive : clic droit sur le fichier → Partager → Copier le lien, puis colle-le ici.</p>`; }
     if (spec.lots) {
       const lots = obj.lots || [];
       body += `<div class="lsec"><h4>Achats</h4>${addPill(`data-addin="${editing.path}.lots"`, 'Achat')}</div>${lots.length ? `<div class="lhead"><span class="h1">Mois</span><span class="h2">Qté</span>${spec.lotCost ? '<span class="h3">€ payés</span>' : ''}</div>` : ''}` + lots.map((l, j) => `<div class="lrow">${fld(`${editing.path}.lots.${j}.date`, l.date, { t: 'month' })}${fld(`${editing.path}.lots.${j}.qty`, l.qty, { ph: 'Qté', cls: 'qty' })}${spec.lotCost ? fld(`${editing.path}.lots.${j}.montant`, l.montant, { ph: '€ payés', cls: 'eur' }) : ''}<button class="x" data-delin="${editing.path}.lots.${j}" aria-label="Supprimer">×</button></div>`).reverse().join('');
@@ -1234,7 +1236,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '15102026-a';
+const APP_BUILD = '15102026-b';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1402,7 +1404,7 @@ document.addEventListener('keydown', e => {                                     
 /* ---------- Événements ---------- */
 const NEW = {
   salaires: () => ({ label: '', montant: 0, who: 'a', imposable: true }), quotidien: () => ({ label: '', montant: 0, who: '' }), loisirs: () => ({ label: '', montant: 0, who: '' }),
-  garanties: () => ({ label: '', dateAchat: new Date().toISOString().slice(0, 10), duree: 24, prix: 0, who: '', note: '' }),
+  garanties: () => ({ label: '', dateAchat: new Date().toISOString().slice(0, 10), duree: 24, prix: 0, who: '', note: '', lien: '' }),
   vacances: () => ({ label: '', montant: 0 }), virements: () => ({ label: '', montant: 0 }), comptes: () => ({ label: '', banque: '', who: 'a', montant: 0 }),
   'interets.lignes': () => ({ label: '', who: 'a', v: {} }), 'placements.objets': () => ({ label: '', grammes: 0, titre: 1 })
 };
