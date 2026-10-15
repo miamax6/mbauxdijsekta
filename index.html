@@ -975,12 +975,19 @@ function vGaranties() {
   return hero + `<div class="addw top">${addPill('data-add="garanties"', 'Garantie')}</div>`
     + (L.length ? blocks : `<section class="sec empty"><p>Aucune garantie. Ajoute un objet acheté avec sa date d'achat et la durée de sa garantie.</p></section>`);
 }
-/* Fenêtre d'alerte : une fois par jour et par appareil, quand une garantie arrive bientôt à échéance */
+/* Alerte : une fois par garantie quand elle entre dans la fenêtre (X mois), puis une 2e fois à 7 jours de la fin.
+   Mémorisé sur l'appareil (pas dans les données synchronisées : évite de créer un conflit au démarrage). */
+const garStage = x => x.st === 'exp' || x.st === 'inc' || !garAlerte() ? 0 : x.j <= 7 ? 2 : x.st === 'soon' ? 1 : 0;
+const garKey = x => (x.g.label || '') + '|' + x.fin.toISOString().slice(0, 10);
+function garPending() {
+  let ack = {}; try { ack = JSON.parse(LS.get('cc.garack') || '{}'); } catch (e) {}
+  return { ack, list: garList().filter(x => garStage(x) > (ack[garKey(x)] || 0)).sort((a, b) => a.fin - b.fin) };
+}
 function garPopup() {
   if (dlg || editing || document.documentElement.classList.contains('door')) return;
-  const soon = garSoon(); if (!soon.length) return;
-  const day = todayD().toDateString(); if (LS.get('cc.garpop') === day) return;
-  LS.set('cc.garpop', day); dlg = { type: 'gar' }; render();
+  const { ack, list } = garPending(); if (!list.length) return;
+  list.forEach(x => { ack[garKey(x)] = garStage(x); });
+  LS.set('cc.garack', JSON.stringify(ack)); dlg = { type: 'gar', keys: list.map(garKey) }; render();
 }
 
 function vAchats() {
@@ -1033,7 +1040,7 @@ function vReglages() {
     <div class="grid3"><label>Après impôt PEA${fld('settings.taxes.pea', s.taxes.pea, { t: 'pct' })}</label><label>Après impôt AV${fld('settings.taxes.av', s.taxes.av, { t: 'pct' })}</label><label>Après impôt CTO${fld('settings.taxes.cto', s.taxes.cto, { t: 'pct' })}</label></div>`, '', '', 'Part qui reste après impôt (82,8 % = 17,2 % prélevés). Ces taux étaient écrits en dur dans l\'Excel : à valider.')}
   ${sec('Nom de l\'appli', `<label>Nom affiché${fld('settings.appName', s.appName || '', { t: 'text' })}</label><p class="hint">Laisse vide pour « ${APP_DEFAULT} ». Visible dans le titre de la page, le menu et la carte d\'accueil. Le nom de l\'icône installée (écran d\'accueil, bureau) ne change pas : il faut réinstaller l\'appli pour qu\'elle le reprenne.</p>`)}
   ${sec('Qui paie les dépenses « pour » quelqu\'un', `<label class="chk"><input type="checkbox" data-p="settings.payeCouple" data-t="chk" ${s.payeCouple ? 'checked' : ''}><span>Ces dépenses sont payées par le couple</span></label><p class="hint">Désactivé : une dépense « pour ${esc(N('a'))} » est payée avec le salaire de ${esc(N('a'))} et réduit son reste pour épargne. Activé : elle est juste attribuée à ${esc(N('a'))} (pour suivre qui en profite), mais payée par le couple, donc répartie au prorata des salaires. Les jauges Quotidien et Loisirs restent « pour la personne » ; seul le reste pour épargne change.</p>`)}
-  ${sec('Alerte de garantie', `<label>Prévenir X mois avant la fin${fld('settings.garAlerte', garAlerte())}</label><p class="hint">Une fenêtre s\'ouvre au plus une fois par jour à l\'ouverture de l\'appli quand une garantie se termine dans ce délai. 0 = pas d\'alerte.</p>`)}
+  ${sec('Alerte de garantie', `<label>Prévenir X mois avant la fin${fld('settings.garAlerte', garAlerte())}</label><p class="hint">À l\'ouverture de l\'appli, une fenêtre prévient une seule fois quand une garantie entre dans ce délai, puis une seconde fois à 7 jours de la fin. 0 = pas d\'alerte. Chaque appareil prévient de son côté.</p>`)}
   ${sec('Carte d\'accueil', `<label class="chk"><input type="checkbox" data-act="door" ${Door.enabled() ? 'checked' : ''}><span>Afficher la carte à l\'ouverture de l\'appli</span></label><p class="hint">Les montants restent cachés tant que tu n\'as pas retourné la carte. Elle se referme après 2 minutes en arrière-plan. Ce n\'est pas un verrou : ça protège des regards, pas de quelqu\'un qui a ton téléphone déverrouillé.</p>`)}
   ${sec('À propos', kv('Version de l\'appli', APP_BUILD), '', '', 'Si tu ne vois pas une nouveauté, ce numéro te dit quelle version ton appareil affiche.')}
   ${sec('Vider cet appareil', `<button class="btn danger" data-act="reset">Effacer les données locales</button>`, '', '', 'Ne touche pas au dépôt GitHub.')}`;
@@ -1080,11 +1087,11 @@ async function doImport() {
 }
 function dlgHtml() {
   if (dlg.type === 'gar') {
-    const L = garSoon();
+    const L = garList().filter(x => x.fin && dlg.keys.includes(garKey(x))).sort((a, b) => a.fin - b.fin);
     return `<div class="sheet" data-close><div class="sheetin" role="dialog" aria-label="Garanties bientôt terminées"><div class="grab"></div><h3>Garanties bientôt terminées</h3><div class="sbody">
       ${L.map(x => `<div class="kv"><span style="display:block">${esc(x.g.label || 'Sans nom')}${x.g.who ? ' ' + chip(x.g.who) : ''}<small style="display:block;color:var(--mu);margin-top:2px">${frDay(x.fin)}${safeUrl(x.g.lien) ? ` · <a href="${esc(safeUrl(x.g.lien))}" target="_blank" rel="noopener noreferrer">facture</a>` : ''}</small></span><b class="neg">${garDelai(x)}</b></div>`).join('')}
       <p class="hint">Si un objet a un défaut, c'est le moment de le faire valoir.</p></div>
-      <div class="btnrow"><button class="btn" data-done>Plus tard</button><button class="btn pri grow" data-go="garanties">Voir les garanties</button></div></div></div>`;
+      <div class="btnrow"><button class="btn" data-done>OK</button><button class="btn pri grow" data-go="garanties">Voir les garanties</button></div></div></div>`;
   }
   if (dlg.type === 'out') return `<div class="sheet" data-close><div class="sheetin" role="dialog" aria-label="Partager la synchronisation"><div class="grab"></div><h3>Partager la synchronisation</h3><div class="sbody">
     <div class="qrbox">${qrSvg(dlg.url)}</div>
@@ -1236,7 +1243,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '15102026-b';
+const APP_BUILD = '15102026-c';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
