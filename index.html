@@ -46,6 +46,8 @@ h3{font-size:.95rem;margin:0 0 6px;font-weight:800}h4{margin:14px 0 6px;font-siz
 /* barres */
 .hb{display:grid;gap:9px}.hbr{display:grid;grid-template-columns:minmax(0,7.2rem) minmax(0,1fr) auto;gap:8px;align-items:center;font-size:.86rem}
 .hl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hbt{height:12px;border-radius:7px;background:var(--track);overflow:hidden}.hbt i{display:block;height:100%;border-radius:7px}.hbr b{font-weight:800;white-space:nowrap}
+.ayear{scroll-margin-top:calc(76px + env(safe-area-inset-top))}.ayear.flash{animation:flash 1.2s ease-out}@keyframes flash{0%,35%{box-shadow:0 0 0 3px var(--ac)}100%{box-shadow:0 0 0 3px transparent}}
+.vbc[data-goto]{cursor:pointer}
 .vb{display:flex;align-items:flex-end;justify-content:space-around;gap:8px;padding-top:6px}.vbc{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0}.vbc b{font-size:.78rem}.vbb{width:100%;max-width:56px;border-radius:10px 10px 4px 4px}.vbc span{font-size:.78rem;color:var(--mu)}
 .line{width:100%;height:auto;display:block}.lax{display:flex;justify-content:space-between;align-items:baseline;font-size:.78rem;color:var(--mu)}.lax b{color:var(--ink);font-size:.95rem}
 /* jauges & cartes */
@@ -682,7 +684,7 @@ const EMO2ICO = { '🛒': 'cart', '🎉': 'smile', '💼': 'briefcase', '🏖️
 const stripEmoji = s => String(s).replace(/^(?:\p{Extended_Pictographic}\uFE0F?\s*)+/u, '');
 const sign = v => v < 0 ? 'neg' : 'pos';
 const info = t => `<button class="info" data-tip="${esc(t)}" aria-label="Information">i</button>`;
-const sec = (title, body, right = '', cls = '', tip = '') => `<section class="sec ${cls}"><header><div class="ht"><h2>${stripEmoji(title)}</h2>${tip ? info(tip) : ''}</div>${right ? `<span class="tot">${right}</span>` : ''}</header>${body}</section>`;
+const sec = (title, body, right = '', cls = '', tip = '', attrs = '') => `<section class="sec ${cls}" ${attrs}><header><div class="ht"><h2>${stripEmoji(title)}</h2>${tip ? info(tip) : ''}</div>${right ? `<span class="tot">${right}</span>` : ''}</header>${body}</section>`;
 const kv = (k, v, cls = '', tip = '') => `<div class="kv"><span>${k}${tip ? info(tip) : ''}</span><b class="${cls}">${v}</b></div>`;
 const whoOpts = shared => [...(shared ? [['', 'Commun']] : []), ['a', N('a')], ['b', N('b')]];
 const chip = w => w === 'a' ? `<i class="chip pa">${esc(N('a'))}</i>` : w === 'b' ? `<i class="chip pb">${esc(N('b'))}</i>` : '';
@@ -731,7 +733,7 @@ function hbars(items) {
 }
 function vbars(items) {
   const max = Math.max(1, ...items.map(i => Math.abs(i.v))), H = 110;
-  return `<div class="vb">${items.map(d => { const h = Math.max(3, Math.abs(d.v) / max * H); return `<div class="vbc"><b class="${d.v < 0 ? 'neg' : 'pos'}">${eur(d.v)}</b><div class="vbb" style="height:${h}px;background:${d.c || (d.v < 0 ? 'linear-gradient(var(--neg),#e0a49c)' : 'linear-gradient(var(--mint),#a9d4c3)')}"></div><span>${esc(d.l)}</span></div>`; }).join('')}</div>`;
+  return `<div class="vb">${items.map(d => { const h = Math.max(3, Math.abs(d.v) / max * H); return `<div class="vbc" ${d.go ? `data-goto="${d.go}" role="button" tabindex="0" aria-label="Aller à ${esc(d.l)}"` : ''}><b class="${d.v < 0 ? 'neg' : 'pos'}">${eur(d.v)}</b><div class="vbb" style="height:${h}px;background:${d.c || (d.v < 0 ? 'linear-gradient(var(--neg),#e0a49c)' : 'linear-gradient(var(--mint),#a9d4c3)')}"></div><span>${esc(d.l)}</span></div>`; }).join('')}</div>`;
 }
 function lineChart(pts, now) {
   if (pts.length < 2) return '';
@@ -1002,11 +1004,11 @@ function garBadge(it) {
   return ` <i class="chip bk">Garantie${x.fin ? ' ' + (x.st === 'exp' ? 'expirée' : '→ ' + x.fin.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })) : ''}</i>`;
 }
 function vAchats() {
-  const bars = R.achats.map(y => ({ l: y.annee, v: y.solde }));
+  const bars = R.achats.map((y, i) => ({ l: y.annee, v: y.solde, go: 'ay' + i }));
   const blocks = S.achats.map((y, i) => {
     const t = R.achats[i];
     const items = y.items.map((it, j) => row(`achats.${i}.items.${j}`, num(it.vente) > 0 && !num(it.achat) ? 'plus' : 'bag', it.label, chip(it.who) + garBadge(it), num(it.vente) > 0 && !num(it.achat) ? '+' + eur(num(it.vente)) : '− ' + eur(num(it.achat)), num(it.vente) > 0 && !num(it.achat) ? 'pos' : '')).join('');
-    return sec(`<button class="yh" data-edit="achats.${i}" aria-label="Modifier ou supprimer l'année">${esc(y.annee)}<span class="yi">${ico('pencil')}</span></button>`, items + addBtn(`achats.${i}.items`, 'Ligne') + kv('Achats', eur(t.achats)) + kv('Ventes', eur(t.ventes)) + kv('Solde', eur(t.solde), sign(t.solde)), eur(t.solde));
+    return sec(`<button class="yh" data-edit="achats.${i}" aria-label="Modifier ou supprimer l'année">${esc(y.annee)}<span class="yi">${ico('pencil')}</span></button>`, items + addBtn(`achats.${i}.items`, 'Ligne') + kv('Achats', eur(t.achats)) + kv('Ventes', eur(t.ventes)) + kv('Solde', eur(t.solde), sign(t.solde)), eur(t.solde), 'ayear', '', `data-ay="ay${i}"`);
   }).reverse().join('');                      // du plus récent au plus ancien
   return `<section class="hero small"><small>Solde cumulé achats / ventes</small><div class="big">${eur(R.achatsSolde)}</div></section>
     ${sec('Solde par année', vbars(bars), addPill('data-addyearachat', 'Année'), 'enter achats-top')}${blocks}`;
@@ -1266,7 +1268,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '19102026-a';
+const APP_BUILD = '19102026-b';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1585,7 +1587,7 @@ function toggleHide() {
   bump(document.querySelector('[data-hide]'));                       // même rebond que les autres cartes, sur la carte réaffichée
   toast(HIDE ? 'Montants masqués (clique sur la carte pour les réafficher)' : 'Montants affichés');
 }
-document.addEventListener('keydown', e => { if (e.target.matches && e.target.matches('[data-hide]') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleHide(); } });
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.vbc[data-goto]')) { e.preventDefault(); e.target.click(); return; } if (e.target.matches && e.target.matches('[data-hide]') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleHide(); } });
 document.addEventListener('click', async e => {
   if (Date.now() < NOCLICK_UNTIL) return;
   if (e.target.closest('[data-hide]') && !e.target.closest('[data-tip],button,input,select,label,a')) { toggleHide(); return; }
@@ -1595,6 +1597,8 @@ document.addEventListener('click', async e => {
   if (hole) { const w = hole.closest('.donutw'); donutTap(w, null); bump(w.querySelector('.dsvg')); return; }
   const sg = e.target.closest('circle.seg, .dleg li');
   if (sg) { const w = sg.closest('.donutw'); donutTap(w, +sg.dataset.i); bump(w.querySelector('.dsvg')); return; }
+  const gt = e.target.closest('[data-goto]');
+  if (gt) { const tg = document.querySelector(`[data-ay="${gt.dataset.goto}"]`); if (tg) { tg.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth', block: 'start' }); tg.classList.remove('flash'); void tg.offsetWidth; tg.classList.add('flash'); } }
   const card = e.target.closest('.cat,.person,.hero,.pm1,.dsvg,.vbc,.hbr,.prow,.split .kv,.pmain,.salc,.ct');
   if (card && !e.target.closest('button,input,select,label')) bump(card);
   const t = e.target.closest('button,[data-close]'); if (!t) return;
