@@ -240,6 +240,7 @@ small.mu{color:var(--mu)!important;font-weight:600}
 /* ---- v10 : tuiles de cours sur 2 lignes maximum, bouton déplier / replier ---- */
 .ctg{position:relative}
 .ctg.collapsed{overflow:hidden;max-height:150px}
+.cours>header{align-items:center}.hbtns{display:flex;align-items:center;gap:8px;flex:none}
 .ctgbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.ctgbar .legend2{margin-top:0}
 .ctgmore{display:inline-flex;align-items:center;gap:4px;flex:none;height:30px;padding:0 10px 0 13px;border:0;border-radius:99px;background:var(--in);color:var(--ac);font:inherit;font-size:.78rem;font-weight:700;cursor:pointer;line-height:1}
 .ctgmore[hidden]{display:none}.ctgmore .ic{width:15px;height:15px;stroke-width:2.6}.ctgmore:active{transform:scale(.96)}
@@ -875,8 +876,8 @@ function coursPanel(P, keys) {
   const errs = Object.entries(LIVE_ERR).filter(([, m]) => m), ed = LS.get('cc.etfdate');
   const st = metalsState === 'busy' ? (LIVE_MSG || 'mise à jour…') : (ed ? 'dernière mise à jour des cours : ' + fmtDT(ed) : 'aucune mise à jour des cours pour l\'instant');
   const leg = [['etf', 'ETF'], ['etc', 'ETC / métaux'], ['cry', 'Crypto']].filter(([c]) => present.has(c)).map(([c, l]) => `<span><i class="lg ${c}"></i>${l}</span>`).join('');
-  return `<section class="sec cours" data-person="${P}"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Quand l\'appli est ouverte, elle vérifie toutes les 5 minutes l\'âge des cours et lance une mise à jour dès qu\'ils ont plus de 15 minutes : en séance, et 24 h/24 si tu as un compte crypto (sinon 1 heure la nuit et le week-end). Un petit programme de ton dépôt GitHub privé les récupère en environ 15 secondes. Le planning automatique de GitHub sert de renfort, mais il n\'est pas garanti. Le bouton ↻ force une mise à jour immédiate (droit « Actions » du jeton nécessaire). Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique).\n\nPour réorganiser les tuiles : maintiens-en une appuyée (ou clique et glisse), puis déplace-la. L\'ordre est synchronisé sur tous tes appareils.')}</div><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></header>
-    <div class="ctg ${CTG_OPEN ? '' : 'collapsed'}">${sorted.map(t => t.html).join('')}</div><div class="ctgbar"><div class="legend2">${leg}</div><button class="ctgmore" data-ctg hidden aria-expanded="${CTG_OPEN}"></button></div><div class="mst" data-live>${st}</div>${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
+  return `<section class="sec cours" data-person="${P}"><header><div class="ht"><h2>Cours de ${esc(N(P))}</h2>${info('Quand l\'appli est ouverte, elle vérifie toutes les 5 minutes l\'âge des cours et lance une mise à jour dès qu\'ils ont plus de 15 minutes : en séance, et 24 h/24 si tu as un compte crypto (sinon 1 heure la nuit et le week-end). Un petit programme de ton dépôt GitHub privé les récupère en environ 15 secondes. Le planning automatique de GitHub sert de renfort, mais il n\'est pas garanti. Le bouton ↻ force une mise à jour immédiate (droit « Actions » du jeton nécessaire). Flèche = variation du jour (crypto : depuis 0 h UTC ; or et argent : sur 24 h, après une journée d\'historique).\n\nPour réorganiser les tuiles : maintiens-en une appuyée (ou clique et glisse), puis déplace-la. L\'ordre est synchronisé sur tous tes appareils.')}</div><div class="hbtns"><button class="ctgmore" data-ctg hidden aria-expanded="${CTG_OPEN}"></button><button class="refresh" data-act="metals" aria-label="Actualiser les cours">↻</button></div></header>
+    <div class="ctg ${CTG_OPEN ? '' : 'collapsed'}">${sorted.map(t => t.html).join('')}</div><div class="ctgbar"><div class="legend2">${leg}</div></div><div class="mst" data-live>${st}</div>${errs.map(([k, m]) => `<div class="mst neg"><b>${k}</b> : ${esc(m)}</div>`).join('')}</section>`;
 }
 function assetRow(key, i, a, base) {
   const perf = a.cout ? a.pv / a.cout : 0;
@@ -1265,7 +1266,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '15102026-d';
+const APP_BUILD = '19102026-a';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
