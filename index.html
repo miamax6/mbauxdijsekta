@@ -1295,7 +1295,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '27102026-i';
+const APP_BUILD = '27102026-j';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1791,7 +1791,7 @@ const Door = (() => {
     card.style.transform = `translate3d(0,0,${(lift * 44).toFixed(1)}px) matrix3d(${m.map(v => v.toFixed(5)).join(',')})`;
     const sx = Math.max(0.1, Math.hypot(R[0][0], R[1][0])), sy = Math.max(0.1, Math.hypot(R[0][1], R[1][1])), rot = Math.atan2(-R[1][0], R[0][0]);
     const nx = R[0][2], ny = R[1][2], nz = R[2][2];
-    shadow.style.transform = `translate(${(-nx * 26).toFixed(1)}px,${(26 + ny * 14 + lift * 14).toFixed(1)}px) rotate(${(-rot).toFixed(3)}rad) scale(${sx.toFixed(3)},${sy.toFixed(3)}) scale(${(0.97 - lift * 0.02).toFixed(3)})`;
+    shadow.style.transform = `translate(${(-nx * 26).toFixed(1)}px,${(26 + ny * 14 + lift * 14).toFixed(1)}px) rotate(${rot.toFixed(3)}rad) scale(${sx.toFixed(3)},${sy.toFixed(3)}) scale(${(0.97 - lift * 0.02).toFixed(3)})`;
     shadow.style.opacity = (0.3 + lift * 0.12) * (0.4 + 0.6 * Math.abs(nz));
     faces.forEach((f, i) => {
       const k = i ? -1 : 1, fz = k * nz, spec = Math.pow(Math.max(0, (k * nx * -0.35 + k * ny * 0.45 + fz * 0.82) / 0.8), 7);
