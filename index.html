@@ -11,7 +11,7 @@
 <link rel="shortcut icon" href="favicon.ico?v=3">
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=3">
 <link rel="manifest" href="manifest.webmanifest">
-<style>:root{--bg:#eef1f3;--sf:#fff;--ink:#1c2733;--mu:#66727e;--ln:#e0e5e9;--in:#f3f5f7;--track:#e6eaee;--pos:#2a8562;--neg:#b8483d;--ac:#2f6b82;--ac2:#4a8ba3;--ca:#c06a38;--cat:#a9521f;--cb:#e3cc78;--cbt:#8f7620;--onb:#3a2c00;--mint:#5aa58a;--coral:#c8695e;--shadow:0 4px 16px rgba(30,50,70,.08)}
+<style>:root{--bg:#e8e2d5;--sf:#f7f3ea;--ink:#1c2733;--mu:#646a6d;--ln:#d9d1c0;--in:#ede7da;--track:#ded6c5;--pos:#2a8562;--neg:#b8483d;--ac:#2f6b82;--ac2:#4a8ba3;--ca:#c06a38;--cat:#a9521f;--cb:#e3cc78;--cbt:#8f7620;--onb:#3a2c00;--mint:#5aa58a;--coral:#c8695e;--shadow:0 4px 16px rgba(70,55,30,.10)}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#12181d;--sf:#1b242b;--ink:#e8eef2;--mu:#98a6b1;--ln:#2a353e;--in:#151d23;--track:#26313a;--pos:#5fc59f;--neg:#e58a7e;--ac:#7db3c8;--ac2:#5f97ad;--ca:#d9834f;--cat:#e79a6a;--cb:#e6d078;--cbt:#e6d078;--onb:#2a2000;--shadow:0 4px 16px rgba(0,0,0,.35)}}
 :root[data-theme=dark]{--bg:#12181d;--sf:#1b242b;--ink:#e8eef2;--mu:#98a6b1;--ln:#2a353e;--in:#151d23;--track:#26313a;--pos:#5fc59f;--neg:#e58a7e;--ac:#7db3c8;--ac2:#5f97ad;--ca:#d9834f;--cat:#e79a6a;--cb:#e6d078;--cbt:#e6d078;--onb:#2a2000;--shadow:0 4px 16px rgba(0,0,0,.35)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
@@ -1280,7 +1280,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '27102026-c';
+const APP_BUILD = '27102026-d';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
