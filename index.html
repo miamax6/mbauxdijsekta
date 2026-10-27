@@ -13,7 +13,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <style>:root{--bg:#eef1f3;--sf:#fff;--ink:#1c2733;--mu:#66727e;--ln:#e0e5e9;--in:#f3f5f7;--track:#e6eaee;--pos:#2a8562;--neg:#b8483d;--ac:#2f6b82;--ac2:#4a8ba3;--ca:#c06a38;--cat:#a9521f;--cb:#e3cc78;--cbt:#8f7620;--onb:#3a2c00;--mint:#5aa58a;--coral:#c8695e;--shadow:0 4px 16px rgba(30,50,70,.08)}
 @media (prefers-color-scheme:dark){:root{--bg:#12181d;--sf:#1b242b;--ink:#e8eef2;--mu:#98a6b1;--ln:#2a353e;--in:#151d23;--track:#26313a;--pos:#5fc59f;--neg:#e58a7e;--ac:#7db3c8;--ac2:#5f97ad;--ca:#d9834f;--cat:#e79a6a;--cb:#e6d078;--cbt:#e6d078;--onb:#2a2000;--shadow:0 4px 16px rgba(0,0,0,.35)}}
-*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;background:var(--bg)}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Avenir Next","Segoe UI Variable","Segoe UI",system-ui,sans-serif;font-variant-numeric:tabular-nums;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 #app{max-width:680px;margin:0 auto}
 .top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
@@ -103,7 +103,7 @@ h3{font-size:.95rem;margin:0 0 6px;font-weight:800}h4{margin:14px 0 6px;font-siz
 .warnbox{border:2px solid var(--neg);border-radius:14px;padding:12px;margin-top:8px}
 /* navigation et fiches */
 .nav{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:6;display:flex;max-width:660px;margin:0 auto;background:var(--sf);border-radius:24px;padding:6px;box-shadow:0 8px 24px rgba(30,50,70,.18)}
-.nav::after{content:"";position:absolute;z-index:-1;left:-50vw;right:-50vw;top:-8px;bottom:calc(-10px - env(safe-area-inset-bottom));background:var(--bg);box-shadow:0 -10px 12px var(--bg);pointer-events:none}   /* bande pleine derrière la barre : plus rien ne défile visiblement autour d'elle */
+.nav::after{content:"";position:absolute;z-index:-1;left:-50vw;right:-50vw;top:-8px;bottom:-240px;background:var(--bg);box-shadow:0 -10px 12px var(--bg);pointer-events:none}   /* bande pleine derrière la barre : plus rien ne défile visiblement autour d'elle */
 .tab{flex:1;border:0;background:transparent;color:var(--mu);font:inherit;font-size:.7rem;font-weight:700;display:grid;justify-items:center;gap:0;padding:6px 2px;border-radius:18px;cursor:pointer;transition:background .18s cubic-bezier(.23,1,.32,1)}
 .te{display:grid;place-items:center;height:26px}.te .ic{width:24px;height:24px}.tab.on{background:color-mix(in srgb,var(--ac) 14%,transparent);color:var(--ac)}
 .sheet{position:fixed;inset:0;z-index:8;background:rgba(15,22,30,.5);display:flex;align-items:flex-end;animation:fade .2s ease-out backwards}
@@ -1270,7 +1270,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '27102026-a';
+const APP_BUILD = '27102026-b';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
