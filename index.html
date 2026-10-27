@@ -102,7 +102,8 @@ h3{font-size:.95rem;margin:0 0 6px;font-weight:800}h4{margin:14px 0 6px;font-siz
 .seg button.on{background:var(--ac);color:#fff}.seg.pers button.on.a{background:var(--ca);color:#fff}.seg.pers button.on.b{background:var(--cb);color:var(--onb)}
 .warnbox{border:2px solid var(--neg);border-radius:14px;padding:12px;margin-top:8px}
 /* navigation et fiches */
-.nav{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:6;display:flex;max-width:660px;margin:0 auto;background:color-mix(in srgb,var(--sf) 92%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:24px;padding:6px;box-shadow:0 8px 24px rgba(30,50,70,.18)}
+.nav{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:6;display:flex;max-width:660px;margin:0 auto;background:var(--sf);border-radius:24px;padding:6px;box-shadow:0 8px 24px rgba(30,50,70,.18)}
+.nav::after{content:"";position:absolute;z-index:-1;left:-50vw;right:-50vw;top:-8px;bottom:calc(-10px - env(safe-area-inset-bottom));background:var(--bg);box-shadow:0 -10px 12px var(--bg);pointer-events:none}   /* bande pleine derrière la barre : plus rien ne défile visiblement autour d'elle */
 .tab{flex:1;border:0;background:transparent;color:var(--mu);font:inherit;font-size:.7rem;font-weight:700;display:grid;justify-items:center;gap:0;padding:6px 2px;border-radius:18px;cursor:pointer;transition:background .18s cubic-bezier(.23,1,.32,1)}
 .te{display:grid;place-items:center;height:26px}.te .ic{width:24px;height:24px}.tab.on{background:color-mix(in srgb,var(--ac) 14%,transparent);color:var(--ac)}
 .sheet{position:fixed;inset:0;z-index:8;background:rgba(15,22,30,.5);display:flex;align-items:flex-end;animation:fade .2s ease-out backwards}
@@ -171,6 +172,7 @@ button.ct{cursor:pointer}button.ct:active{transform:scale(.97)}
   .mprods>*{margin:0}
   main>.seg,.mtop>.seg{max-width:460px}
   .nav{left:0;top:0;bottom:0;right:auto;width:214px;max-width:none;margin:0;border-radius:0;flex-direction:column;justify-content:flex-start;gap:4px;padding:78px 10px 16px;background:var(--sf);box-shadow:1px 0 0 var(--ln);backdrop-filter:none}
+  .nav::after{display:none}
   .nav::before{content:var(--appname,"Comptes du foyer");position:absolute;top:24px;left:22px;font-weight:800;font-size:1.05rem;letter-spacing:-.01em}
   .tab{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;flex:none;font-size:.95rem;padding:11px 14px}
   .te{height:auto}
@@ -1268,7 +1270,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '19102026-b';
+const APP_BUILD = '27102026-a';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
