@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<script>try{var t=localStorage.getItem("cc.theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script><meta name="theme-color" content="#2f6b82"><meta name="robots" content="noindex,nofollow">
+<script>try{var t=localStorage.getItem("cc.theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script><meta name="theme-color" content="#d5dde3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#12181d" media="(prefers-color-scheme: dark)"><meta name="robots" content="noindex,nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Comptes">
 <title>Comptes du foyer</title>
@@ -1202,9 +1202,23 @@ window.addEventListener('resize', () => { const d = isDesk(); if (d !== wasDesk)
 /* Thème : auto (suit le téléphone / l'ordinateur), clair ou sombre. Choix propre à l'appareil. */
 const THEMES = [['auto', 'auto', 'Automatique'], ['light', 'sun', 'Clair'], ['dark', 'moon', 'Sombre']];
 const getTheme = () => { const t = LS.get('cc.theme'); return t === 'light' || t === 'dark' ? t : 'auto'; };
-function applyTheme() { const t = getTheme(); if (t === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t; }
+function applyTheme() {
+  const t = getTheme(); if (t === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+  syncChrome();
+}
+/* Couleur de la barre de titre / barre d'état (Android, Windows) = fond de la page, selon le thème en cours */
+function syncChrome() {
+  try {
+    const c = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(); if (!c) return;
+    const ms = [...document.querySelectorAll('meta[name="theme-color"]')]; let m = ms[0];
+    if (!m) { m = document.createElement('meta'); m.name = 'theme-color'; document.head.appendChild(m); }
+    ms.slice(1).forEach(x => x.remove()); m.removeAttribute('media'); m.setAttribute('content', c);
+  } catch (e) {}
+}
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncChrome); } catch (e) {}
 function themeBtn() { const [, ic, lb] = THEMES.find(x => x[0] === getTheme()); return `<button class="thm" data-themecycle aria-label="Thème : ${lb}. Appuyer pour changer" title="Thème : ${lb}">${ico(ic)}</button>`; }
 function applyName() {
+  syncChrome();
   const n = appName(); document.title = n;
   document.documentElement.style.setProperty('--appname', JSON.stringify(n));
 }
@@ -1280,7 +1294,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '27102026-g';
+const APP_BUILD = '27102026-h';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1760,11 +1774,12 @@ const Door = (() => {
       }
       let e = qmul(t, qconj(st.q)); if (e[0] < 0) e = e.map(v => -v);
       const s2 = Math.hypot(e[1], e[2], e[3]), ang = 2 * Math.atan2(s2, e[0]), rv = s2 > 1e-6 ? [e[1] / s2 * ang, e[2] / s2 * ang, e[3] / s2 * ang] : [0, 0, 0];
-      const K = 70, C = 11;                                           // ressort un peu sous-amorti : léger rebond à l'arrivée
+      const K = 70, C = 14;                                           // ressort presque critique : un très léger rebond, sans balancement latéral à l'arrivée
       for (let i = 0; i < 3; i++) st.w[i] += (K * rv[i] - C * st.w[i]) * dt;
       const sp = Math.hypot(...st.w);
       if (sp > 1e-5) st.q = qnorm(qmul(qaxis(st.w[0], st.w[1], st.w[2], sp * dt), st.q));
-      if (st.target === 'back' && ang < 0.05 && sp < 0.35) { st.done = true; paint(); reveal(); return; }
+      st.n = (st.n || 0) + 1;
+      if (st.target === 'back' && ((ang < 0.012 && sp < 0.08) || st.n > 300)) { st.q = st.t.slice(); st.w = [0, 0, 0]; st.done = true; paint(); reveal(); return; }   // la carte est posée bien à plat avant de partir (pas de reste de mouvement)
     }
     st.lift = (st.lift || 0) + ((st.drag ? 1 : 0) - (st.lift || 0)) * Math.min(1, dt * 12);
     paint(); raf = requestAnimationFrame(loop);
@@ -1794,7 +1809,7 @@ const Door = (() => {
     if (main) [...main.children].forEach(c => /\bm(top|flow|prods)\b/.test(c.className) ? items.push(...c.children) : items.push(c));
     const head = document.querySelectorAll('.top,.nav');
     if (!rm && scene.animate) {
-      scene.animate([{ transform: 'translateY(0) scale(1)', opacity: 1 }, { transform: 'translateY(14vh) scale(.94)', opacity: 0 }], { duration: 520, easing: 'cubic-bezier(.5,0,.9,.5)', fill: 'forwards' });
+      scene.animate([{ transform: 'translate3d(0,0,0) scale(1)', opacity: 1 }, { transform: 'translate3d(0,14vh,0) scale(.94)', opacity: 0 }], { duration: 520, easing: 'cubic-bezier(.5,0,.9,.5)', fill: 'forwards' });
       el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 480, delay: 120, easing: 'ease-out', fill: 'forwards' });
       head.forEach(h => h.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: 250, fill: 'backwards' }));
       items.filter(it => it.getBoundingClientRect().top < innerHeight).forEach((it, i) => {
