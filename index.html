@@ -55,7 +55,7 @@ h3{font-size:.95rem;margin:0 0 6px;font-weight:800}h4{margin:14px 0 6px;font-siz
 .line{width:100%;height:auto;display:block}.lax{display:flex;justify-content:space-between;align-items:baseline;font-size:.78rem;color:var(--mu)}.lax b{color:var(--ink);font-size:.95rem}
 /* jauges & cartes */
 .gauge{position:relative;height:10px;border-radius:6px;background:var(--track);overflow:visible;margin:10px 0 3px}.gauge i{display:block;position:absolute;top:0;bottom:0;left:0;border-radius:6px}
-.gok{background:var(--mint)}.gko{background:var(--coral)}
+.gok{background:var(--mint)}.gko{background:var(--coral)}.cat .gauge i.fill{background:var(--k)}.cat .gauge{background:color-mix(in srgb,var(--k) 16%,var(--track))}
 .cats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .cat{background:var(--sf);border-radius:18px;padding:12px 10px;box-shadow:var(--shadow)}
 .cat h3{display:flex;flex-direction:column;gap:0;margin:0 0 4px;font-size:.88rem}.cat h3 span{font-size:1.4rem}.cat h3 small{color:var(--mu);font-weight:700;font-size:.76rem}
@@ -1295,7 +1295,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '28102026-a';
+const APP_BUILD = '28102026-b';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
