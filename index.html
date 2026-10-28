@@ -1039,6 +1039,7 @@ function vReglages() {
   const s = S.settings, st = { off: 'Non configurée', ok: 'À jour', dirty: 'Modifications à envoyer', busy: 'En cours', err: 'Erreur : ' + sync.msg, conflict: 'Conflit : version distante différente' }[sync.state];
   const conflict = sync.state === 'conflict' ? `<div class="warnbox"><b>Deux versions existent.</b><div class="btnrow"><button class="btn" data-act="keeplocal">Garder cet appareil</button><button class="btn" data-act="keepremote">Prendre la version distante</button></div></div>` : '';
   return `
+  ${sec('À propos', kv('Version de l\'appli', APP_BUILD), '', '', 'Si tu ne vois pas une nouveauté, ce numéro te dit quelle version ton appareil affiche.')}
   ${sec('Synchronisation chiffrée', `<ol class="steps"><li><b>Jeton d'accès</b> : créé sur github.com (Settings → Developer settings → Fine-grained tokens).</li>
       <li><b>Phrase secrète</b> : tu l'inventes ici. GitHub ne la connaît pas et ne la demande nulle part. Elle chiffre le fichier avant son envoi. Utilise la <u>même</u> sur chaque appareil.</li>
       <li>Appuie sur <b>Synchroniser maintenant</b>.</li></ol>
@@ -1063,7 +1064,6 @@ function vReglages() {
   ${sec('Qui paie les dépenses « pour » quelqu\'un', `<label class="chk"><input type="checkbox" data-p="settings.payeCouple" data-t="chk" ${s.payeCouple ? 'checked' : ''}><span>Ces dépenses sont payées par le couple</span></label><p class="hint">Désactivé : une dépense « pour ${esc(N('a'))} » est payée avec le salaire de ${esc(N('a'))} et réduit son reste pour épargne. Activé : elle est juste attribuée à ${esc(N('a'))} (pour suivre qui en profite), mais payée par le couple, donc répartie au prorata des salaires. Les jauges Quotidien et Loisirs restent « pour la personne » ; seul le reste pour épargne change.</p>`)}
   ${sec('Alerte de garantie', `<label>Prévenir X mois avant la fin${fld('settings.garAlerte', garAlerte())}</label><p class="hint">À l\'ouverture de l\'appli, une fenêtre prévient une seule fois quand une garantie entre dans ce délai, puis une seconde fois à 7 jours de la fin. 0 = pas d\'alerte. Chaque appareil prévient de son côté.</p>`)}
   ${sec('Carte d\'accueil', `<label class="chk"><input type="checkbox" data-act="door" ${Door.enabled() ? 'checked' : ''}><span>Afficher la carte à l\'ouverture de l\'appli</span></label><p class="hint">Les montants restent cachés tant que tu n\'as pas retourné la carte. Elle se referme après 2 minutes en arrière-plan. Ce n\'est pas un verrou : ça protège des regards, pas de quelqu\'un qui a ton téléphone déverrouillé.</p>`)}
-  ${sec('À propos', kv('Version de l\'appli', APP_BUILD), '', '', 'Si tu ne vois pas une nouveauté, ce numéro te dit quelle version ton appareil affiche.')}
   ${sec('Vider cet appareil', `<button class="btn danger" data-act="reset">Effacer les données locales</button>`, '', '', 'Ne touche pas au dépôt GitHub.')}`;
 }
 
@@ -1295,7 +1295,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '28102026-e';
+const APP_BUILD = '28102026-f';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
