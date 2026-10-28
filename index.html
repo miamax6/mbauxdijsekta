@@ -809,7 +809,7 @@ function persRow(k) {
   return `<div class="prow p${k}"><div class="ph"><b>${esc(N(k))}</b><span>${eur(part)} net · ${pc(R.ratio[k], 1)}</span></div><div class="pg">
     <div><span>Quotidien</span><b>${eur(q)}</b>${gauge(q, part * 0.5, true, tipCat('Quotidien de ' + N(k), '50 %', q, part, part * 0.5))}<em>cible ${eur(part * 0.5)}</em></div>
     <div><span>Loisirs</span><b>${eur(l)}</b>${gauge(l, part * 0.3, true, tipCat('Loisirs de ' + N(k), '30 %', l, part, part * 0.3))}<em>cible ${eur(part * 0.3)}</em></div>
-    <div><span>Reste pour épargne</span><b class="${sign(d)}">${eur(d)}</b>${gauge(d, part * 0.2, false, tipReste(d, part, part * 0.2))}<em>cible ${eur(part * 0.2)}</em></div></div></div>`;
+    <div><span>Reste pour épargne</span><b class="${d < 0 ? 'neg' : ''}">${eur(d)}</b>${gauge(d, part * 0.2, false, tipReste(d, part, part * 0.2))}<em>cible ${eur(part * 0.2)}</em></div></div></div>`;
 }
 function vBudget() {
   const toggle = `<div class="seg" role="tablist"><button class="${bmode === 'tableau' ? 'on' : ''}" data-bmode="tableau">Tableau de bord</button><button class="${bmode === 'saisie' ? 'on' : ''}" data-bmode="saisie">Détails</button></div>`;
@@ -1295,7 +1295,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '28102026-c';
+const APP_BUILD = '28102026-d';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
