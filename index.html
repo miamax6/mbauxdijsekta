@@ -343,7 +343,7 @@ const EMPTY_STATE = () => ({
   settings: {
     noms: { a: 'Moi', b: 'Conjoint·e' },
     appName: '', payeCouple: false, garAlerte: 2,
-    impotTaux: { a: 0, b: 0 },
+    impotTaux: { a: 0, b: 0 }, imposableRatio: { a: 1.1, b: 1.1 },
     taxes: { pea: 0.828, av: 0.828, cto: 0.7 },
     livretA: 0.015,
     credit: { mensualite: 0, nbMois: 0, debut: '' },
@@ -434,7 +434,7 @@ function calc(S, now = new Date(), cours = null, quotes = null) {
   const cs = (cours && num(cours.orOnce) > 0) ? cours : cfg.cours; R.cours = cs;
   // --- Revenus
   R.brut = { a: 0, b: 0 }; R.imposable = { a: 0, b: 0 };
-  S.salaires.forEach(s => { R.brut[s.who] += num(s.montant); if (s.imposable) R.imposable[s.who] += num(s.netImposable) > 0 ? num(s.netImposable) : num(s.montant); });
+  S.salaires.forEach(s => { R.brut[s.who] += num(s.montant); if (s.imposable) R.imposable[s.who] += num(s.netImposable) > 0 ? num(s.netImposable) : num(s.montant) * (num((cfg.imposableRatio || {})[s.who]) || 1.1); });
   R.impots = { a: R.imposable.a * num(cfg.impotTaux.a), b: R.imposable.b * num(cfg.impotTaux.b) };
   R.part = { a: R.brut.a - R.impots.a, b: R.brut.b - R.impots.b };
   R.brutTotal = R.brut.a + R.brut.b;
@@ -561,7 +561,11 @@ const set = (o, p, v) => { const draft = p.startsWith('@draft'), ks = p.split('.
 /* ---------- Persistance locale + synchro ---------- */
 function saveLocal() { LS.set('cc.state', JSON.stringify(S)); LS.set('cc.meta', JSON.stringify(meta)); }
 /* Ancienne version : espèces du compte-titres saisies à la main -> versements reconstitués depuis les achats */
-function migrate(s) { const a = migrateCto(s), b = migrateAchats(s); return a || b; }
+function migrateRatio(s) {                                       // ratio « net imposable ÷ net payé » par défaut (modifiable dans Revenus)
+  if (!s.settings || (s.settings.imposableRatio && s.settings.imposableRatio.a)) return false;
+  s.settings.imposableRatio = { a: 1.1, b: 1.1 }; return true;
+}
+function migrate(s) { const a = migrateCto(s), b = migrateAchats(s), c = migrateRatio(s); return a || b || c; }
 /* Années d'achats : « À venir » = années avant 2024 -> 2020 ; toujours classées par année */
 const uid = () => Math.random().toString(36).slice(2, 10);
 function migrateAchats(s) {
@@ -840,9 +844,10 @@ function vBudgetSaisie() {
   const lig = l => l.auto === 'vacances' ? R.vacMoy : num(l.montant);
   const list = (key, icon) => S[key].map((l, i) => row(`${key}.${i}`, icon, l.label, chip(l.who) + (l.auto ? ' auto' : ''), eur(lig(l)))).join('');
   const sal = S.salaires.map((s, i) => row(`salaires.${i}`, 'briefcase', s.label, chip(s.who) + (s.imposable ? (num(s.netImposable) > 0 ? ' · imposable sur ' + eur(num(s.netImposable)) : ' imposable') : ''), eur(num(s.montant)))).join('');
+  const rat = ['a', 'b'].map(k => `<div class="inl"><span>Base imposable ${nm(k)}</span>${fld(`settings.imposableRatio.${k}`, (S.settings.imposableRatio || {})[k] || 1.1, { t: 'pct' })}<em>% du net payé</em></div>`).join('');
   const imp = ['a', 'b'].map(k => `<div class="inl"><span>Taux d'impôt ${nm(k)}</span>${fld(`settings.impotTaux.${k}`, S.settings.impotTaux[k], { t: 'pct' })}<em>= ${eur(R.impots[k])}</em></div>`).join('');
   return `
-  ${sec('Revenus', sal + addBtn('salaires', 'Salaire') + imp, eur(R.brutTotal) + ' brut')}
+  ${sec('Revenus', sal + addBtn('salaires', 'Salaire') + rat + imp, eur(R.brutTotal) + ' brut')}
   ${sec('Virements compte commun', S.virements.map((v, i) => row(`virements.${i}`, 'bank', v.label, 'réparti au prorata', eur(num(v.montant)))).join('') + addBtn('virements', 'Virement'), eur(R.virementsTot))}
   ${sec('Quotidien', list('quotidien', 'cart') + addBtn('quotidien', 'Dépense'), eur(R.quot.tot))}
   ${sec('Loisirs', list('loisirs', 'smile') + addBtn('loisirs', 'Loisir'), eur(R.loisirs.tot))}
@@ -1295,7 +1300,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '28102026-g';
+const APP_BUILD = '28102026-h';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
