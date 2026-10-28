@@ -1295,7 +1295,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '28102026-f';
+const APP_BUILD = '28102026-g';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1537,6 +1537,18 @@ function closeOverlay() {
 }
 const isEsc = e => e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27;
 window.addEventListener('keydown', e => { if (isEsc(e) && closeOverlay()) { e.preventDefault(); e.stopPropagation(); } }, true);
+/* Entrée valide partout : dans une fenêtre (ajout, modification, dialogue) elle appuie sur le bouton principal ; hors fenêtre elle valide le champ. */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.defaultPrevented || e.isComposing || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+  const t = e.target; if (!t || !t.matches || !t.matches('input:not([type=button]):not([type=submit]):not([type=file]),[data-p]')) return;
+  if (t.tagName === 'TEXTAREA' || t.tagName === 'SELECT') return;
+  e.preventDefault();
+  if (typeof t.blur === 'function') t.blur();                    // déclenche « change » : la valeur est enregistrée avant la validation
+  const sh = t.closest('.sheet'); if (!sh) return;
+  setTimeout(() => { const b = document.querySelector('.sheet .btn.pri'); if (b) b.click(); }, 0);
+});
+/* Espace sur la page d'accueil verrouillée : la carte part (Windows / clavier) */
+document.addEventListener('keydown', e => { if ((e.key === ' ' || e.code === 'Space') && !e.defaultPrevented && !(e.target.matches && e.target.matches('input,textarea,select,button,a,[contenteditable]')) && Door.press()) e.preventDefault(); });
 
 /* ---------- Fermer une fenêtre en la glissant vers le bas ---------- */
 let SD = null;
@@ -1756,6 +1768,7 @@ const Door = (() => {
     st.w = span > 0.012 && now - d.hist[d.hist.length - 1][0] < 60 ? sw.map(v => v / span) : [0, 0, 0];
     decide(); start();
   }
+  function press() { if (!st || st.done || open || st.target === 'back' || st.drag || !el || el.style.display === 'none') return false; flick(0, 1, 0.15); return true; }
   function flick(wx, side, wz) { st.w = [wx * 7, side * 7.4, wz * 7]; st.swayAmp = 0; decide(); start(); }
   /* le côté d'arrivée est choisi une fois pour toutes au lâcher, d'après l'orientation prévue 0,45 s plus tard */
   function decide() {
@@ -1838,7 +1851,7 @@ const Door = (() => {
       else if (st && !st.done) start();
     });
   }
-  return { init, enabled };
+  return { init, enabled, press };
 })();
 
 /* ---------- Démarrage ---------- */
