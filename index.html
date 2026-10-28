@@ -429,12 +429,14 @@ function calcPlacement(p, cfg, now, quotes) {
            retraitMois: p.retrait ? Math.max(0, monthsBetween(now.toISOString().slice(0, 10), new Date(p.retrait))) : null };
 }
 
+/* Cas standard (sans mutuelle payée par l'employeur, tickets resto…) : net imposable ≈ net avant impôt + CSG/CRDS non déductibles (2,9 % du brut, soit ≈ 3,6 % du net) */
+const NET_IMPOSABLE_BASE = 1.036;
 function calc(S, now = new Date(), cours = null, quotes = null) {
   const cfg = S.settings, R = { cfg };
   const cs = (cours && num(cours.orOnce) > 0) ? cours : cfg.cours; R.cours = cs;
   // --- Revenus
   R.brut = { a: 0, b: 0 }; R.imposable = { a: 0, b: 0 };
-  S.salaires.forEach(s => { R.brut[s.who] += num(s.montant); if (s.imposable) R.imposable[s.who] += num(s.netImposable) > 0 ? num(s.netImposable) : num(s.montant); });
+  S.salaires.forEach(s => { R.brut[s.who] += num(s.montant); if (s.imposable) R.imposable[s.who] += num(s.netImposable) > 0 ? num(s.netImposable) : num(s.montant) * NET_IMPOSABLE_BASE; });
   R.impots = { a: R.imposable.a * num(cfg.impotTaux.a), b: R.imposable.b * num(cfg.impotTaux.b) };
   R.part = { a: R.brut.a - R.impots.a, b: R.brut.b - R.impots.b };
   R.brutTotal = R.brut.a + R.brut.b;
@@ -827,7 +829,7 @@ function vBudgetTableau() {
     <div class="pl">brut ${eur(R.brut[k])} · impôt estimé ${eur(R.impots[k])}</div><div class="pl">${pc(R.ratio[k], 1)} du net du foyer</div></div>`;
   return `
   <section class="hero small"><small>Net disponible par mois</small><div class="big">${eur(R.net)}</div><div class="hchips"><span>${eur(R.brutTotal)} brut</span><span>− ${eur(R.impots.a + R.impots.b)} d'impôt</span></div></section>
-  ${sec('Salaires', `<div class="two sal">${salc('a')}${salc('b')}</div>`, '', '', 'Net = net payé − impôt estimé. L\'impôt = taux (réglé dans « Détails ») × net imposable de la fiche de paie (ou le net payé si non renseigné). La part de chacun sert à répartir les dépenses communes au prorata des salaires nets.')}
+  ${sec('Salaires', `<div class="two sal">${salc('a')}${salc('b')}</div>`, '', '', 'Net = net payé − impôt estimé. L\'impôt = taux (réglé dans « Détails ») × net imposable de la fiche de paie (ou, si non renseigné, le net + 3,6 %). La part de chacun sert à répartir les dépenses communes au prorata des salaires nets.')}
   ${sec('Où part l\'argent', donut([{ l: 'Quotidien', v: R.quot.tot, c: '#4a6fa5' }, { l: 'Loisirs', v: R.loisirs.tot, c: '#4f9a94' }, { l: 'Reste pour épargne', v: Math.max(0, R.reste), c: '#86a862' }], { center: eur(R.net), top: 'net / mois' }), '', 'enter')}
   <div class="cats">${catCard('Quotidien', '50 %', R.quot.tot, R.cible.besoins, true, '', '', tipCat('Quotidien', '50 %', R.quot.tot, R.net, R.cible.besoins))}
     ${catCard('Loisirs', '30 %', R.loisirs.tot, R.cible.envies, true, `dont vacances ${eur(R.vacMoy)}`, '', tipCat('Loisirs', '30 %', R.loisirs.tot, R.net, R.cible.envies))}
@@ -1132,7 +1134,7 @@ function dlgHtml() {
 function specFor(path) {
   const who = sh => ['who', 'sel', 'Pour', whoOpts(sh)];
   let m;
-  if (/^salaires\.\d+$/.test(path)) return { title: 'Salaire', f: [['label', 'text', 'Libellé'], ['montant', 'num', 'Net payé par mois (€)'], who(false), ['imposable', 'chk', 'Soumis au calcul d\'impôt'], ['netImposable', 'num', 'Net imposable par mois (€) — sur la fiche de paie. Vide = on prend le net payé']] };
+  if (/^salaires\.\d+$/.test(path)) return { title: 'Salaire', f: [['label', 'text', 'Libellé'], ['montant', 'num', 'Net payé par mois (€)'], who(false), ['imposable', 'chk', 'Soumis au calcul d\'impôt'], ['netImposable', 'num', 'Net imposable par mois (€) — fiche de paie. Vide = net + 3,6 % (cas standard)']] };
   const cur = () => get(S, editing && editing.specPath === path ? editing.path : path);
   if (/^(quotidien|loisirs)\.\d+$/.test(path)) { const o = cur(); return { title: 'Dépense', f: [['label', 'text', 'Libellé'], ...(o.auto ? [] : [['montant', 'num', 'Montant mensuel (€)']]), who(true)], note: o.auto ? 'Le montant est calculé depuis les vacances.' : '' }; }
   if (/^garanties\.\d+$/.test(path)) return { title: 'Garantie', f: [['label', 'text', 'Objet'], ['dateAchat', 'date', 'Date d\'achat'], ['duree', 'num', 'Durée de la garantie (mois, ex : 24 = 2 ans)'], who(true), ['note', 'text', 'Magasin, n° de série… (facultatif)'], ['lien', 'text', 'Lien de la facture (OneDrive…, facultatif)']], link: 'lien', gar: true };
@@ -1295,7 +1297,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '28102026-g';
+const APP_BUILD = '28102026-i';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
