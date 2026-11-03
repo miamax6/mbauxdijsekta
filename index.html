@@ -1018,7 +1018,7 @@ function buyInit(k) {
 function buyPopup() {
   if (dlg || editing || document.documentElement.classList.contains('door') || !buyDay()) return;
   const todo = buyAccounts(pf).filter(k => !buyDone(k)); if (!todo.length) return;             // seulement les comptes de la personne dont l'onglet est ouvert
-  const today = new Date().toISOString().slice(0, 10), sk = 'cc.buyskip.' + pf; if (LS.get(sk) === today) return;
+  const today = new Date().toISOString().slice(0, 10), sk = 'cc.buyskip.' + pf; if (LS.get(sk) === today || LS.get('cc.buyno.' + pf) === thisMonth()) return;
   LS.set(sk, today);                                        // fermée sans valider : elle revient demain
   dlg = { type: 'buy', b: buyInit(todo[0]) }; render();
 }
@@ -1029,7 +1029,12 @@ function buyRead() {
 function buyCommit(more) {
   buyRead(); const b = dlg.b, p = S.placements[b.k], a = (p.actifs || [])[+b.ai], m = thisMonth(), cto = b.k === 'ctoA';
   if (!a) { toast('Choisis un ETF'); return; }
-  const qty = num(b.qty); if (qty <= 0) { toast('Indique la quantité achetée'); return; }
+  const qty = num(b.qty);
+  if (qty <= 0 && !more) {                                            // pas d'achat ce mois-ci : on garde seulement le versement (s'il est coché) et la popup ne revient plus ce mois-ci
+    if (b.hasVirt && b.vers && num(b.vmont) > 0) p.virements.push({ date: m, montant: num(b.vmont) });
+    LS.set('cc.buyno.' + p.who, m); dlg = null; commit(); toast(b.hasVirt && b.vers && num(b.vmont) > 0 ? 'Versement ajouté, pas d\'achat ce mois-ci' : 'Pas d\'achat ce mois-ci'); return;
+  }
+  if (qty <= 0) { toast('Indique la quantité achetée'); return; }
   if (cto && num(b.mont) <= 0) { toast('Indique le montant payé'); return; }
   if (!cto && num(b.pru) <= 0) { toast('Indique le nouveau prix de revient moyen'); return; }
   (a.lots = a.lots || []).push({ date: m, qty, ...(cto ? { montant: num(b.mont) } : {}) });
@@ -1046,7 +1051,7 @@ function buyHtml() {
     <p class="hint">${todo.length ? 'Pas encore d\'achat ce mois-ci : ' + todo.map(buyLbl).join(', ') + '.' : 'Tous les comptes ont déjà un achat ce mois-ci.'}</p>
     ${acc.length > 1 ? field('Compte', `<select class="f" data-bp="k">${acc.map(k => opt(k, buyLbl(k) + (buyDone(k) ? ' (déjà fait)' : ''), k === b.k)).join('')}</select>`) : ''}
     ${field('ETF acheté', `<select class="f" data-bp="ai">${p.actifs.map((a, i) => opt(i, a.nom || a.isin || 'Actif ' + (i + 1), i === +b.ai)).join('')}</select>`)}
-    ${field('Quantité achetée', `<input class="f" data-bp="qty" inputmode="decimal" autocomplete="off" value="${esc(b.qty)}">`)}
+    ${field('Quantité achetée <small>(vide = pas d\'achat ce mois-ci)</small>', `<input class="f" data-bp="qty" inputmode="decimal" autocomplete="off" value="${esc(b.qty)}">`)}
     ${cto ? field('Montant payé (€)', `<input class="f" data-bp="mont" inputmode="decimal" autocomplete="off" value="${esc(b.mont)}">`) : field('Nouveau prix de revient moyen (€)', `<input class="f" data-bp="pru" inputmode="decimal" autocomplete="off" value="${esc(b.pru)}">`)}
     ${b.hasVirt ? `<label class="chk"><input type="checkbox" data-bp="vers" ${b.vers ? 'checked' : ''}><span>Ajouter le versement du mois</span></label>${b.vers ? field('Montant versé (€)', `<input class="f" data-bp="vmont" inputmode="decimal" autocomplete="off" value="${esc(b.vmont)}">`) : ''}` : `<p class="hint">Versement du mois déjà enregistré.</p>`}
     </div><div class="btnrow"><button class="btn" data-done>Plus tard</button><button class="btn" data-act="buymore">+ Autre achat</button><button class="btn pri grow" data-act="buyok">Terminer</button></div></div></div>`;
@@ -1348,7 +1353,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '03112026-b';
+const APP_BUILD = '03112026-c';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
