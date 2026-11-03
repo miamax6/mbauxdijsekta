@@ -1003,8 +1003,8 @@ function garPending() {
 }
 /* ---------- Achat du mois (PEA / CTO) : popup à partir du 1er jour ouvré ---------- */
 const BUY_KEYS = ['peaA', 'peaB', 'ctoA'];
-const buyLbl = k => (k === 'ctoA' ? 'CTO' : S.placements[k].titre) + ' · ' + N(S.placements[k].who);
-const buyAccounts = () => BUY_KEYS.filter(k => S.placements[k] && (S.placements[k].actifs || []).length);
+const buyLbl = k => k === 'ctoA' ? 'CTO' : S.placements[k].titre;
+const buyAccounts = w => BUY_KEYS.filter(k => S.placements[k] && S.placements[k].who === w && (S.placements[k].actifs || []).length);   // comptes d'une personne
 const buyDone = k => (S.placements[k].actifs || []).some(a => (a.lots || []).some(l => l.date === thisMonth()));
 function buyDay(now = new Date()) {                                   // vrai à partir du 1er jour ouvré (lundi-vendredi) du mois
   const f = new Date(now.getFullYear(), now.getMonth(), 1); while (f.getDay() === 0 || f.getDay() === 6) f.setDate(f.getDate() + 1);
@@ -1017,9 +1017,9 @@ function buyInit(k) {
 }
 function buyPopup() {
   if (dlg || editing || document.documentElement.classList.contains('door') || !buyDay()) return;
-  const todo = buyAccounts().filter(k => !buyDone(k)); if (!todo.length) return;
-  const today = new Date().toISOString().slice(0, 10); if (LS.get('cc.buyskip') === today) return;
-  LS.set('cc.buyskip', today);                                        // fermée sans valider : elle revient demain
+  const todo = buyAccounts(pf).filter(k => !buyDone(k)); if (!todo.length) return;             // seulement les comptes de la personne dont l'onglet est ouvert
+  const today = new Date().toISOString().slice(0, 10), sk = 'cc.buyskip.' + pf; if (LS.get(sk) === today) return;
+  LS.set(sk, today);                                        // fermée sans valider : elle revient demain
   dlg = { type: 'buy', b: buyInit(todo[0]) }; render();
 }
 function buyRead() {
@@ -1036,11 +1036,11 @@ function buyCommit(more) {
   if (!cto) a.pru = num(b.pru);
   if (b.hasVirt && b.vers && num(b.vmont) > 0) p.virements.push({ date: m, montant: num(b.vmont) });
   const nom = a.nom || 'ETF';
-  if (more) { const todo = buyAccounts().filter(k => !buyDone(k)); dlg = { type: 'buy', b: buyInit(todo[0] || b.k) }; } else dlg = null;
+  if (more) { const todo = buyAccounts(p.who).filter(k => !buyDone(k)); dlg = { type: 'buy', b: buyInit(todo[0] || b.k) }; } else dlg = null;
   commit(); toast('Achat ajouté : ' + nom);
 }
 function buyHtml() {
-  const b = dlg.b, p = S.placements[b.k], acc = buyAccounts(), cto = b.k === 'ctoA', todo = acc.filter(k => !buyDone(k));
+  const b = dlg.b, p = S.placements[b.k], acc = buyAccounts(p.who), cto = b.k === 'ctoA', todo = acc.filter(k => !buyDone(k));
   const opt = (v, l, sel) => `<option value="${v}" ${sel ? 'selected' : ''}>${esc(l)}</option>`;
   return `<div class="sheet" data-close><div class="sheetin" role="dialog" aria-label="Achat du mois"><div class="grab"></div><h3>Achat du mois</h3><div class="sbody">
     <p class="hint">${todo.length ? 'Pas encore d\'achat ce mois-ci : ' + todo.map(buyLbl).join(', ') + '.' : 'Tous les comptes ont déjà un achat ce mois-ci.'}</p>
@@ -1348,7 +1348,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '03112026-a';
+const APP_BUILD = '03112026-b';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1708,7 +1708,7 @@ document.addEventListener('click', async e => {
   if (d.edit) { editing = { path: d.edit }; render(); return; }
   if ('ctg' in d) { CTG_OPEN = !CTG_OPEN; LS.set('cc.ctg', CTG_OPEN ? '1' : '0'); fitCours(); const g = document.querySelector('.ctg'); if (g) g.closest('.cours').scrollIntoView({ block: 'nearest' }); return; }
   if (d.ef) { ef = d.ef; LS.set('cc.ef', ef); render(); window.scrollTo(0, 0); return; }
-  if (d.pf) { pf = d.pf; LS.set('cc.pf', pf); render(); window.scrollTo(0, 0); return; }
+  if (d.pf) { pf = d.pf; LS.set('cc.pf', pf); render(); window.scrollTo(0, 0); buyPopup(); return; }
   if (d.bmode) { bmode = d.bmode; LS.set('cc.bmode', bmode); render(); window.scrollTo(0, 0); return; }
   if (d.gview !== undefined) { const k = +d.gview; closeEditing(true); view = 'garanties'; editing = { path: 'garanties.' + k }; render(); window.scrollTo(0, 0); return; }
   if (d.garfrom) {
