@@ -1001,6 +1001,56 @@ function garPending() {
   let ack = {}; try { ack = JSON.parse(LS.get('cc.garack') || '{}'); } catch (e) {}
   return { ack, list: garList().filter(x => garStage(x) > (ack[garKey(x)] || 0)).sort((a, b) => a.fin - b.fin) };
 }
+/* ---------- Achat du mois (PEA / CTO) : popup à partir du 1er jour ouvré ---------- */
+const BUY_KEYS = ['peaA', 'peaB', 'ctoA'];
+const buyLbl = k => (k === 'ctoA' ? 'CTO' : S.placements[k].titre) + ' · ' + N(S.placements[k].who);
+const buyAccounts = () => BUY_KEYS.filter(k => S.placements[k] && (S.placements[k].actifs || []).length);
+const buyDone = k => (S.placements[k].actifs || []).some(a => (a.lots || []).some(l => l.date === thisMonth()));
+function buyDay(now = new Date()) {                                   // vrai à partir du 1er jour ouvré (lundi-vendredi) du mois
+  const f = new Date(now.getFullYear(), now.getMonth(), 1); while (f.getDay() === 0 || f.getDay() === 6) f.setDate(f.getDate() + 1);
+  return now.getDate() >= f.getDate();
+}
+function buyInit(k) {
+  const p = S.placements[k], a = (p.actifs || [])[0] || {}, vs = Array.isArray(p.virements) ? p.virements : null;
+  const hasVirt = !!vs && !vs.some(v => v.date === thisMonth());
+  return { k, ai: 0, qty: '', mont: '', pru: a.pru ? String(a.pru) : '', hasVirt, vers: hasVirt, vmont: hasVirt && vs.length ? String(num(vs[vs.length - 1].montant)) : '' };
+}
+function buyPopup() {
+  if (dlg || editing || document.documentElement.classList.contains('door') || !buyDay()) return;
+  const todo = buyAccounts().filter(k => !buyDone(k)); if (!todo.length) return;
+  const today = new Date().toISOString().slice(0, 10); if (LS.get('cc.buyskip') === today) return;
+  LS.set('cc.buyskip', today);                                        // fermée sans valider : elle revient demain
+  dlg = { type: 'buy', b: buyInit(todo[0]) }; render();
+}
+function buyRead() {
+  const b = dlg && dlg.b; if (!b) return;
+  document.querySelectorAll('.sheet [data-bp]').forEach(el => { const k = el.dataset.bp; b[k] = el.type === 'checkbox' ? el.checked : el.value; });
+}
+function buyCommit(more) {
+  buyRead(); const b = dlg.b, p = S.placements[b.k], a = (p.actifs || [])[+b.ai], m = thisMonth(), cto = b.k === 'ctoA';
+  if (!a) { toast('Choisis un ETF'); return; }
+  const qty = num(b.qty); if (qty <= 0) { toast('Indique la quantité achetée'); return; }
+  if (cto && num(b.mont) <= 0) { toast('Indique le montant payé'); return; }
+  if (!cto && num(b.pru) <= 0) { toast('Indique le nouveau prix de revient moyen'); return; }
+  (a.lots = a.lots || []).push({ date: m, qty, ...(cto ? { montant: num(b.mont) } : {}) });
+  if (!cto) a.pru = num(b.pru);
+  if (b.hasVirt && b.vers && num(b.vmont) > 0) p.virements.push({ date: m, montant: num(b.vmont) });
+  const nom = a.nom || 'ETF';
+  if (more) { const todo = buyAccounts().filter(k => !buyDone(k)); dlg = { type: 'buy', b: buyInit(todo[0] || b.k) }; } else dlg = null;
+  commit(); toast('Achat ajouté : ' + nom);
+}
+function buyHtml() {
+  const b = dlg.b, p = S.placements[b.k], acc = buyAccounts(), cto = b.k === 'ctoA', todo = acc.filter(k => !buyDone(k));
+  const opt = (v, l, sel) => `<option value="${v}" ${sel ? 'selected' : ''}>${esc(l)}</option>`;
+  return `<div class="sheet" data-close><div class="sheetin" role="dialog" aria-label="Achat du mois"><div class="grab"></div><h3>Achat du mois</h3><div class="sbody">
+    <p class="hint">${todo.length ? 'Pas encore d\'achat ce mois-ci : ' + todo.map(buyLbl).join(', ') + '.' : 'Tous les comptes ont déjà un achat ce mois-ci.'}</p>
+    ${acc.length > 1 ? field('Compte', `<select class="f" data-bp="k">${acc.map(k => opt(k, buyLbl(k) + (buyDone(k) ? ' (déjà fait)' : ''), k === b.k)).join('')}</select>`) : ''}
+    ${field('ETF acheté', `<select class="f" data-bp="ai">${p.actifs.map((a, i) => opt(i, a.nom || a.isin || 'Actif ' + (i + 1), i === +b.ai)).join('')}</select>`)}
+    ${field('Quantité achetée', `<input class="f" data-bp="qty" inputmode="decimal" autocomplete="off" value="${esc(b.qty)}">`)}
+    ${cto ? field('Montant payé (€)', `<input class="f" data-bp="mont" inputmode="decimal" autocomplete="off" value="${esc(b.mont)}">`) : field('Nouveau prix de revient moyen (€)', `<input class="f" data-bp="pru" inputmode="decimal" autocomplete="off" value="${esc(b.pru)}">`)}
+    ${b.hasVirt ? `<label class="chk"><input type="checkbox" data-bp="vers" ${b.vers ? 'checked' : ''}><span>Ajouter le versement du mois</span></label>${b.vers ? field('Montant versé (€)', `<input class="f" data-bp="vmont" inputmode="decimal" autocomplete="off" value="${esc(b.vmont)}">`) : ''}` : `<p class="hint">Versement du mois déjà enregistré.</p>`}
+    </div><div class="btnrow"><button class="btn" data-done>Plus tard</button><button class="btn" data-act="buymore">+ Autre achat</button><button class="btn pri grow" data-act="buyok">Terminer</button></div></div></div>`;
+}
 function garPopup() {
   if (dlg || editing || document.documentElement.classList.contains('door')) return;
   const { ack, list } = garPending(); if (!list.length) return;
@@ -1109,6 +1159,7 @@ async function doImport() {
   LS.set('cc.cfg', JSON.stringify(CFG)); dlg = null; render(); toast('Synchronisation configurée : récupération des données…'); await pull(false); render();
 }
 function dlgHtml() {
+  if (dlg.type === 'buy') return buyHtml();
   if (dlg.type === 'gar') {
     const L = garList().filter(x => x.fin && dlg.keys.includes(garKey(x))).sort((a, b) => a.fin - b.fin);
     return `<div class="sheet" data-close><div class="sheetin" role="dialog" aria-label="Garanties bientôt terminées"><div class="grab"></div><h3>Garanties bientôt terminées</h3><div class="sbody">
@@ -1297,7 +1348,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '28102026-i';
+const APP_BUILD = '03112026-a';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1481,6 +1532,13 @@ function newItem(path) {
 }
 document.addEventListener('input', e => { if (e.target.dataset && e.target.dataset.sharecode !== undefined) shareCode = e.target.value; });
 document.addEventListener('change', e => {
+  if (e.target.dataset && e.target.dataset.bp !== undefined && dlg && dlg.type === 'buy') {
+    const k = e.target.dataset.bp, prevK = dlg.b.k; buyRead(); const b = dlg.b;
+    if (k === 'k' && b.k !== prevK) dlg.b = buyInit(b.k);
+    else if (k === 'ai') { const a = S.placements[b.k].actifs[+b.ai]; b.pru = a && a.pru ? String(a.pru) : ''; }
+    if (k === 'k' || k === 'ai' || k === 'vers') render();
+    return;
+  }
   if (e.target.dataset && e.target.dataset.sharecode !== undefined) { shareCode = e.target.value; e.target.value = showCode(normCode(shareCode)); return; }
   const sel = e.target.closest && e.target.closest('select[data-mp]');
   if (sel) { const w = sel.parentElement; set(S, sel.dataset.mp, w.querySelector('[data-part="y"]').value + '-' + w.querySelector('[data-part="m"]').value); commit(); return; }
@@ -1661,7 +1719,7 @@ document.addEventListener('click', async e => {
   }
   if (d.ganchor) { const g = get(S, d.ganchor); if (g) g.achat = d.gid; commit(); return; }
   if (d.themecycle !== undefined) { const i = THEMES.findIndex(x => x[0] === getTheme()), n = THEMES[(i + 1) % 3]; LS.set('cc.theme', n[0]); applyTheme(); render(); toast('Thème : ' + n[2].toLowerCase()); return; }
-  if (d.go) { view = d.go; moreOpen = false; dlg = null; closeEditing(false); render(); window.scrollTo(0, 0); return; }
+  if (d.go) { view = d.go; moreOpen = false; dlg = null; closeEditing(false); render(); window.scrollTo(0, 0); if (view === 'placements') buyPopup(); return; }
   if ('more' in d) { moreOpen = true; render(); return; }
   if (d.qv) { const arr = get(S, d.qv), m = thisMonth(); if (!arr.some(v => v.date === m)) arr.push({ date: m, montant: arr.length ? num(arr[arr.length - 1].montant) : 0 }); editing = { path: d.qv }; commit(); return; }
   if (d.add) { DRAFT = { arrPath: d.add, item: newItem(d.add) }; editing = { path: '@draft', specPath: d.add + '.0', draft: true }; render(); return; }          // la ligne n'existe pas encore dans les données
@@ -1670,6 +1728,8 @@ document.addEventListener('click', async e => {
   if (d.delete) { const ks = d.delete.split('.'), i = +ks.pop(); get(S, ks.join('.')).splice(i, 1); editing = null; commit(); return; }
   if ('addyear' in d) { const a = S.interets.annees; a.push(a[a.length - 1] + 1); commit(); return; }
   if ('addyearachat' in d) { const ys = S.achats.map(y => parseInt(y.annee)).filter(Number.isFinite); S.achats.push({ annee: String(ys.length ? Math.max(...ys) + 1 : new Date().getFullYear()), items: [] }); sortAchats(); commit(); return; }
+  if (d.act === 'buyok') { buyCommit(false); return; }
+  if (d.act === 'buymore') { buyCommit(true); return; }
   if (d.act === 'newcode') { shareCode = newShareCode(); render(); return; }
   if (d.act === 'sharegen') { if (!shareCode) shareCode = newShareCode(); openShare(); return; }
   if (d.act === 'shareimport') { doImport(); return; }
