@@ -1013,7 +1013,7 @@ function buyDay(now = new Date()) {                                   // vrai à
 function buyInit(k) {
   const p = S.placements[k], a = (p.actifs || [])[0] || {}, vs = Array.isArray(p.virements) ? p.virements : null;
   const hasVirt = !!vs && !vs.some(v => v.date === thisMonth());
-  return { k, ai: 0, qty: '', mont: '', pru: a.pru ? String(a.pru) : '', hasVirt, vers: hasVirt, vmont: hasVirt && vs.length ? String(num(vs[vs.length - 1].montant)) : '' };
+  return { k, ai: 0, qty: '', mont: '', pru: a.pru ? String(a.pru) : '', hasVirt, vmont: hasVirt && vs.length ? String(num(vs[vs.length - 1].montant)) : '' };
 }
 function buyPopup() {
   if (dlg || editing || document.documentElement.classList.contains('door') || !buyDay()) return;
@@ -1029,17 +1029,18 @@ function buyRead() {
 function buyCommit(more) {
   buyRead(); const b = dlg.b, p = S.placements[b.k], a = (p.actifs || [])[+b.ai], m = thisMonth(), cto = b.k === 'ctoA';
   if (!a) { toast('Choisis un ETF'); return; }
+  if (b.hasVirt && num(b.vmont) <= 0) { toast('Indique d\'abord le versement du mois'); return; }   // le versement passe avant tout achat
   const qty = num(b.qty);
   if (qty <= 0 && !more) {                                            // pas d'achat ce mois-ci : on garde seulement le versement (s'il est coché) et la popup ne revient plus ce mois-ci
-    if (b.hasVirt && b.vers && num(b.vmont) > 0) p.virements.push({ date: m, montant: num(b.vmont) });
-    LS.set('cc.buyno.' + p.who, m); dlg = null; commit(); toast(b.hasVirt && b.vers && num(b.vmont) > 0 ? 'Versement ajouté, pas d\'achat ce mois-ci' : 'Pas d\'achat ce mois-ci'); return;
+    if (b.hasVirt) p.virements.push({ date: m, montant: num(b.vmont) });
+    LS.set('cc.buyno.' + p.who, m); dlg = null; commit(); toast(b.hasVirt ? 'Versement ajouté, pas d\'achat ce mois-ci' : 'Pas d\'achat ce mois-ci'); return;
   }
   if (qty <= 0) { toast('Indique la quantité achetée'); return; }
   if (cto && num(b.mont) <= 0) { toast('Indique le montant payé'); return; }
   if (!cto && num(b.pru) <= 0) { toast('Indique le nouveau prix de revient moyen'); return; }
   (a.lots = a.lots || []).push({ date: m, qty, ...(cto ? { montant: num(b.mont) } : {}) });
   if (!cto) a.pru = num(b.pru);
-  if (b.hasVirt && b.vers && num(b.vmont) > 0) p.virements.push({ date: m, montant: num(b.vmont) });
+  if (b.hasVirt) p.virements.push({ date: m, montant: num(b.vmont) });
   const nom = a.nom || 'ETF';
   if (more) { const todo = buyAccounts(p.who).filter(k => !buyDone(k)); dlg = { type: 'buy', b: buyInit(todo[0] || b.k) }; } else dlg = null;
   commit(); toast('Achat ajouté : ' + nom);
@@ -1050,10 +1051,10 @@ function buyHtml() {
   return `<div class="sheet" data-close><div class="sheetin" role="dialog" aria-label="Achat du mois"><div class="grab"></div><h3>Achat du mois</h3><div class="sbody">
     <p class="hint">${todo.length ? 'Pas encore d\'achat ce mois-ci : ' + todo.map(buyLbl).join(', ') + '.' : 'Tous les comptes ont déjà un achat ce mois-ci.'}</p>
     ${acc.length > 1 ? field('Compte', `<select class="f" data-bp="k">${acc.map(k => opt(k, buyLbl(k) + (buyDone(k) ? ' (déjà fait)' : ''), k === b.k)).join('')}</select>`) : ''}
+    ${b.hasVirt ? field('Versement du mois (€) <small>obligatoire</small>', `<input class="f" data-bp="vmont" inputmode="decimal" autocomplete="off" value="${esc(b.vmont)}">`) : `<p class="hint">✓ Versement du mois déjà enregistré.</p>`}
     ${field('ETF acheté', `<select class="f" data-bp="ai">${p.actifs.map((a, i) => opt(i, a.nom || a.isin || 'Actif ' + (i + 1), i === +b.ai)).join('')}</select>`)}
     ${field('Quantité achetée <small>(vide = pas d\'achat ce mois-ci)</small>', `<input class="f" data-bp="qty" inputmode="decimal" autocomplete="off" value="${esc(b.qty)}">`)}
     ${cto ? field('Montant payé (€)', `<input class="f" data-bp="mont" inputmode="decimal" autocomplete="off" value="${esc(b.mont)}">`) : field('Nouveau prix de revient moyen (€)', `<input class="f" data-bp="pru" inputmode="decimal" autocomplete="off" value="${esc(b.pru)}">`)}
-    ${b.hasVirt ? `<label class="chk"><input type="checkbox" data-bp="vers" ${b.vers ? 'checked' : ''}><span>Ajouter le versement du mois</span></label>${b.vers ? field('Montant versé (€)', `<input class="f" data-bp="vmont" inputmode="decimal" autocomplete="off" value="${esc(b.vmont)}">`) : ''}` : `<p class="hint">Versement du mois déjà enregistré.</p>`}
     </div><div class="btnrow"><button class="btn" data-done>Plus tard</button><button class="btn" data-act="buymore">+ Autre achat</button><button class="btn pri grow" data-act="buyok">Terminer</button></div></div></div>`;
 }
 function garPopup() {
@@ -1353,7 +1354,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '03112026-c';
+const APP_BUILD = '03112026-d';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1541,7 +1542,7 @@ document.addEventListener('change', e => {
     const k = e.target.dataset.bp, prevK = dlg.b.k; buyRead(); const b = dlg.b;
     if (k === 'k' && b.k !== prevK) dlg.b = buyInit(b.k);
     else if (k === 'ai') { const a = S.placements[b.k].actifs[+b.ai]; b.pru = a && a.pru ? String(a.pru) : ''; }
-    if (k === 'k' || k === 'ai' || k === 'vers') render();
+    if (k === 'k' || k === 'ai') render();
     return;
   }
   if (e.target.dataset && e.target.dataset.sharecode !== undefined) { shareCode = e.target.value; e.target.value = showCode(normCode(shareCode)); return; }
