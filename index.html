@@ -55,6 +55,7 @@ h3{font-size:.95rem;margin:0 0 6px;font-weight:800}h4{margin:14px 0 6px;font-siz
 .line{width:100%;height:auto;display:block}.lax{display:flex;justify-content:space-between;align-items:baseline;font-size:.78rem;color:var(--mu)}.lax b{color:var(--ink);font-size:.95rem}
 /* jauges & cartes */
 .gauge{position:relative;height:10px;border-radius:6px;background:var(--track);overflow:visible;margin:10px 0 3px}.gauge i{display:block;position:absolute;top:0;bottom:0;left:0;border-radius:6px}
+.brep{background:var(--in);border-radius:14px;padding:10px 12px;margin:2px 0 10px}.brep h4{margin:0 0 6px;font-size:.84rem;color:var(--mu)}.brep div{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:4px 0;font-size:.92rem}.brep em{font-style:normal;color:var(--mu);font-size:.78rem}.brep i{grid-column:1/-1;height:8px;border-radius:5px;background:var(--track);position:relative;overflow:hidden}.brep i::after{content:'';position:absolute;inset:0 auto 0 0;width:var(--w);background:var(--ac);border-radius:5px}
 .gok{background:var(--mint)}.gko{background:var(--coral)}.cat .gauge i.fill{background:var(--k)}.cat .gauge{background:color-mix(in srgb,var(--k) 16%,var(--track))}.pg>div:nth-child(1){--k:#4a6fa5}.pg>div:nth-child(2){--k:#4f9a94}.pg>div:nth-child(3){--k:#86a862}.pg .gauge i.fill{background:var(--k)}.pg .gauge{background:color-mix(in srgb,var(--k) 16%,var(--track))}
 .cats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .cat{background:var(--sf);border-radius:18px;padding:12px 10px;box-shadow:var(--shadow)}
@@ -949,7 +950,7 @@ function vPlacements() {
   const tNet = 'Valeur nette : ce que tu récupérerais en vendant tout aujourd\'hui, après impôt sur les plus-values.\n' + keys.map(k => `${lbl(k)} : ${eur(R.pl[k].totalApresImpot)} (brut ${eur(R.pl[k].totalBrut)} ; on conserve ${pc(R.cfg.taxes[S.placements[k].taxe], 1)} de la plus-value)`).join('\n') + (P === 'b' ? `\nOr physique : ${eur(R.objetsNet)} (brut ${eur(R.objetsBrut)}, après marge de revente ${pc(S.settings.reventeOr, 0)})` : '') + `\n\nTotal net : ${eur(net)}\nValeur brute (avant impôt) : ${eur(brut)}\nActifs : ${keys.map(k => lbl(k) + ' ' + eur(R.pl[k].valeurActifs)).join(', ')}${keys.some(k => Array.isArray(S.placements[k].virements)) ? '\nEspèces en attente comprises.' : ''}`;
   const firstIso = keys.map(k => R.pl[k].premier).filter(Boolean).sort()[0], days = firstIso ? Math.max(1, (Date.now() - new Date(firstIso + '-01')) / 864e5) : 0, simpleNet = days ? pp.rendement / days * 365 : 0;
   const rep = repartActifs(P, keys), tr24 = trend24(keys, pp);
-  return `${seg}${coursPanel(P, keys)}
+  return `${seg}${pruBanner()}${coursPanel(P, keys)}
   <section class="hero small" ${hideAttrs()}>${eyeIcon()}<small>Plus-value nette · ${nm(P)}</small><div class="big">${eur(pp.pvNet)}${tr24 ? `<span class="tr ${tr24.cls}" data-tip="${esc(tr24.tip)}">${ico(tr24.icon)}</span>` : ''}</div>
     <div class="hchips">${chipT(signed(pp.rendement) + ' net', 'Plus-value nette ÷ argent investi.')}${chipT(signed(pp.xirrNet) + ' par an (pondéré)', 'Taux annuel après impôt, en tenant compte de la date de chaque versement (méthode XIRR). Sur peu de recul, il varie beaucoup.\n\nPour info, annualisé simple : ' + signed(simpleNet) + ' par an (rendement net ÷ ' + dureeTxt(Math.round(days / 30.44)) + ' depuis le 1er versement × 12 mois). Moins réaliste quand les versements sont étalés.')}${chipT('Investi ' + eur(pp.investi), tInv)}${chipT('Valeur nette ' + eur(net), tNet)}</div></section>
   ${rep.length ? sec('Répartition de mes actifs', donut(rep, { center: eur(sum(rep, x => x.v)), top: 'valeur brute', label: 'Répartition des actifs' }), '', 'enter', 'Part de chaque actif dans la valeur de tes placements (espèces en attente et fonds euros compris) : sert à rééquilibrer. Touche une part pour voir son pourcentage.') : ''}
@@ -1033,13 +1034,30 @@ function buyCommit(more) {
   if (qty <= 0) { toast('Indique la quantité, ou touche « Pas d\'achat ce mois-ci »'); return; }
   if (b.hasVirt && num(b.vmont) <= 0) { toast('Indique d\'abord le versement du mois'); return; }   // le versement passe avant tout achat
   if (cto && num(b.mont) <= 0) { toast('Indique le montant payé'); return; }
-  if (!cto && num(b.pru) <= 0) { toast('Indique le nouveau prix de revient moyen'); return; }
+  if (!cto && num(b.pru) <= 0) { toast('Indique le PRU (celui affiché dans Fortuneo)'); return; }
   (a.lots = a.lots || []).push({ date: m, qty, ...(cto ? { montant: num(b.mont) } : {}) });
+  const pru0 = num(a.pru);
   if (!cto) a.pru = num(b.pru);
+  if (!cto && num(b.pru) === pru0) pruTodoAdd(b.k, +b.ai, num(b.pru));
   if (b.hasVirt) p.virements.push({ date: m, montant: num(b.vmont) });
   const nom = a.nom || 'ETF';
   if (more) { const todo = buyAccounts(p.who).filter(k => !buyDone(k)); dlg = { type: 'buy', b: buyInit(todo[0] || b.k) }; } else dlg = null;
   commit(); toast('Achat ajouté : ' + nom);
+}
+/* Rappel « mets à jour le PRU » : mémorisé sur l'appareil tant que le PRU de l'actif n'a pas changé */
+const pruTodoGet = () => { try { return JSON.parse(LS.get('cc.prutodo') || '[]'); } catch (e) { return []; } };
+const pruTodoSet = l => LS.set('cc.prutodo', JSON.stringify(l));
+function pruTodoAdd(k, i, pru) { const l = pruTodoGet().filter(x => !(x.k === k && x.i === i)); l.push({ k, i, pru }); pruTodoSet(l); }
+function pruBanner() {
+  const l = pruTodoGet().filter(x => { const p = S.placements[x.k], a = p && (p.actifs || [])[x.i]; return a && p.who === pf && num(a.pru) === num(x.pru); });
+  return l.map(x => { const a = S.placements[x.k].actifs[x.i]; return `<section class="sec warnbox"><b>Pense à mettre à jour le PRU de « ${esc(a.nom || 'cet actif')} »</b><p class="hint">Recopie le PRU affiché dans Fortuneo une fois l'ordre exécuté (s'il a été passé hors des heures de Bourse, le prix change).</p><div class="btnrow"><button class="btn" data-act="prudone" data-k="${x.k}" data-i="${x.i}">C'est à jour</button><button class="btn pri grow" data-edit="placements.${x.k}.actifs.${x.i}">Mettre à jour le PRU</button></div></section>`; }).join('');
+}
+function buyRepart(k) {                                              // part de chaque actif dans la valeur du compte (pour savoir quoi acheter)
+  const c = R.pl[k], tot = c ? c.valeurActifs : 0;
+  if (!c || !c.actifs.length) return '';
+  const rows = c.actifs.map(a => ({ nom: a.nom || a.isin || 'Actif', p: tot > 0 ? a.valeur / tot : 0 }));
+  const min = tot > 0 && rows.length > 1 ? Math.min(...rows.map(r => r.p)) : -1;
+  return `<div class="brep"><h4>Répartition actuelle de ton ${esc(buyLbl(k))}</h4>${tot > 0 ? rows.map(r => `<div><span>${esc(r.nom)}${r.p === min ? ' <em>· la plus petite part</em>' : ''}</span><b>${pc(r.p, 0)}</b><i style="--w:${(r.p * 100).toFixed(1)}%"></i></div>`).join('') : '<p class="hint">Valeur pas encore connue (cours indisponible).</p>'}</div>`;
 }
 function buyHtml() {
   const b = dlg.b, p = S.placements[b.k], acc = buyAccounts(p.who), cto = b.k === 'ctoA', todo = acc.filter(k => !buyDone(k));
@@ -1047,10 +1065,11 @@ function buyHtml() {
   return `<div class="sheet" data-close><div class="sheetin" role="dialog" aria-label="Achat du mois"><div class="grab"></div><h3>Achat du mois</h3><div class="sbody">
     <p class="hint">${todo.length ? 'Pas encore d\'achat ce mois-ci : ' + todo.map(buyLbl).join(', ') + '.' : 'Tous les comptes ont déjà un achat ce mois-ci.'}</p>
     ${acc.length > 1 ? field('Compte', `<select class="f" data-bp="k">${acc.map(k => opt(k, buyLbl(k) + (buyDone(k) ? ' (déjà fait)' : ''), k === b.k)).join('')}</select>`) : ''}
-    ${b.hasVirt ? field('Versement du mois (€) <small>obligatoire</small>', `<input class="f" data-bp="vmont" inputmode="decimal" autocomplete="off" value="${esc(b.vmont)}">`) : `<p class="hint">✓ Versement du mois déjà enregistré.</p>`}
-    ${field('ETF acheté', `<select class="f" data-bp="ai">${p.actifs.map((a, i) => opt(i, a.nom || a.isin || 'Actif ' + (i + 1), i === +b.ai)).join('')}</select>`)}
-    ${field('Quantité achetée', `<input class="f" data-bp="qty" inputmode="decimal" autocomplete="off" value="${esc(b.qty)}">`)}
-    ${cto ? field('Montant payé (€)', `<input class="f" data-bp="mont" inputmode="decimal" autocomplete="off" value="${esc(b.mont)}">`) : field('Nouveau prix de revient moyen (€)', `<input class="f" data-bp="pru" inputmode="decimal" autocomplete="off" value="${esc(b.pru)}">`)}
+    ${b.hasVirt ? field('1 · Versement du mois (€) <small>obligatoire</small>', `<input class="f" data-bp="vmont" inputmode="decimal" autocomplete="off" value="${esc(b.vmont)}">`) : `<p class="hint">✓ Versement du mois déjà enregistré.</p>`}
+    ${buyRepart(b.k)}
+    ${field('2 · ETF acheté', `<select class="f" data-bp="ai">${p.actifs.map((a, i) => opt(i, a.nom || a.isin || 'Actif ' + (i + 1), i === +b.ai)).join('')}</select>`)}
+    ${field('3 · Quantité achetée', `<input class="f" data-bp="qty" inputmode="decimal" autocomplete="off" value="${esc(b.qty)}">`)}
+    ${cto ? field('4 · Montant payé (€)', `<input class="f" data-bp="mont" inputmode="decimal" autocomplete="off" value="${esc(b.mont)}">`) : field('4 · PRU (€)', `<input class="f" data-bp="pru" inputmode="decimal" autocomplete="off" value="${esc(b.pru)}">`) + `<p class="hint">PRU = prix de revient unitaire, affiché dans Fortuneo une fois l'ordre exécuté. Ordre passé hors des heures de Bourse ? Il n'est exécuté qu'à l'ouverture : le PRU change alors, reviens le mettre à jour.</p>`}
     <button class="btn" data-act="buyno">Pas d\'achat ce mois-ci</button></div><div class="btnrow"><button class="btn" data-done>Plus tard</button><button class="btn" data-act="buymore">+ Autre achat</button><button class="btn pri grow" data-act="buyok">Terminer</button></div></div></div>`;
 }
 function garPopup() {
@@ -1199,7 +1218,7 @@ function specFor(path) {
   if ((m = path.match(/^achats\.(\d+)\.items\.\d+$/))) return { title: 'Achat ou vente', f: [['label', 'text', 'Libellé'], ['achat', 'num', 'Achat (€)'], ['vente', 'num', 'Vente (€)'], who(true)] };
   if ((m = path.match(/^placements\.(\w+)\.actifs\.\d+$/))) {
     const key = m[1], p = S.placements[key], lotCost = key === 'ctoA' || !Array.isArray(p.virements), pru = (Array.isArray(p.virements) && key !== 'ctoA') || p.fondsEuros;
-    return { title: 'Actif', f: [['nom', 'text', 'Nom'], ['isin', 'text', 'Code ISIN'], ...(pru ? [['pru', 'num', 'Prix de revient moyen (€)']] : [])], lots: true, lotCost, note: 'Le cours actuel est récupéré automatiquement à partir du code ISIN : rien à saisir.' };
+    return { title: 'Actif', f: [['nom', 'text', 'Nom'], ['isin', 'text', 'Code ISIN'], ...(pru ? [['pru', 'num', 'PRU (€)']] : [])], lots: true, lotCost, note: 'Le cours actuel est récupéré automatiquement à partir du code ISIN : rien à saisir.' };
   }
   if (/^achats\.\d+$/.test(path)) return { title: 'Année', f: [['annee', 'text', 'Année (ex : 2026)']], note: 'Supprimer l\'année supprime aussi toutes ses lignes.' };
   if (/^placements\.\w+\.virements$/.test(path)) return { title: 'Versements sur le compte', list: [['date', 'month', ''], ['montant', 'num', '€']] };
@@ -1350,7 +1369,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '04112026-a';
+const APP_BUILD = '04112026-b';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1584,6 +1603,19 @@ function closeEditing(confirm) {
     const o = get(S, editing.path), arr = Array.isArray(o) ? o : (o && o.lots);
     if (arr) for (let i = arr.length - 1; i >= 0; i--) if (editing.fresh.includes(arr[i]) && (!confirm || isBlank(arr[i]))) { arr.splice(i, 1); changed = true; }
   }
+  if (confirm && !editing.draft && editing.fresh && editing.fresh.length) {                       // achat du mois ajouté par la fiche de l'actif, sans versement : on ajoute le même versement que le mois dernier
+    const mk = /^placements\.(peaA|peaB|ctoA)\.actifs\.(\d+)$/.exec(editing.path), m = thisMonth();
+    if (mk) {
+      const p = S.placements[mk[1]], a = (p.actifs || [])[+mk[2]], vs = p.virements;
+      if (a && Array.isArray(vs) && (a.lots || []).some(l => editing.fresh.includes(l) && l.date === m && num(l.qty) > 0)) {
+        if (mk[1] !== 'ctoA' && num(a.pru) === num(editing.pru0)) pruTodoAdd(mk[1], +mk[2], num(a.pru));
+        if (!vs.some(v => v.date === m) && vs.length && num(vs[vs.length - 1].montant) > 0) {
+          vs.push({ date: m, montant: num(vs[vs.length - 1].montant) }); changed = true;
+          setTimeout(() => toast('Versement du mois ajouté : ' + eur(num(vs[vs.length - 1].montant)) + ' (comme le mois dernier). Modifiable dans « Tous les versements ».'), 60);
+        }
+      }
+    }
+  }
   if (editing && /^achats\.\d+$/.test(editing.path)) sortAchats();
   editing = null;
   if (changed) { R = recalc(); meta.dirty = true; saveLocal(); if (cfgOK() && sync.state !== 'conflict') { setSync('dirty'); schedulePush(); } }
@@ -1707,7 +1739,7 @@ document.addEventListener('click', async e => {
   if ('close' in d) { if (e.target === t) { dlg = null; closeEditing(false); moreOpen = false; render(); } return; }
   if ('done' in d) { dlg = null; closeEditing(true); render(); return; }
   if ('cancel' in d) { closeEditing(false); render(); return; }
-  if (d.edit) { editing = { path: d.edit }; render(); return; }
+  if (d.edit) { const o = get(S, d.edit); editing = { path: d.edit, pru0: o && o.pru }; render(); return; }
   if ('ctg' in d) { CTG_OPEN = !CTG_OPEN; LS.set('cc.ctg', CTG_OPEN ? '1' : '0'); fitCours(); const g = document.querySelector('.ctg'); if (g) g.closest('.cours').scrollIntoView({ block: 'nearest' }); return; }
   if (d.ef) { ef = d.ef; LS.set('cc.ef', ef); render(); window.scrollTo(0, 0); return; }
   if (d.pf) { pf = d.pf; LS.set('cc.pf', pf); render(); window.scrollTo(0, 0); buyPopup(); return; }
@@ -1731,6 +1763,7 @@ document.addEventListener('click', async e => {
   if ('addyear' in d) { const a = S.interets.annees; a.push(a[a.length - 1] + 1); commit(); return; }
   if ('addyearachat' in d) { const ys = S.achats.map(y => parseInt(y.annee)).filter(Number.isFinite); S.achats.push({ annee: String(ys.length ? Math.max(...ys) + 1 : new Date().getFullYear()), items: [] }); sortAchats(); commit(); return; }
   if (d.act === 'buyno') { LS.set('cc.buyno.' + S.placements[dlg.b.k].who, thisMonth()); dlg = null; render(); toast('Pas d\'achat ce mois-ci : rien enregistré'); return; }
+  if (d.act === 'prudone') { pruTodoSet(pruTodoGet().filter(x => !(x.k === d.k && x.i === +d.i))); render(); return; }
   if (d.act === 'buyok') { buyCommit(false); return; }
   if (d.act === 'buymore') { buyCommit(true); return; }
   if (d.act === 'newcode') { shareCode = newShareCode(); render(); return; }
