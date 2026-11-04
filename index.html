@@ -1048,13 +1048,13 @@ function buyCommit(more) {
 /* Rappel « mets à jour le PRU » : mémorisé sur l'appareil tant que le PRU de l'actif n'a pas changé */
 const pruTodoGet = () => { try { return JSON.parse(LS.get('cc.prutodo') || '[]'); } catch (e) { return []; } };
 const pruTodoSet = l => LS.set('cc.prutodo', JSON.stringify(l));
-function pruTodoAdd(k, i, pru) { const l = pruTodoGet().filter(x => !(x.k === k && x.i === i)); l.push({ k, i, pru }); pruTodoSet(l); }
+function pruTodoAdd(k, i, pru) { const l = pruTodoGet().filter(x => !(x.k === k && x.i === i)); l.push({ k, i, pru, m: thisMonth() }); pruTodoSet(l); }
 function pruBanner() {
   if (PF0 === 'b' && pf === 'b' && !LS.get('cc.pruforce1')) {          // une seule fois : rappel du PRU pour chaque actif du PEA de Franzi, sur l'appareil qui ouvrait son onglet
     LS.set('cc.pruforce1', '1');
     BUY_KEYS.filter(k => S.placements[k] && S.placements[k].who === 'b').forEach(k => (S.placements[k].actifs || []).forEach((a, i) => pruTodoAdd(k, i, num(a.pru))));
   }
-  const l = pruTodoGet().filter(x => { const p = S.placements[x.k], a = p && (p.actifs || [])[x.i]; return a && p.who === pf && num(a.pru) === num(x.pru); });
+  const l = pruTodoGet().filter(x => { const p = S.placements[x.k], a = p && (p.actifs || [])[x.i]; return a && p.who === pf && num(a.pru) === num(x.pru) && (a.lots || []).some(lt => lt.date === (x.m || thisMonth())); });   // seulement les actifs achetés ce mois-là
   return l.map(x => { const a = S.placements[x.k].actifs[x.i]; return `<section class="sec warnbox"><b>Pense à mettre à jour le PRU de « ${esc(a.nom || 'cet actif')} »</b><p class="hint">Recopie le PRU affiché dans Fortuneo une fois l'ordre exécuté (s'il a été passé hors des heures de Bourse, le prix change).</p><div class="btnrow"><button class="btn" data-act="prudone" data-k="${x.k}" data-i="${x.i}">C'est à jour</button><button class="btn pri grow" data-edit="placements.${x.k}.actifs.${x.i}">Mettre à jour le PRU</button></div></section>`; }).join('');
 }
 function buyRepart(k) {                                              // part de chaque actif dans la valeur du compte (pour savoir quoi acheter)
@@ -1375,7 +1375,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '04112026-c';
+const APP_BUILD = '05112026-a';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
