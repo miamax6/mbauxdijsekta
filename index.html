@@ -1029,13 +1029,9 @@ function buyRead() {
 function buyCommit(more) {
   buyRead(); const b = dlg.b, p = S.placements[b.k], a = (p.actifs || [])[+b.ai], m = thisMonth(), cto = b.k === 'ctoA';
   if (!a) { toast('Choisis un ETF'); return; }
-  if (b.hasVirt && num(b.vmont) <= 0) { toast('Indique d\'abord le versement du mois'); return; }   // le versement passe avant tout achat
   const qty = num(b.qty);
-  if (qty <= 0 && !more) {                                            // pas d'achat ce mois-ci : on garde seulement le versement (s'il est coché) et la popup ne revient plus ce mois-ci
-    if (b.hasVirt) p.virements.push({ date: m, montant: num(b.vmont) });
-    LS.set('cc.buyno.' + p.who, m); dlg = null; commit(); toast(b.hasVirt ? 'Versement ajouté, pas d\'achat ce mois-ci' : 'Pas d\'achat ce mois-ci'); return;
-  }
-  if (qty <= 0) { toast('Indique la quantité achetée'); return; }
+  if (qty <= 0) { toast('Indique la quantité, ou touche « Pas d\'achat ce mois-ci »'); return; }
+  if (b.hasVirt && num(b.vmont) <= 0) { toast('Indique d\'abord le versement du mois'); return; }   // le versement passe avant tout achat
   if (cto && num(b.mont) <= 0) { toast('Indique le montant payé'); return; }
   if (!cto && num(b.pru) <= 0) { toast('Indique le nouveau prix de revient moyen'); return; }
   (a.lots = a.lots || []).push({ date: m, qty, ...(cto ? { montant: num(b.mont) } : {}) });
@@ -1053,9 +1049,9 @@ function buyHtml() {
     ${acc.length > 1 ? field('Compte', `<select class="f" data-bp="k">${acc.map(k => opt(k, buyLbl(k) + (buyDone(k) ? ' (déjà fait)' : ''), k === b.k)).join('')}</select>`) : ''}
     ${b.hasVirt ? field('Versement du mois (€) <small>obligatoire</small>', `<input class="f" data-bp="vmont" inputmode="decimal" autocomplete="off" value="${esc(b.vmont)}">`) : `<p class="hint">✓ Versement du mois déjà enregistré.</p>`}
     ${field('ETF acheté', `<select class="f" data-bp="ai">${p.actifs.map((a, i) => opt(i, a.nom || a.isin || 'Actif ' + (i + 1), i === +b.ai)).join('')}</select>`)}
-    ${field('Quantité achetée <small>(vide = pas d\'achat ce mois-ci)</small>', `<input class="f" data-bp="qty" inputmode="decimal" autocomplete="off" value="${esc(b.qty)}">`)}
+    ${field('Quantité achetée', `<input class="f" data-bp="qty" inputmode="decimal" autocomplete="off" value="${esc(b.qty)}">`)}
     ${cto ? field('Montant payé (€)', `<input class="f" data-bp="mont" inputmode="decimal" autocomplete="off" value="${esc(b.mont)}">`) : field('Nouveau prix de revient moyen (€)', `<input class="f" data-bp="pru" inputmode="decimal" autocomplete="off" value="${esc(b.pru)}">`)}
-    </div><div class="btnrow"><button class="btn" data-done>Plus tard</button><button class="btn" data-act="buymore">+ Autre achat</button><button class="btn pri grow" data-act="buyok">Terminer</button></div></div></div>`;
+    <button class="btn" data-act="buyno">Pas d\'achat ce mois-ci</button></div><div class="btnrow"><button class="btn" data-done>Plus tard</button><button class="btn" data-act="buymore">+ Autre achat</button><button class="btn pri grow" data-act="buyok">Terminer</button></div></div></div>`;
 }
 function garPopup() {
   if (dlg || editing || document.documentElement.classList.contains('door')) return;
@@ -1354,7 +1350,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '03112026-d';
+const APP_BUILD = '04112026-a';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1734,6 +1730,7 @@ document.addEventListener('click', async e => {
   if (d.delete) { const ks = d.delete.split('.'), i = +ks.pop(); get(S, ks.join('.')).splice(i, 1); editing = null; commit(); return; }
   if ('addyear' in d) { const a = S.interets.annees; a.push(a[a.length - 1] + 1); commit(); return; }
   if ('addyearachat' in d) { const ys = S.achats.map(y => parseInt(y.annee)).filter(Number.isFinite); S.achats.push({ annee: String(ys.length ? Math.max(...ys) + 1 : new Date().getFullYear()), items: [] }); sortAchats(); commit(); return; }
+  if (d.act === 'buyno') { LS.set('cc.buyno.' + S.placements[dlg.b.k].who, thisMonth()); dlg = null; render(); toast('Pas d\'achat ce mois-ci : rien enregistré'); return; }
   if (d.act === 'buyok') { buyCommit(false); return; }
   if (d.act === 'buymore') { buyCommit(true); return; }
   if (d.act === 'newcode') { shareCode = newShareCode(); render(); return; }
