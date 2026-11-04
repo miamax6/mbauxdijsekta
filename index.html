@@ -661,6 +661,7 @@ function commit() { R = recalc(); if (!(editing && editing.draft)) { meta.dirty 
 /* ---------- Petits composants ---------- */
 let dlg = null, shareEnc = true, shareCode = '';
 let ef = LS.get('cc.ef') === 'b' ? 'b' : 'a', showSecrets = false, pf = LS.get('cc.pf') === 'b' ? 'b' : 'a';
+const PF0 = pf;                                                       // onglet Placements au démarrage de cet appareil
 let CRYPTO = JSON.parse(LS.get('cc.crypto') || 'null') || {};
 const PAL = ['#3f7691', '#5a9a86', '#7b8fbf', '#8a7ba6', '#9bb06a', '#6b8a9a', '#b58b6e', '#4d6a8c'];
 const ICONS = {
@@ -1049,6 +1050,10 @@ const pruTodoGet = () => { try { return JSON.parse(LS.get('cc.prutodo') || '[]')
 const pruTodoSet = l => LS.set('cc.prutodo', JSON.stringify(l));
 function pruTodoAdd(k, i, pru) { const l = pruTodoGet().filter(x => !(x.k === k && x.i === i)); l.push({ k, i, pru }); pruTodoSet(l); }
 function pruBanner() {
+  if (PF0 === 'b' && pf === 'b' && !LS.get('cc.pruforce1')) {          // une seule fois : rappel du PRU pour chaque actif du PEA de Franzi, sur l'appareil qui ouvrait son onglet
+    LS.set('cc.pruforce1', '1');
+    BUY_KEYS.filter(k => S.placements[k] && S.placements[k].who === 'b').forEach(k => (S.placements[k].actifs || []).forEach((a, i) => pruTodoAdd(k, i, num(a.pru))));
+  }
   const l = pruTodoGet().filter(x => { const p = S.placements[x.k], a = p && (p.actifs || [])[x.i]; return a && p.who === pf && num(a.pru) === num(x.pru); });
   return l.map(x => { const a = S.placements[x.k].actifs[x.i]; return `<section class="sec warnbox"><b>Pense à mettre à jour le PRU de « ${esc(a.nom || 'cet actif')} »</b><p class="hint">Recopie le PRU affiché dans Fortuneo une fois l'ordre exécuté (s'il a été passé hors des heures de Bourse, le prix change).</p><div class="btnrow"><button class="btn" data-act="prudone" data-k="${x.k}" data-i="${x.i}">C'est à jour</button><button class="btn pri grow" data-edit="placements.${x.k}.actifs.${x.i}">Mettre à jour le PRU</button></div></section>`; }).join('');
 }
@@ -1069,7 +1074,7 @@ function buyHtml() {
     ${buyRepart(b.k)}
     ${field('2 · ETF acheté', `<select class="f" data-bp="ai">${p.actifs.map((a, i) => opt(i, a.nom || a.isin || 'Actif ' + (i + 1), i === +b.ai)).join('')}</select>`)}
     ${field('3 · Quantité achetée', `<input class="f" data-bp="qty" inputmode="decimal" autocomplete="off" value="${esc(b.qty)}">`)}
-    ${cto ? field('4 · Montant payé (€)', `<input class="f" data-bp="mont" inputmode="decimal" autocomplete="off" value="${esc(b.mont)}">`) : field('4 · PRU (€)', `<input class="f" data-bp="pru" inputmode="decimal" autocomplete="off" value="${esc(b.pru)}">`) + `<p class="hint">PRU = prix de revient unitaire, affiché dans Fortuneo une fois l'ordre exécuté. Ordre passé hors des heures de Bourse ? Il n'est exécuté qu'à l'ouverture : le PRU change alors, reviens le mettre à jour.</p>`}
+    ${cto ? field('4 · Montant payé (€)', `<input class="f" data-bp="mont" inputmode="decimal" autocomplete="off" value="${esc(b.mont)}">`) : field('4 · Prix de revient unitaire (PRU) (€)', `<input class="f" data-bp="pru" inputmode="decimal" autocomplete="off" value="${esc(b.pru)}">`) + `<p class="hint">Le PRU est affiché dans Fortuneo une fois l'ordre exécuté. Ordre passé hors des heures de Bourse ? Il n'est exécuté qu'à l'ouverture : le PRU change alors, reviens le mettre à jour.</p>`}
     <button class="btn" data-act="buyno">Pas d\'achat ce mois-ci</button></div><div class="btnrow"><button class="btn" data-done>Plus tard</button><button class="btn" data-act="buymore">+ Autre achat</button><button class="btn pri grow" data-act="buyok">Terminer</button></div></div></div>`;
 }
 function garPopup() {
@@ -1218,7 +1223,7 @@ function specFor(path) {
   if ((m = path.match(/^achats\.(\d+)\.items\.\d+$/))) return { title: 'Achat ou vente', f: [['label', 'text', 'Libellé'], ['achat', 'num', 'Achat (€)'], ['vente', 'num', 'Vente (€)'], who(true)] };
   if ((m = path.match(/^placements\.(\w+)\.actifs\.\d+$/))) {
     const key = m[1], p = S.placements[key], lotCost = key === 'ctoA' || !Array.isArray(p.virements), pru = (Array.isArray(p.virements) && key !== 'ctoA') || p.fondsEuros;
-    return { title: 'Actif', f: [['nom', 'text', 'Nom'], ['isin', 'text', 'Code ISIN'], ...(pru ? [['pru', 'num', 'PRU (€)']] : [])], lots: true, lotCost, note: 'Le cours actuel est récupéré automatiquement à partir du code ISIN : rien à saisir.' };
+    return { title: 'Actif', f: [['nom', 'text', 'Nom'], ['isin', 'text', 'Code ISIN'], ...(pru ? [['pru', 'num', 'Prix de revient unitaire (PRU) (€)']] : [])], lots: true, lotCost, note: 'Le cours actuel est récupéré automatiquement à partir du code ISIN : rien à saisir.' };
   }
   if (/^achats\.\d+$/.test(path)) return { title: 'Année', f: [['annee', 'text', 'Année (ex : 2026)']], note: 'Supprimer l\'année supprime aussi toutes ses lignes.' };
   if (/^placements\.\w+\.virements$/.test(path)) return { title: 'Versements sur le compte', list: [['date', 'month', ''], ['montant', 'num', '€']] };
@@ -1303,6 +1308,7 @@ function render() {
   SD = null;
   R = R || recalc();
   const [title, fn] = VIEWS[view];
+  LS.set('cc.view', view);
   const fresh = lastView !== view; lastView = view;
   hideTip();
   const hadSheet = !!document.querySelector('.sheet');                // une fenêtre est déjà ouverte : on la redessine sans la ré-animer (sinon elle clignote)
@@ -1369,7 +1375,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '04112026-b';
+const APP_BUILD = '04112026-c';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1938,7 +1944,7 @@ const Door = (() => {
       });
       setTimeout(done, 700);
     } else { el.style.display = 'none'; done(); }
-    function done() { setTimeout(garPopup, 300); el.style.display = 'none'; el.getAnimations().forEach(a => a.cancel()); scene.getAnimations().forEach(a => a.cancel()); st = null; }
+    function done() { setTimeout(() => { garPopup(); buyPopup(); }, 300); el.style.display = 'none'; el.getAnimations().forEach(a => a.cancel()); scene.getAnimations().forEach(a => a.cancel()); st = null; }
   }
   function init() {
     if (!enabled() || !S.salaires.length) return;
@@ -1953,7 +1959,7 @@ const Door = (() => {
 })();
 
 /* ---------- Démarrage ---------- */
-loadLocal(); R = recalc(); Door.init(); render(); setTimeout(garPopup, 400);
+loadLocal(); R = recalc(); { const v0 = LS.get('cc.view'); if (v0 && VIEWS[v0]) view = v0; } Door.init(); render(); setTimeout(() => { garPopup(); buyPopup(); }, 400);
 /* Lien de partage : traité à l'ouverture ET quand l'appli est déjà ouverte (le lien ne change alors que la partie après le #) */
 function checkShareHash() { const m = location.hash.match(/^#partage=(.+)$/); if (m) { dlg = { type: 'in', payload: m[1] }; try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} render(); } }
 checkShareHash(); window.addEventListener('hashchange', checkShareHash);
