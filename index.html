@@ -1018,9 +1018,9 @@ function buyInit(k) {
   return { k, ai: 0, qty: '', mont: '', pru: a.pru ? String(a.pru) : '', hasVirt, vmont: hasVirt && vs.length ? String(num(vs[vs.length - 1].montant)) : '' };
 }
 function buyPopup() {
-  if (dlg || editing || document.documentElement.classList.contains('door') || !buyDay()) return;
+  if (view !== 'placements' || dlg || editing || document.documentElement.classList.contains('door') || !buyDay()) return;
   const todo = buyAccounts(pf).filter(k => !buyDone(k)); if (!todo.length) return;             // seulement les comptes de la personne dont l'onglet est ouvert
-  const today = new Date().toISOString().slice(0, 10), sk = 'cc.buyskip.' + pf; if (LS.get(sk) === today || LS.get('cc.buyno.' + pf) === thisMonth()) return;
+  const today = new Date().toISOString().slice(0, 10), sk = 'cc.buyskip.' + pf; if (LS.get(sk) === today || ((S.settings.noBuy || {})[pf] === thisMonth() || LS.get('cc.buyno.' + pf) === thisMonth())) return;
   LS.set(sk, today);                                        // fermée sans valider : elle revient demain
   dlg = { type: 'buy', b: buyInit(todo[0]) }; render();
 }
@@ -1375,7 +1375,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '05112026-a';
+const APP_BUILD = '05112026-b';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1768,7 +1768,7 @@ document.addEventListener('click', async e => {
   if (d.delete) { const ks = d.delete.split('.'), i = +ks.pop(); get(S, ks.join('.')).splice(i, 1); editing = null; commit(); return; }
   if ('addyear' in d) { const a = S.interets.annees; a.push(a[a.length - 1] + 1); commit(); return; }
   if ('addyearachat' in d) { const ys = S.achats.map(y => parseInt(y.annee)).filter(Number.isFinite); S.achats.push({ annee: String(ys.length ? Math.max(...ys) + 1 : new Date().getFullYear()), items: [] }); sortAchats(); commit(); return; }
-  if (d.act === 'buyno') { LS.set('cc.buyno.' + S.placements[dlg.b.k].who, thisMonth()); dlg = null; render(); toast('Pas d\'achat ce mois-ci : rien enregistré'); return; }
+  if (d.act === 'buyno') { (S.settings.noBuy = S.settings.noBuy || {})[S.placements[dlg.b.k].who] = thisMonth(); dlg = null; commit(); toast('Pas d\'achat ce mois-ci : noté sur tous tes appareils'); return; }   // synchronisé
   if (d.act === 'prudone') { pruTodoSet(pruTodoGet().filter(x => !(x.k === d.k && x.i === +d.i))); render(); return; }
   if (d.act === 'buyok') { buyCommit(false); return; }
   if (d.act === 'buymore') { buyCommit(true); return; }
