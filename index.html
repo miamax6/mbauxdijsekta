@@ -640,7 +640,7 @@ async function pull(silent) {
     if (meta.dirty) { setSync('conflict', 'La version distante a changé'); render(); return; }
     S = Object.assign(EMPTY_STATE(), JSON.parse(await decrypt(rem.text, CFG.pass)));
     const mg = migrate(S);
-    meta = { sha: rem.sha, dirty: mg, at: new Date().toISOString() }; saveLocal(); setSync(mg ? 'dirty' : 'ok'); if (mg) schedulePush(); R = recalc(); render(); garPopup(); if (typeof fetchLive === 'function') fetchLive();
+    meta = { sha: rem.sha, dirty: mg, at: new Date().toISOString() }; saveLocal(); setSync(mg ? 'dirty' : 'ok'); if (mg) schedulePush(); R = recalc(); if (dlg && dlg.type === 'buy' && ((S.settings.noBuy || {})[pf] === thisMonth() || buyAccounts(pf).every(buyDone))) dlg = null; render(); garPopup(); buyPopup(); if (typeof fetchLive === 'function') fetchLive();
   } catch (e) { setSync('err', e.name === 'OperationError' ? 'Phrase secrète incorrecte' : e.message); if (!silent) toast(sync.msg); }
 }
 async function push(force) {
@@ -1017,8 +1017,9 @@ function buyInit(k) {
   const hasVirt = !!vs && !vs.some(v => v.date === thisMonth());
   return { k, ai: 0, qty: '', mont: '', pru: a.pru ? String(a.pru) : '', hasVirt, vmont: hasVirt && vs.length ? String(num(vs[vs.length - 1].montant)) : '' };
 }
+let SYNC_READY = !cfgOK();                                           // faux tant que la 1re synchro du démarrage n'est pas terminée
 function buyPopup() {
-  if (view !== 'placements' || dlg || editing || document.documentElement.classList.contains('door') || !buyDay()) return;
+  if (!SYNC_READY || view !== 'placements' || dlg || editing || document.documentElement.classList.contains('door') || !buyDay()) return;
   const todo = buyAccounts(pf).filter(k => !buyDone(k)); if (!todo.length) return;             // seulement les comptes de la personne dont l'onglet est ouvert
   const today = new Date().toISOString().slice(0, 10), sk = 'cc.buyskip.' + pf; if (LS.get(sk) === today || ((S.settings.noBuy || {})[pf] === thisMonth() || LS.get('cc.buyno.' + pf) === thisMonth())) return;
   LS.set(sk, today);                                        // fermée sans valider : elle revient demain
@@ -1375,7 +1376,7 @@ window.addEventListener('scroll', () => { if (tipFor) hideTip(); }, { passive: t
 let CTG_OPEN = LS.get('cc.ctg') === '1';
 let LIVE_ERR = {}, CHG = JSON.parse(LS.get('cc.chg') || '{}'), RELAY_POLL_MS = 2000, LAST_LIVE = 0, LIVE_MSG = '';
 const setLiveMsg = t => { LIVE_MSG = t; document.querySelectorAll('[data-live]').forEach(e => { e.textContent = t; }); };
-const APP_BUILD = '05112026-b';
+const APP_BUILD = '12112026-a';
 const errTxt = e => (e && e.message === 'Failed to fetch') ? 'connexion refusée par le navigateur (accès bloqué ou service hors ligne)' : (e && e.message) || 'échec';
 const allActifs = () => Object.values(S.placements).flatMap(p => Array.isArray(p) ? [] : (p.actifs || []));
 const allIsins = () => [...new Set(allActifs().map(a => a.isin).filter(Boolean))];
@@ -1959,12 +1960,13 @@ const Door = (() => {
 })();
 
 /* ---------- Démarrage ---------- */
-loadLocal(); R = recalc(); { const v0 = LS.get('cc.view'); if (v0 && VIEWS[v0]) view = v0; } Door.init(); render(); setTimeout(() => { garPopup(); buyPopup(); }, 400);
+loadLocal(); R = recalc(); { const v0 = LS.get('cc.view'); if (v0 && VIEWS[v0]) view = v0; } Door.init(); render(); setTimeout(garPopup, 400);
 /* Lien de partage : traité à l'ouverture ET quand l'appli est déjà ouverte (le lien ne change alors que la partie après le #) */
 function checkShareHash() { const m = location.hash.match(/^#partage=(.+)$/); if (m) { dlg = { type: 'in', payload: m[1] }; try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} render(); } }
 checkShareHash(); window.addEventListener('hashchange', checkShareHash);
 fetchLive();
-if (cfgOK()) pull(true);
+{ const ready = () => { if (!SYNC_READY) { SYNC_READY = true; buyPopup(); } };
+  if (cfgOK()) { Promise.race([pull(true), new Promise(r => setTimeout(r, 6000))]).then(ready, ready); } else ready(); }   // popup d'achat : seulement une fois les données de l'autre appareil reçues (6 s maxi)
 window.addEventListener('online', () => { if (cfgOK()) pull(true); fetchLive(); });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
